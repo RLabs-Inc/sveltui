@@ -1,0 +1,32 @@
+# Main build configuration
+[build]
+entrypoints = ["./src/index.ts"]  # Main entry file
+outdir = "./dist"                 # Output directory
+target = "node"                   # Target platform (node for CLI tools)
+format = "esm"                    # Output as ES modules
+splitting = true                  # Enable code splitting for better optimization
+minify = true                     # Minify production builds
+sourcemap = "external"            # Generate source maps for debugging
+external = ["blessed"]
+
+# Development server settings
+[dev]
+port = 3000                      # Port for dev server if needed
+
+# Test configuration
+[test]
+coverage = true                  # Enable coverage reporting
+timeout = 5000                   # Test timeout in milliseconds
+
+# Package management configuration
+[install]
+production = false               # Install dev dependencies by default
+exact = true                     # Use exact versions for dependencies
+
+# TypeScript configuration (Bun has built-in TypeScript support)
+[typescript]
+verbatimModuleSyntax = true      # Preserve import/export syntax
+
+# Runtime behaviors
+[runtime]
+env = { NODE_ENV = "development" }  # Default environment variables

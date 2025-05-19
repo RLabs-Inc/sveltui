@@ -1,0 +1,31 @@
+{
+  "name": "sveltui",
+  "module": "index.ts",
+  "type": "module",
+  "version": "0.0.1",
+  "author": "Rusty",
+  "license": "MIT",
+  "description": "SveltUI is a Svelte library for building TUIs.",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "example": "vite-node examples/demo.svelte.ts"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@types/blessed": "0.1.25",
+    "@types/bun": "latest",
+    "@types/node": "^22.15.19",
+    "esbuild": "^0.25.4",
+    "vite": "^6.3.5",
+    "vite-node": "3.1.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "blessed": "0.1.81",
+    "svelte": "^5.30.2"
+  }
+}
