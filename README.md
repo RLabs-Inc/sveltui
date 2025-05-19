@@ -32,10 +32,20 @@ To start the development server:
 bun run dev
 ```
 
-To run the demo example:
+To run the demo examples:
 
 ```bash
+# Main demo
 bun run example
+
+# Component demos
+bun run checkbox-demo  # Checkbox component demo
+bun run select-demo    # Select dropdown component demo
+
+# Theme demos
+bun run theme-demo     # Full theme demo with dual preview lists
+bun run theme-simple   # Simple theme demonstration
+bun run theme-showcase # Showcase of theme colors and components
 ```
 
 ## Building
@@ -163,6 +173,8 @@ SveltUI includes these built-in components:
 | **Text** | Text display | `content`, `style`, `left`, `top` |
 | **Input** | Text input field | `value`, `placeholder`, `onChange`, `onSubmit` |
 | **List** | Selectable list | `items`, `selected`, `onSelect`, `style` |
+| **Checkbox** | Interactive checkbox | `checked`, `label`, `onChange`, `disabled` |
+| **Select** | Dropdown selection | `options`, `value`, `onChange`, `placeholder` |
 
 All components support standard positioning properties like `left`, `top`, `width`, and `height`.
 

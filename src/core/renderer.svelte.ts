@@ -13,7 +13,7 @@ import {
   getThemeFiles,
   createTheme 
 } from "./theme-manager";
-import type { Theme, Color } from "./theme";
+import type { Theme, Color } from "./types";
 import { TerminalTheme, DarkTheme, LightTheme } from "./theme";
 
 // Export theme-related functions and types

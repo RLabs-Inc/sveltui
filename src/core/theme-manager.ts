@@ -1,41 +1,64 @@
-import { Theme, TerminalTheme, DarkTheme, LightTheme } from './theme';
-import { lighten, darken, withAlpha } from './color-utils';
-import * as fs from 'fs';
-import * as yaml from 'js-yaml';
-import * as path from 'path';
+import type { Theme, Color } from "./types";
+import { TerminalTheme, DarkTheme, LightTheme } from "./theme";
+import { lighten, withAlpha } from "./color-utils";
+import * as yaml from "js-yaml";
+
+// Conditionally load Node.js modules
+let fs: any = null;
+let path: any = null;
+let BUILT_IN_THEMES_DIR: string = "";
+let CUSTOM_THEMES_DIR: string = "";
+
+// Check if we're running in Node.js environment
+const isNodeEnv = typeof process !== 'undefined' && 
+  process.versions != null && 
+  process.versions.node != null;
+
+// Only import fs/path in Node environment
+if (isNodeEnv) {
+  try {
+    // Dynamic imports to avoid Vite warnings
+    fs = require('fs');
+    path = require('path');
+    
+    // Set theme directories
+    BUILT_IN_THEMES_DIR = path.resolve(process.cwd(), "themes/built-in");
+    CUSTOM_THEMES_DIR = path.resolve(process.cwd(), "themes/custom");
+  } catch (e) {
+    console.warn('Unable to import Node.js modules:', e);
+  }
+}
 
 // Theme registry
 const themeRegistry = new Map<string, Theme>();
 
-// Theme directories
-const BUILT_IN_THEMES_DIR = path.resolve(process.cwd(), 'themes/built-in');
-const CUSTOM_THEMES_DIR = path.resolve(process.cwd(), 'themes/custom');
-
 // Register default themes
-themeRegistry.set('terminal', TerminalTheme);
-themeRegistry.set('dark', DarkTheme);
-themeRegistry.set('light', LightTheme);
+themeRegistry.set("terminal", TerminalTheme);
+themeRegistry.set("dark", DarkTheme);
+themeRegistry.set("light", LightTheme);
 
-// Load built-in themes
-try {
-  if (fs.existsSync(BUILT_IN_THEMES_DIR)) {
-    const themeFiles = fs.readdirSync(BUILT_IN_THEMES_DIR).filter(file => 
-      file.endsWith('.yaml') || file.endsWith('.yml')
-    );
-    
-    themeFiles.forEach(file => {
-      try {
-        const theme = loadTheme(path.join(BUILT_IN_THEMES_DIR, file));
-        if (theme) {
-          registerTheme(theme);
+// Load built-in themes - only in Node environment
+if (isNodeEnv && fs && path) {
+  try {
+    if (fs.existsSync(BUILT_IN_THEMES_DIR)) {
+      const themeFiles = fs
+        .readdirSync(BUILT_IN_THEMES_DIR)
+        .filter((file: string) => file.endsWith(".yaml") || file.endsWith(".yml"));
+
+      themeFiles.forEach((file: string) => {
+        try {
+          const theme = loadTheme(path.join(BUILT_IN_THEMES_DIR, file));
+          if (theme) {
+            registerTheme(theme);
+          }
+        } catch (error) {
+          console.warn(`Failed to load built-in theme ${file}:`, error);
         }
-      } catch (error) {
-        console.warn(`Failed to load built-in theme ${file}:`, error);
-      }
-    });
+      });
+    }
+  } catch (error) {
+    console.warn("Failed to load built-in themes:", error);
   }
-} catch (error) {
-  console.warn('Failed to load built-in themes:', error);
 }
 
 // Currently active theme
@@ -52,7 +75,7 @@ export function getTheme(): Theme {
  * Set the active theme by name or theme object
  */
 export function setTheme(theme: string | Theme): boolean {
-  if (typeof theme === 'string') {
+  if (typeof theme === "string") {
     const foundTheme = themeRegistry.get(theme.toLowerCase());
     if (foundTheme) {
       activeTheme = foundTheme;
@@ -81,50 +104,64 @@ export function getAvailableThemes(): string[] {
 
 /**
  * Get a list of all theme files (both built-in and custom)
+ * Only works in Node.js environment
  */
-export function getThemeFiles(): { builtIn: string[], custom: string[] } {
+export function getThemeFiles(): { builtIn: string[]; custom: string[] } {
   const result = {
     builtIn: [] as string[],
-    custom: [] as string[]
+    custom: [] as string[],
   };
-  
+
+  if (!isNodeEnv || !fs || !path) {
+    console.warn("Theme file operations require Node.js environment");
+    return result;
+  }
+
   try {
     if (fs.existsSync(BUILT_IN_THEMES_DIR)) {
-      result.builtIn = fs.readdirSync(BUILT_IN_THEMES_DIR)
-        .filter(file => file.endsWith('.yaml') || file.endsWith('.yml'))
-        .map(file => path.join(BUILT_IN_THEMES_DIR, file));
+      result.builtIn = fs
+        .readdirSync(BUILT_IN_THEMES_DIR)
+        .filter((file: string) => file.endsWith(".yaml") || file.endsWith(".yml"))
+        .map((file: string) => path.join(BUILT_IN_THEMES_DIR, file));
     }
   } catch (error) {
-    console.warn('Failed to read built-in theme directory:', error);
+    console.warn("Failed to read built-in theme directory:", error);
   }
-  
+
   try {
     if (fs.existsSync(CUSTOM_THEMES_DIR)) {
-      result.custom = fs.readdirSync(CUSTOM_THEMES_DIR)
-        .filter(file => file.endsWith('.yaml') || file.endsWith('.yml'))
-        .map(file => path.join(CUSTOM_THEMES_DIR, file));
+      result.custom = fs
+        .readdirSync(CUSTOM_THEMES_DIR)
+        .filter((file: string) => file.endsWith(".yaml") || file.endsWith(".yml"))
+        .map((file: string) => path.join(CUSTOM_THEMES_DIR, file));
     }
   } catch (error) {
-    console.warn('Failed to read custom theme directory:', error);
+    console.warn("Failed to read custom theme directory:", error);
   }
-  
+
   return result;
 }
 
 /**
  * Load a theme from a YAML file
+ * Only works in Node.js environment
  */
 export function loadTheme(filePath: string): Theme | null {
+  if (!isNodeEnv || !fs) {
+    console.warn("Theme loading requires Node.js environment");
+    return null;
+  }
+  
   try {
-    const fileContent = fs.readFileSync(filePath, 'utf8');
+    const fileContent = fs.readFileSync(filePath, "utf8");
     const themeData = yaml.load(fileContent) as Theme;
-    
+
     // Basic validation
     if (!themeData.name || !themeData.colors) {
-      console.error('Invalid theme format: missing required properties');
+      console.error("Invalid theme format: missing required properties");
       return null;
     }
-    
+
     return themeData;
   } catch (error) {
     console.error(`Error loading theme: ${error}`);
@@ -138,203 +175,31 @@ export function loadTheme(filePath: string): Theme | null {
 export function getDerivedColors(theme: Theme = activeTheme) {
   // Safety check - if theme is undefined or doesn't have colors
   if (!theme || !theme.colors) {
-    console.warn("getDerivedColors: Theme or theme.colors is undefined, using default values");
+    console.warn(
+      "getDerivedColors: Theme or theme.colors is undefined, using default values"
+    );
     return {
       surfaceColor: null,
-      mutedText: null
+      mutedText: null,
     };
   }
-  
+
   const derived = {
     // Surface color is slightly lighter/darker than background
-    surfaceColor: theme.colors.background === null ? 
-      null : lighten(theme.colors.background, 0.05),
-    
+    surfaceColor:
+      theme.colors.background === null
+        ? null
+        : lighten(theme.colors.background, 0.05),
+
     // Muted text is the same color with some transparency or slightly darker
-    mutedText: theme.colors.foreground === null ?
-      null : withAlpha(theme.colors.foreground, 0.7),
+    mutedText:
+      theme.colors.foreground === null
+        ? null
+        : withAlpha(theme.colors.foreground, 0.7),
   };
-  
+
   // Override with any explicitly defined values in the theme
   return { ...derived, ...theme.derived };
-}
-
-/**
- * Apply theme to component props
- */
-export function applyThemeToProps(
-  elementType: string, 
-  props: Record<string, any>,
-  theme: Theme = activeTheme
-): Record<string, any> {
-  // Safety check - if no theme, just return original props
-  if (!theme) {
-    console.warn("applyThemeToProps: Theme is undefined, returning original props");
-    return { ...props };
-  }
-  
-  const derivedColors = getDerivedColors(theme);
-  const result = { ...props };
-  
-  // Common theme application logic based on element type
-  switch (elementType.toLowerCase()) {
-    case 'box':
-      // Apply background color if defined
-      if (theme.colors.background !== null) {
-        result.bg = theme.colors.background;
-      }
-      
-      // For panels, use surface color
-      if (props.type === 'panel' && derivedColors.surfaceColor !== null) {
-        result.bg = derivedColors.surfaceColor;
-      }
-      
-      // Apply foreground color if defined
-      if (theme.colors.foreground !== null) {
-        result.fg = theme.colors.foreground;
-      }
-      
-      // Apply component-specific styling if available
-      if (theme.components?.box) {
-        if (theme.components.box.background) result.bg = theme.components.box.background;
-        if (theme.components.box.foreground) result.fg = theme.components.box.foreground;
-        
-        // Handle border styling
-        if (theme.components.box.border) {
-          result.style = result.style || {};
-          result.style.border = result.style.border || {};
-          
-          if (theme.components.box.border.color) {
-            result.style.border.fg = theme.components.box.border.color;
-          }
-          
-          if (props.focus && theme.components.box.border.focusColor) {
-            result.style.border.fg = theme.components.box.border.focusColor;
-          }
-        }
-      }
-      break;
-      
-    case 'text':
-      // Apply foreground color
-      if (theme.colors.foreground !== null) {
-        result.fg = theme.colors.foreground;
-      }
-      
-      // If text is marked as muted, use muted text color
-      if (props.muted && derivedColors.mutedText !== null) {
-        result.fg = derivedColors.mutedText;
-      }
-      
-      // Apply component-specific styling
-      if (theme.components?.text) {
-        if (props.muted && theme.components.text.muted) {
-          result.fg = theme.components.text.muted;
-        } else if (theme.components.text.normal) {
-          result.fg = theme.components.text.normal;
-        }
-        
-        // If text is bold, apply bold styling
-        if (props.bold && theme.components.text.bold?.color) {
-          result.fg = theme.components.text.bold.color;
-        }
-      }
-      break;
-      
-    case 'list':
-      // Apply basic styling
-      if (theme.colors.background !== null) {
-        result.bg = theme.colors.background;
-      }
-      
-      if (theme.colors.foreground !== null) {
-        result.fg = theme.colors.foreground;
-      }
-      
-      // Apply component-specific styling
-      if (theme.components?.list) {
-        if (theme.components.list.background) {
-          result.bg = theme.components.list.background;
-        }
-        
-        // Apply item styling
-        if (theme.components.list.item) {
-          result.style = result.style || {};
-          
-          // Selected item styling
-          if (theme.components.list.item.selected) {
-            result.style.selected = result.style.selected || {};
-            
-            if (theme.components.list.item.selected.background) {
-              result.style.selected.bg = theme.components.list.item.selected.background;
-            } else {
-              result.style.selected.bg = theme.colors.primary;
-            }
-            
-            if (theme.components.list.item.selected.foreground) {
-              result.style.selected.fg = theme.components.list.item.selected.foreground;
-            }
-          } else {
-            // Default selected styling
-            result.style.selected = {
-              bg: theme.colors.primary || 'blue',
-              fg: 'white'
-            };
-          }
-          
-          // Hover styling
-          if (theme.components.list.item.hover?.background) {
-            result.style.item = result.style.item || {};
-            result.style.item.hover = result.style.item.hover || {};
-            result.style.item.hover.bg = theme.components.list.item.hover.background;
-          }
-        }
-      }
-      break;
-      
-    case 'input':
-      // Apply basic styling
-      if (theme.colors.background !== null) {
-        result.bg = theme.colors.background;
-      }
-      
-      if (theme.colors.foreground !== null) {
-        result.fg = theme.colors.foreground;
-      }
-      
-      // Apply component-specific styling
-      if (theme.components?.input) {
-        if (theme.components.input.background) {
-          result.bg = theme.components.input.background;
-        }
-        
-        if (theme.components.input.foreground) {
-          result.fg = theme.components.input.foreground;
-        }
-        
-        if (theme.components.input.placeholder) {
-          result.placeholder = theme.components.input.placeholder;
-        }
-        
-        // Border styling
-        if (theme.components.input.border) {
-          result.style = result.style || {};
-          result.style.border = result.style.border || {};
-          
-          if (theme.components.input.border.color) {
-            result.style.border.fg = theme.components.input.border.color;
-          }
-          
-          // Focus styling
-          if (props.focus && theme.components.input.border.focusColor) {
-            result.style.border.fg = theme.components.input.border.focusColor;
-          }
-        }
-      }
-      break;
-  }
-  
-  return result;
 }
 
 /**
@@ -365,4 +230,136 @@ export function createTheme(
       info: "blue",
     }
   };
+}
+
+/**
+ * Apply theme to component props
+ */
+export function applyThemeToProps(
+  elementType: string,
+  props: Record<string, any>,
+  theme: Theme = activeTheme
+): Record<string, any> {
+  // Safety check - if no theme, just return original props
+  if (!theme) {
+    console.warn(
+      "applyThemeToProps: Theme is undefined, returning original props"
+    );
+    return { ...props };
+  }
+
+  const derivedColors = getDerivedColors(theme);
+  const result = { ...props };
+
+  // Common theme application logic based on element type
+  switch (elementType.toLowerCase()) {
+    case "box":
+      // Apply background color if defined
+      if (theme.colors.background !== null) {
+        result.bg = theme.colors.background;
+      }
+
+      // For panels, use surface color
+      if (props.type === "panel" && derivedColors.surfaceColor !== null) {
+        result.bg = derivedColors.surfaceColor;
+      }
+
+      // Apply foreground color if defined
+      if (theme.colors.foreground !== null) {
+        result.fg = theme.colors.foreground;
+      }
+
+      break;
+
+    case "text":
+      // Apply foreground color
+      if (theme.colors.foreground !== null) {
+        result.fg = theme.colors.foreground;
+      }
+
+      // If text is marked as muted, use muted text color
+      if (props.muted && derivedColors.mutedText !== null) {
+        result.fg = derivedColors.mutedText;
+      }
+
+      break;
+
+    case "list":
+      // Apply basic styling
+      if (theme.colors.background !== null) {
+        result.bg = theme.colors.background;
+      }
+
+      if (theme.colors.foreground !== null) {
+        result.fg = theme.colors.foreground;
+      }
+
+      break;
+
+    case "input":
+      // Apply basic styling
+      if (theme.colors.background !== null) {
+        result.bg = theme.colors.background;
+      }
+
+      if (theme.colors.foreground !== null) {
+        result.fg = theme.colors.foreground;
+      }
+      break;
+
+    case "select":
+      // Apply basic styling
+      if (theme.colors.background !== null) {
+        result.bg = theme.colors.background;
+      }
+
+      if (theme.colors.foreground !== null) {
+        result.fg = theme.colors.foreground;
+      }
+
+      // Add tags support for colored text
+      result.tags = true;
+
+      // Apply focus indicator using the primary color
+      result.style = result.style || {};
+      if (props.isFocused || props.focused) {
+        // For Select components, we want to highlight the border when focused
+        result.style.border = result.style.border || {};
+        result.style.border.fg = theme.colors.primary || "blue";
+      }
+
+      // Ensure we set style for dropdown list
+      if (props.open) {
+        // When open, handle the dropdown styling
+        result.style.selected = result.style.selected || {};
+        result.style.selected.bg = theme.colors.primary || "blue";
+        result.style.selected.fg = theme.colors.foreground || "white";
+      }
+      break;
+
+    case "checkbox":
+      // Apply basic styling
+      if (theme.colors.foreground !== null) {
+        result.fg = theme.colors.foreground;
+      }
+
+      // Add tags support for colored text
+      result.tags = true;
+
+      // Set style properties for checkbox states
+      result.style = result.style || {};
+
+      // Handle disabled state
+      if (props.disabled) {
+        result.style.fg = "gray";
+      }
+      // Handle focus state
+      else if (props.isFocused || props.focused) {
+        // Use primary color for the focus indicator
+        result.style.fg = theme.colors.primary || "blue";
+      }
+      break;
+  }
+
+  return result;
 }

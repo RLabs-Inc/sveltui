@@ -21,6 +21,10 @@ bun run build
 # Run the main demo example
 bun run example
 
+# Run component demos
+bun run checkbox-demo  # Checkbox component demo
+bun run select-demo    # Select component demo 
+
 # Run the theme demos
 bun run theme-demo     # Full theme demo with dual preview lists
 bun run theme-simple   # Simple theme demonstration
@@ -41,7 +45,8 @@ SveltUI is a terminal UI (TUI) library that combines Svelte 5's reactivity syste
 2. **Component Registry** (`src/core/registry.svelte.ts`)
    - Maintains a registry of available components
    - Provides component definitions with create/update methods
-   - Initializes built-in components like Box, Text, Input and List
+   - Initializes built-in components like Box, Text, Input, List, Checkbox, and Select
+   - Supports multiple component definitions and variants
 
 3. **Reconciler** (`src/core/reconciler.svelte.ts`)
    - Tracks component instances and their state
@@ -248,14 +253,22 @@ Comprehensive API documentation is available in the following files:
 
 ### File Organization
 
+The project follows a specific organizational pattern detailed in `/docs/COMPONENT_PATTERNS.md`. In summary:
+
 - `src/core/`: Core framework functionality
   - `renderer.svelte.ts`: Screen initialization and rendering
+  - `reconciler.svelte.ts`: Component reconciliation
+  - `registry.svelte.ts`: Component registration
   - `blessed-utils.svelte.ts`: Utilities for working with blessed elements
   - `types.ts`: TypeScript types and interfaces
   - `theme.ts`: Theme interface and built-in themes
   - `theme-manager.ts`: Theme loading, registration, and application
+  - `adapters/`: Blessed implementation adapters (connecting Svelte components to blessed)
+    - Organized by component category (display, input, container)
+    - Each adapter handles the specific blessed implementation details
 - `src/components/`: UI components
   - Each component in its own `.svelte` file
+  - Components only contain Svelte logic, not blessed implementation details
 - `examples/`: Example applications
   - `demo.svelte.ts`: Main example
   - `theme-demo.svelte.ts`: Theme demonstration with dual preview lists
@@ -265,35 +278,121 @@ Comprehensive API documentation is available in the following files:
   - `built-in/`: Built-in theme files
   - `custom/`: User-defined theme files
 
-### Component Structure
+### Component Implementation Pattern
 
-Components should follow this structure:
+SveltUI components follow a three-part implementation pattern to separate concerns:
+
+1. **Svelte Component Interface (`.svelte` file)**: Defines the public API using Svelte 5 runes
+2. **Adapter Implementation (`.svelte.ts` file)**: Connects Svelte to blessed, handling implementation details
+3. **Registry Definition**: Registers the component in the SveltUI system
+
+For detailed information, see `/docs/COMPONENT_PATTERNS.md`.
+
+#### Component Structure
+
+Svelte components should follow this structure:
 
 ```svelte
 <script lang="ts">
+  // Import types but NOT blessed-specific code
+  import type { ComponentProps } from '../core/types';
+
   // Component properties with defaults and bindable props
   let {
-    prop1 = $bindable(defaultValue),
-    prop2 = defaultValue,
-    // ...
+    // Public properties that can be bound
+    value = $bindable(''),
+    
+    // Event handlers with proper typing
+    onChange = undefined as ((value: string) => void) | undefined,
+    
+    // Optional style and layout properties
+    width = '50%',
+    height = 3,
+    style = {},
   } = $props();
   
   // Internal state
-  let internalState = $state(initialValue);
+  let isFocused = $state(false);
   
   // Derived values
-  let derivedValue = $derived(/* calculation */);
-  
-  // Effects for side effects
-  $effect(() => {
-    // Side effects when dependencies change
-  });
+  let displayValue = $derived(`Value: ${value}`);
   
   // Component methods
-  function handleEvent() {
-    // Event handling logic
+  function handleChange(newValue: string) {
+    value = newValue;
+    if (onChange) onChange(newValue);
+  }
+  
+  // Focus/blur handlers
+  function handleFocus() {
+    isFocused = true;
+  }
+  
+  function handleBlur() {
+    isFocused = false;
+  }
+  
+  // Keyboard navigation (for interactive components)
+  function handleKeyNavigation(key: string): boolean {
+    // Return true if the key was handled
+    return false;
   }
 </script>
+
+<!-- No template needed - our renderer handles this -->
+```
+
+#### Adapter Structure
+
+Component adapters should follow this structure:
+
+```typescript
+import * as blessed from 'blessed';
+import { getTheme } from '../theme-manager';
+
+// Create the blessed element
+export function createComponentElement(
+  props: Record<string, any>,
+  parent?: blessed.Widgets.Node
+): blessed.Widgets.BlessedElement {
+  // Create and configure the element
+  const element = blessed.text({
+    ...props,
+    parent,
+    tags: true,
+    focusable: true,
+  });
+  
+  // Set up event handlers
+  setupEvents(element, props);
+  
+  // Initialize display
+  updateDisplay(element, props);
+  
+  return element;
+}
+
+// Update the element display
+export function updateComponentDisplay(
+  element: blessed.Widgets.BlessedElement,
+  props: Record<string, any>
+): void {
+  // Update element display based on props
+  
+  // Apply theming
+  const theme = getTheme();
+  
+  // Update content/appearance
+}
+
+// Helper functions for this component
+function setupEvents(element, props) {
+  // Set up events with proper handlers
+}
+
+function toggleState(props) {
+  // Toggle component state
+}
 ```
 
 ## Working with this Project
