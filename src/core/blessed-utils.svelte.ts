@@ -1,4 +1,5 @@
 import * as blessed from "blessed";
+import { applyThemeToProps } from "./theme-manager";
 
 // Create a blessed element based on type and props
 export function createBlessedElement(
@@ -8,39 +9,41 @@ export function createBlessedElement(
 ): blessed.Widgets.BlessedElement {
   let element: blessed.Widgets.BlessedElement;
 
+  // Apply theme to props before creating the element
+  const themedProps = applyThemeToProps(elementType, props);
+  
   switch (elementType.toLowerCase()) {
     case "box":
       element = blessed.box({
-        ...mapProps(props),
+        ...mapProps(themedProps),
         parent,
       });
       break;
     case "text":
       element = blessed.text({
-        ...mapProps(props),
+        ...mapProps(themedProps),
         parent,
-        content: props.content || "",
+        content: themedProps.content || "",
       });
       break;
     case "list":
-      // Completely separate approach to ensure items are only included once
-      // Create a clean configuration with minimal properties
+      // Apply themed props to list component
       element = blessed.list({
         parent,
         // Explicitly set items from props
-        items: props.items || [],
+        items: themedProps.items || [],
         // Basic required properties
         keys: true,
         mouse: true,
         // Selection
-        selected: props.selected !== undefined ? props.selected : (props.selectedIndex || 0),
+        selected: themedProps.selected !== undefined ? themedProps.selected : (themedProps.selectedIndex || 0),
         // Visual styling
-        border: props.border,
-        width: props.width,
-        height: props.height,
-        top: props.top,
-        left: props.left,
-        style: props.style || {
+        border: themedProps.border,
+        width: themedProps.width,
+        height: themedProps.height,
+        top: themedProps.top,
+        left: themedProps.left,
+        style: themedProps.style || {
           selected: {
             bg: "blue",
             fg: "white",
@@ -48,10 +51,10 @@ export function createBlessedElement(
         },
       });
 
-      if (props.onSelect) {
+      if (themedProps.onSelect) {
         // Only attach one select handler
         element.on("select", (item, index) => {
-          props.onSelect(item, index);
+          themedProps.onSelect(item, index);
         });
       }
       
@@ -59,7 +62,7 @@ export function createBlessedElement(
       break;
     case "input":
       element = blessed.textbox({
-        ...mapProps(props),
+        ...mapProps(themedProps),
         parent,
         inputOnFocus: true,
         keys: true,
@@ -69,16 +72,16 @@ export function createBlessedElement(
         Secret: false,
       });
 
-      if (props.onChange) {
+      if (themedProps.onChange) {
         // Use input event instead of keypress to avoid double triggers
         element.on("input", (value) => {
-          props.onChange(value);
+          themedProps.onChange(value);
         });
       }
 
-      if (props.onSubmit) {
+      if (themedProps.onSubmit) {
         element.on("submit", (value) => {
-          props.onSubmit(value);
+          themedProps.onSubmit(value);
         });
       }
       
@@ -92,20 +95,20 @@ export function createBlessedElement(
         }
       });
 
-      if (props.value) {
-        (element as any).setValue(props.value);
+      if (themedProps.value) {
+        (element as any).setValue(themedProps.value);
       }
       break;
     default:
       element = blessed.box({
-        ...mapProps(props),
+        ...mapProps(themedProps),
         parent,
         content: `[${elementType}]`,
       });
   }
 
   // Handle event attachments
-  setupEventHandlers(element, props);
+  setupEventHandlers(element, themedProps);
 
   return element;
 }
@@ -143,7 +146,9 @@ export function updateBlessedElement(
   element: blessed.Widgets.BlessedElement,
   props: Record<string, any>
 ): void {
-  const mappedProps = mapProps(props);
+  // Apply theme to props before updating
+  const themedProps = applyThemeToProps(element.type, props);
+  const mappedProps = mapProps(themedProps);
 
   // Apply changes
   for (const [key, value] of Object.entries(mappedProps)) {
@@ -163,7 +168,7 @@ export function updateBlessedElement(
   }
 
   // Update event handlers
-  setupEventHandlers(element, props);
+  setupEventHandlers(element, themedProps);
 }
 
 // Set up event handlers for an element

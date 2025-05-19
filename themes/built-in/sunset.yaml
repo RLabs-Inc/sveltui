@@ -1,0 +1,40 @@
+name: "Sunset"
+description: "A warm theme inspired by sunset colors"
+author: "RLabs Inc."
+version: "1.0.0"
+
+colors:
+  primary: "#ff6b35"     # Sunset Orange
+  secondary: "#f7c59f"   # Peach
+  background: "#2a2a2a"  # Dark Gray
+  foreground: "#efefef"  # Off-White
+  
+  # Status colors
+  success: "#7bc950"     # Vibrant Green
+  warning: "#ffca3a"     # Bright Yellow
+  error: "#ff595e"       # Coral Pink
+  info: "#1982c4"        # Sky Blue
+
+derived:
+  surfaceColor: "#3a3a3a" # Slightly lighter gray
+  mutedText: "#c2c2c2"    # Light Gray
+
+components:
+  box:
+    border:
+      color: "#ff6b35"     # Sunset Orange
+      focusColor: "#f7c59f" # Peach
+  
+  list:
+    item:
+      selected:
+        background: "#ff6b35" # Sunset Orange
+        foreground: "#ffffff" # White
+      hover:
+        background: "#3f3f3f" # Medium Gray
+  
+  input:
+    border:
+      color: "#ff6b35"      # Sunset Orange
+      focusColor: "#f7c59f" # Peach
+    placeholder: "#999999"  # Medium Gray

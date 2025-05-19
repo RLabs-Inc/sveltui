@@ -1,0 +1,39 @@
+name: "Dark"
+description: "A dark theme with good contrast"
+author: "RLabs Inc."
+version: "1.0.0"
+
+colors:
+  primary: "#4a7fff"
+  secondary: "#00ccbb"
+  background: "#121212"
+  foreground: "#ffffff"
+  
+  success: "#00cc66"
+  warning: "#ffcc00"
+  error: "#ff4d4d"
+  info: "#66ccff"
+
+derived:
+  surfaceColor: "#1e1e1e"
+  mutedText: "#aaaaaa"
+
+components:
+  box:
+    border:
+      color: "#4a7fff"
+      focusColor: "#00ccbb"
+  
+  list:
+    item:
+      selected:
+        background: "#4a7fff"
+        foreground: "#ffffff"
+      hover:
+        background: "#2a2a2a"
+  
+  input:
+    placeholder: "#777777"
+    border:
+      color: "#4a7fff"
+      focusColor: "#00ccbb"

@@ -1,0 +1,41 @@
+# This is an example custom theme - modify it to create your own!
+name: "Custom Example"
+description: "An example custom theme - replace with your own"
+author: "Your Name"
+version: "1.0.0"
+
+colors:
+  primary: "#9966ff"      # Purple
+  secondary: "#ff6699"    # Pink
+  background: "#1a1a2e"   # Dark Blue
+  foreground: "#e6e6ff"   # Light Purple
+  
+  # Status colors
+  success: "#66ff99"      # Mint Green
+  warning: "#ffcc66"      # Light Orange
+  error: "#ff6666"        # Light Red
+  info: "#66ccff"         # Light Blue
+
+derived:
+  surfaceColor: "#2a2a3e" # Slightly lighter blue
+  mutedText: "#b3b3cc"    # Muted purple
+
+components:
+  box:
+    border:
+      color: "#9966ff"     # Purple
+      focusColor: "#ff6699" # Pink
+  
+  list:
+    item:
+      selected:
+        background: "#9966ff" # Purple
+        foreground: "#ffffff" # White
+      hover:
+        background: "#2a2a4e" # Darker blue
+  
+  input:
+    border:
+      color: "#9966ff"     # Purple
+      focusColor: "#ff6699" # Pink
+    placeholder: "#8888aa"  # Muted blue-purple

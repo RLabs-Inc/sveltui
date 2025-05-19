@@ -53,8 +53,10 @@ bun run build
 - **Component Architecture** - Familiar component-based architecture for terminal UIs
 - **Svelte Integration** - Leverage your existing Svelte knowledge
 - **Keyboard Navigation** - Built-in support for keyboard shortcuts and navigation
+- **Theming System** - Customizable themes with YAML support
 - **Styling** - Rich styling options for terminal interfaces
 - **Event Handling** - Comprehensive event system for user interactions
+- **CLI Support** - Tools for styled terminal output in CLI applications
 
 ## Technical Foundation
 
@@ -163,6 +165,101 @@ SveltUI includes these built-in components:
 | **List** | Selectable list | `items`, `selected`, `onSelect`, `style` |
 
 All components support standard positioning properties like `left`, `top`, `width`, and `height`.
+
+## Theming
+
+SveltUI includes a powerful theming system that allows you to customize the appearance of your terminal UI.
+
+### Using Built-in Themes
+
+```typescript
+import { initializeScreen, render, setTheme, DarkTheme, LightTheme, TerminalTheme } from "sveltui";
+
+// Use the dark theme
+setTheme(DarkTheme);
+
+// Create your UI components as usual
+const screen = initializeScreen();
+const box = render("box", {
+  // ...props
+});
+```
+
+### Creating Custom Themes
+
+You can create custom themes programmatically:
+
+```typescript
+import { createTheme, setTheme } from "sveltui";
+
+const purpleTheme = createTheme("Purple", {
+  primary: "#9966ff",
+  background: "#1a1a2e",
+  foreground: "#e6e6ff"
+});
+
+setTheme(purpleTheme);
+```
+
+### Loading Themes from YAML
+
+You can also load themes from YAML files:
+
+```typescript
+import { loadTheme, setTheme } from "sveltui";
+
+const oceanTheme = loadTheme("./themes/ocean.yaml");
+if (oceanTheme) {
+  setTheme(oceanTheme);
+}
+```
+
+Example YAML theme file:
+
+```yaml
+name: "Ocean"
+description: "A soothing blue theme"
+author: "RLabs Inc."
+version: "1.0.0"
+
+colors:
+  primary: "#0077cc"
+  secondary: "#00ccbb"
+  background: "#05233b"
+  foreground: "#e1f2ff"
+  
+  # Status colors
+  success: "#00cc77"
+  warning: "#ffbb00"
+  error: "#ff5555"
+  info: "#55aaff"
+
+derived:
+  surfaceColor: "#072e4f"
+  mutedText: "#a0c0e0"
+
+components:
+  box:
+    border:
+      color: "#0099ff"
+  list:
+    item:
+      selected:
+        background: "#0088dd"
+```
+
+### CLI Text Styling
+
+You can use the theme for CLI text output:
+
+```typescript
+import { text } from "sveltui";
+
+console.log(text.primary("This text uses the primary color"));
+console.log(text.success("Operation completed successfully"));
+console.log(text.error("An error occurred"));
+console.log(text.muted("This is less important information"));
+```
 
 ## Best Practices
 

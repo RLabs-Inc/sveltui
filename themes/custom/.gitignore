@@ -1,0 +1,6 @@
+# Ignore all YAML files in the custom themes directory
+*.yaml
+*.yml
+
+# But don't ignore the example custom theme
+!example-custom.yaml

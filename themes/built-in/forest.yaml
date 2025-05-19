@@ -1,0 +1,40 @@
+name: "Forest"
+description: "A soothing green theme inspired by nature"
+author: "RLabs Inc."
+version: "1.0.0"
+
+colors:
+  primary: "#2e8b57"     # Sea Green
+  secondary: "#8fbc8f"   # Dark Sea Green
+  background: "#1a2f1a"  # Dark Forest Green
+  foreground: "#e0f0e0"  # Light Mint
+  
+  # Status colors
+  success: "#00cc44"     # Bright Green
+  warning: "#f0c000"     # Gold
+  error: "#cc3300"       # Burnt Orange
+  info: "#668cff"        # Soft Blue
+
+derived:
+  surfaceColor: "#243024" # Slightly lighter forest green
+  mutedText: "#a0c0a0"    # Muted mint
+
+components:
+  box:
+    border:
+      color: "#2e8b57"     # Sea Green
+      focusColor: "#3cb371" # Medium Sea Green
+  
+  list:
+    item:
+      selected:
+        background: "#3cb371" # Medium Sea Green
+        foreground: "#ffffff" # White
+      hover:
+        background: "#2d402d" # Darker forest green
+  
+  input:
+    border:
+      color: "#2e8b57"       # Sea Green
+      focusColor: "#3cb371"  # Medium Sea Green
+    placeholder: "#709070"   # Muted green

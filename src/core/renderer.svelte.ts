@@ -4,6 +4,29 @@ import {
   updateBlessedElement,
 } from "./blessed-utils.svelte";
 import type { RenderResult } from "./types";
+import { 
+  getTheme, 
+  setTheme, 
+  loadTheme, 
+  registerTheme, 
+  getAvailableThemes,
+  getThemeFiles,
+  createTheme 
+} from "./theme-manager";
+import type { Theme, Color } from "./theme";
+
+// Export theme-related functions and types
+export { 
+  getTheme, 
+  setTheme, 
+  loadTheme, 
+  registerTheme, 
+  getAvailableThemes,
+  getThemeFiles,
+  createTheme,
+  type Theme,
+  type Color
+};
 
 // Active screen - use runes for reactivity
 let screen = $state<blessed.Widgets.Screen | null>(null);

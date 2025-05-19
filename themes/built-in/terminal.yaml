@@ -1,0 +1,19 @@
+name: "Terminal"
+description: "Uses the terminal's default colors"
+author: "RLabs Inc."
+version: "1.0.0"
+
+colors:
+  primary: "blue"
+  secondary: "cyan"
+  background: null     # null = use terminal default
+  foreground: null     # null = use terminal default
+  
+  success: "green"
+  warning: "yellow"
+  error: "red"
+  info: "blue"
+
+derived:
+  surfaceColor: null   # Will be slightly lighter than background
+  mutedText: null      # Will be the foreground with some transparency

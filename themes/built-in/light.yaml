@@ -1,0 +1,39 @@
+name: "Light"
+description: "A light theme with good contrast"
+author: "RLabs Inc."
+version: "1.0.0"
+
+colors:
+  primary: "#0066cc"
+  secondary: "#009988"
+  background: "#f5f5f5"
+  foreground: "#333333"
+  
+  success: "#00aa44"
+  warning: "#dd9900"
+  error: "#cc3333"
+  info: "#0088cc"
+
+derived:
+  surfaceColor: "#ffffff"
+  mutedText: "#777777"
+
+components:
+  box:
+    border:
+      color: "#0066cc"
+      focusColor: "#009988"
+  
+  list:
+    item:
+      selected:
+        background: "#0066cc"
+        foreground: "#ffffff"
+      hover:
+        background: "#e5e5e5"
+  
+  input:
+    placeholder: "#aaaaaa"
+    border:
+      color: "#0066cc"
+      focusColor: "#009988"

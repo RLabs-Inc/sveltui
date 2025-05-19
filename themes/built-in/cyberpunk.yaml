@@ -1,0 +1,40 @@
+name: "Cyberpunk"
+description: "A vibrant neon theme inspired by cyberpunk aesthetics"
+author: "RLabs Inc."
+version: "1.0.0"
+
+colors:
+  primary: "#ff2a6d"     # Hot Pink
+  secondary: "#05d9e8"   # Cyan
+  background: "#0d0221"  # Deep Purple Black
+  foreground: "#d1f7ff"  # Light Cyan
+  
+  # Status colors
+  success: "#39ff14"     # Neon Green
+  warning: "#ff9f1c"     # Bright Orange
+  error: "#fe0000"       # Bright Red
+  info: "#01c8ee"        # Electric Blue
+
+derived:
+  surfaceColor: "#1a0536" # Slightly lighter purple
+  mutedText: "#7390aa"    # Muted blue
+
+components:
+  box:
+    border:
+      color: "#ff2a6d"     # Hot Pink
+      focusColor: "#05d9e8" # Cyan
+  
+  list:
+    item:
+      selected:
+        background: "#ff2a6d" # Hot Pink
+        foreground: "#ffffff" # White
+      hover:
+        background: "#2b0645" # Medium Purple
+  
+  input:
+    border:
+      color: "#ff2a6d"     # Hot Pink
+      focusColor: "#05d9e8" # Cyan
+    placeholder: "#4b6eaa"  # Muted blue-purple
