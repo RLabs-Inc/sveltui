@@ -11,7 +11,9 @@
     "dev": "vite",
     "preview": "vite preview",
     "example": "vite-node examples/demo.svelte.ts",
-    "theme-demo": "vite-node examples/theme-demo.svelte.ts"
+    "theme-demo": "vite-node examples/theme-demo.svelte.ts",
+    "theme-simple": "vite-node examples/theme-simple-demo.svelte.ts",
+    "theme-showcase": "vite-node examples/theme-showcase.svelte.ts"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.0.3",

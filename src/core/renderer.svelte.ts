@@ -14,6 +14,7 @@ import {
   createTheme 
 } from "./theme-manager";
 import type { Theme, Color } from "./theme";
+import { TerminalTheme, DarkTheme, LightTheme } from "./theme";
 
 // Export theme-related functions and types
 export { 
@@ -24,12 +25,15 @@ export {
   getAvailableThemes,
   getThemeFiles,
   createTheme,
+  TerminalTheme,
+  DarkTheme,
+  LightTheme,
   type Theme,
   type Color
 };
 
-// Active screen - use runes for reactivity
-let screen = $state<blessed.Widgets.Screen | null>(null);
+// Active screen
+let screen: blessed.Widgets.Screen | null = null;
 
 // Initialize a blessed screen
 export function initializeScreen(

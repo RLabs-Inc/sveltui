@@ -136,6 +136,15 @@ export function loadTheme(filePath: string): Theme | null {
  * Get derived colors for the theme
  */
 export function getDerivedColors(theme: Theme = activeTheme) {
+  // Safety check - if theme is undefined or doesn't have colors
+  if (!theme || !theme.colors) {
+    console.warn("getDerivedColors: Theme or theme.colors is undefined, using default values");
+    return {
+      surfaceColor: null,
+      mutedText: null
+    };
+  }
+  
   const derived = {
     // Surface color is slightly lighter/darker than background
     surfaceColor: theme.colors.background === null ? 
@@ -158,6 +167,12 @@ export function applyThemeToProps(
   props: Record<string, any>,
   theme: Theme = activeTheme
 ): Record<string, any> {
+  // Safety check - if no theme, just return original props
+  if (!theme) {
+    console.warn("applyThemeToProps: Theme is undefined, returning original props");
+    return { ...props };
+  }
+  
   const derivedColors = getDerivedColors(theme);
   const result = { ...props };
   

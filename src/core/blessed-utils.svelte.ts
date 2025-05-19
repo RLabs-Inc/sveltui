@@ -52,8 +52,10 @@ export function createBlessedElement(
       });
 
       if (themedProps.onSelect) {
-        // Only attach one select handler
-        element.on("select", (item, index) => {
+        // Only attach one select handler - use select item event
+        element.on("select item", (item, index) => {
+          // The item might be a complex object, so pass the index
+          // and let the handler get the correct item from its array
           themedProps.onSelect(item, index);
         });
       }

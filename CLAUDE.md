@@ -18,8 +18,13 @@ bun run dev
 # Build the library
 bun run build
 
-# Run the demo example
+# Run the main demo example
 bun run example
+
+# Run the theme demos
+bun run theme-demo     # Full theme demo with dual preview lists
+bun run theme-simple   # Simple theme demonstration
+bun run theme-showcase # Showcase of theme colors and components
 ```
 
 ## Architecture Overview
@@ -47,6 +52,13 @@ SveltUI is a terminal UI (TUI) library that combines Svelte 5's reactivity syste
    - Provides utilities for creating and updating blessed elements
    - Maps SveltUI props to blessed props
    - Sets up event handlers for components
+
+5. **Theme System** (`src/core/theme.ts`, `src/core/theme-manager.ts`)
+   - Defines the theme interface and color types
+   - Provides built-in themes (Terminal, Dark, Light)
+   - Manages theme loading from YAML files
+   - Applies themes to components
+   - Supports custom themes with a simple API
 
 ### UI Components
 
@@ -168,6 +180,45 @@ element.on("select item", (item, index) => {
 });
 ```
 
+9. Using the theming system:
+```javascript
+// Import theme functions and built-in themes
+import { 
+  setTheme, 
+  getTheme, 
+  loadTheme, 
+  TerminalTheme, 
+  DarkTheme,
+  LightTheme 
+} from "sveltui";
+
+// Use a built-in theme
+setTheme(DarkTheme);
+
+// Load a theme from a YAML file
+const customTheme = loadTheme("./themes/custom/ocean.yaml");
+if (customTheme) {
+  setTheme(customTheme);
+}
+
+// Use theme colors in component styling
+const button = render("box", {
+  content: "Click me",
+  style: {
+    bg: getTheme().colors.primary,
+    fg: "white",
+    focus: {
+      bg: getTheme().colors.secondary
+    }
+  }
+});
+
+// Handle undefined theme properties safely
+function getThemeColor(color, fallback) {
+  return color || fallback;
+}
+```
+
 ## Reference Resources
 
 The `/docs/svelte5/` directory contains valuable reference material about Svelte 5's internals:
@@ -201,9 +252,18 @@ Comprehensive API documentation is available in the following files:
   - `renderer.svelte.ts`: Screen initialization and rendering
   - `blessed-utils.svelte.ts`: Utilities for working with blessed elements
   - `types.ts`: TypeScript types and interfaces
+  - `theme.ts`: Theme interface and built-in themes
+  - `theme-manager.ts`: Theme loading, registration, and application
 - `src/components/`: UI components
   - Each component in its own `.svelte` file
 - `examples/`: Example applications
+  - `demo.svelte.ts`: Main example
+  - `theme-demo.svelte.ts`: Theme demonstration with dual preview lists
+  - `theme-simple-demo.svelte.ts`: Simple theme demo
+  - `theme-showcase.svelte.ts`: Showcase of theme colors and components
+- `themes/`: Theme files in YAML format
+  - `built-in/`: Built-in theme files
+  - `custom/`: User-defined theme files
 
 ### Component Structure
 
