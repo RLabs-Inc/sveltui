@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Overview
+
+SveltUI is a terminal UI framework that combines Svelte 5's reactivity system with the blessed library to create interactive terminal interfaces. It allows developers to build responsive, component-based terminal applications using familiar Svelte patterns.
+
 ## Commands
 
 ```bash
@@ -173,3 +177,81 @@ The `/docs/svelte5/` directory contains valuable reference material about Svelte
 - `svelte-5-reactivity.md`: Complete documentation of Svelte 5's reactivity system
 
 Consult these files when you need deeper understanding of how Svelte 5's internal mechanisms work, especially when implementing or debugging reactivity features.
+
+## API Documentation
+
+Comprehensive API documentation is available in the following files:
+
+- `/docs/API.md`: Complete API reference for all components and utilities
+- `/docs/USAGE.md`: Usage examples and patterns for common use cases
+
+## Code Style Guidelines
+
+### General Guidelines
+
+1. Use TypeScript for all code with proper types
+2. Prefer explicit types over inferred types where clarity is needed
+3. Use Svelte 5 runes for reactivity (`$state`, `$derived`, etc.)
+4. Keep functions small and focused on a single responsibility
+5. Use clear, descriptive variable and function names
+
+### File Organization
+
+- `src/core/`: Core framework functionality
+  - `renderer.svelte.ts`: Screen initialization and rendering
+  - `blessed-utils.svelte.ts`: Utilities for working with blessed elements
+  - `types.ts`: TypeScript types and interfaces
+- `src/components/`: UI components
+  - Each component in its own `.svelte` file
+- `examples/`: Example applications
+
+### Component Structure
+
+Components should follow this structure:
+
+```svelte
+<script lang="ts">
+  // Component properties with defaults and bindable props
+  let {
+    prop1 = $bindable(defaultValue),
+    prop2 = defaultValue,
+    // ...
+  } = $props();
+  
+  // Internal state
+  let internalState = $state(initialValue);
+  
+  // Derived values
+  let derivedValue = $derived(/* calculation */);
+  
+  // Effects for side effects
+  $effect(() => {
+    // Side effects when dependencies change
+  });
+  
+  // Component methods
+  function handleEvent() {
+    // Event handling logic
+  }
+</script>
+```
+
+## Working with this Project
+
+When working on this project, consider the following guidelines:
+
+1. Always test UI changes with the example applications
+2. Ensure keyboard navigation works correctly for all components
+3. Maintain backward compatibility when modifying existing components
+4. Add comprehensive documentation for new features
+5. Keep the implementation simple and focused on the core requirements
+
+## Debugging Tips
+
+When debugging terminal UI issues:
+
+1. Add borders to components to visualize layout issues
+2. Use console.log for debugging information
+3. Check focus management when keyboard input isn't working
+4. Verify that screen.render() is called after state changes
+5. Test components in isolation before integrating
