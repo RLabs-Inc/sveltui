@@ -3,7 +3,7 @@
   "module": "index.ts",
   "type": "module",
   "version": "0.0.1",
-  "author": "Rusty",
+  "author": "RLabs Inc.",
   "license": "MIT",
   "description": "SveltUI is a Svelte library for building TUIs.",
   "scripts": {

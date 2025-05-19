@@ -225,4 +225,4 @@ It was initially created using `bun init` in bun v1.1.42. [Bun](https://bun.sh) 
 
 ## License
 
-MIT © [Your Name]
+MIT © [RLabs Inc.](LICENSE)
