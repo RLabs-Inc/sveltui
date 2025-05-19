@@ -89,26 +89,96 @@ The project uses Svelte 5's native runes system through Vite:
 
 The update model is direct: when state changes, the relevant updates are immediately applied rather than relying on reactive effects to detect changes. This makes the code more predictable and easier to debug.
 
-#### Key Handling Best Practices
+#### Key Handling System
 
-When implementing keyboard interactions:
+SveltUI provides utilities for keyboard handling in the `key-utils.ts` module. These utilities work with blessed's native key handling system to provide simple patterns for implementing keyboard navigation and interaction.
 
-1. Use the keypress event for most reliable keyboard input handling:
+##### Key Handling Utilities
+
 ```javascript
-// Use the keypress event for global key handling
-screen.on('keypress', function(ch, key) {
-  // Handle exit keys
-  if (key.name === 'q' || key.name === 'escape' || (key.ctrl && key.name === 'c')) {
-    process.exit(0);
-  }
-  // Handle + key for incrementing counter
-  else if (ch === '+') {
-    count++;
-    headerElement.update({ content: `Count: ${count}` });
+import {
+  setupTabNavigation,
+  setupExitKeys,
+  setupInputHandling,
+  focusFirst,
+  safeToString
+} from 'sveltui';
+
+// Set up tab navigation between elements
+const focusableElements = [
+  listElement.element,
+  inputElement.element,
+  checkboxElement.element,
+  buttonElement.element
+];
+setupTabNavigation(screen, focusableElements);
+
+// Set up exit keys
+setupExitKeys(screen);
+
+// Set up input handling with proper escape behavior
+setupInputHandling(inputElement.element, {
+  onEscape: () => {
+    // Move focus to another element when escape is pressed
+    checkboxElement.element.focus();
     screen.render();
+  },
+  onSubmit: (value) => {
+    // Handle submitted value
+    console.log(`Submitted: ${value}`);
   }
 });
+
+// Set initial focus
+focusFirst(focusableElements);
 ```
+
+##### Component-Level Key Handling
+
+Components handle their own key events using blessed's key event system:
+
+```javascript
+// Register key handlers for a button
+buttonElement.element.key(['space', 'enter'], () => {
+  // Handle button activation
+  console.log('Button activated');
+  screen.render();
+});
+
+// Register key handlers for a list
+listElement.element.key('enter', () => {
+  // Handle list selection
+  const index = listElement.element.selected;
+  const item = listElement.element.items[index];
+  console.log(`Selected: ${safeToString(item)}`);
+  screen.render();
+});
+```
+
+##### Global Keyboard Shortcuts
+
+For global shortcuts, register handlers at the screen level:
+
+```javascript
+// Register global shortcuts
+screen.key(['?'], () => {
+  // Show help
+  console.log('Show help dialog');
+  screen.render();
+});
+
+// Counter increment/decrement
+screen.key('+', () => {
+  // Skip when input is focused
+  if (screen.focused === inputElement.element) return;
+  
+  counter++;
+  counterElement.update({ content: `Counter: ${counter}` });
+  screen.render();
+});
+```
+
+See the `/docs/KEY_HANDLING.md` file for a complete guide to keyboard handling patterns in SveltUI.
 
 2. Always call `screen.render()` after state changes to update the UI.
 

@@ -39,8 +39,9 @@ To run the demo examples:
 bun run example
 
 # Component demos
-bun run checkbox-demo  # Checkbox component demo
-bun run select-demo    # Select dropdown component demo
+bun run components-demo # All components with focus on debugging
+bun run checkbox-demo   # Checkbox component demo
+bun run select-demo     # Select dropdown component demo
 
 # Theme demos
 bun run theme-demo     # Full theme demo with dual preview lists
@@ -62,7 +63,7 @@ bun run build
 - **State Management** - Automatic UI updates when state changes
 - **Component Architecture** - Familiar component-based architecture for terminal UIs
 - **Svelte Integration** - Leverage your existing Svelte knowledge
-- **Keyboard Navigation** - Built-in support for keyboard shortcuts and navigation
+- **Keyboard Navigation** - Built-in support for keyboard shortcuts and navigation with [detailed guidelines](docs/KEY_HANDLING.md)
 - **Theming System** - Customizable themes with YAML support
 - **Styling** - Rich styling options for terminal interfaces
 - **Event Handling** - Comprehensive event system for user interactions
@@ -275,9 +276,81 @@ console.log(text.muted("This is less important information"));
 
 ## Best Practices
 
+For detailed component best practices, see [COMPONENT_BEST_PRACTICES.md](docs/COMPONENT_BEST_PRACTICES.md).
+
 ### Key Handling
 
-For the most reliable keyboard interaction, use the global keypress event:
+When handling keyboard interactions, use the appropriate method for each component type. For detailed documentation, refer to [KEY_HANDLING.md](docs/KEY_HANDLING.md).
+
+#### For Self-Handling Components (Input, List)
+
+These components handle their own keyboard events internally:
+
+```typescript
+// Input Component
+const input = render("input", {
+  value: myValue,
+  onChange: (value) => {
+    myValue = value;
+    // Update UI as needed
+  },
+  onSubmit: (value) => {
+    // Handle form submission
+  }
+});
+
+// List Component
+const list = render("list", {
+  items: ["Item 1", "Item 2", "Item 3"],
+  onSelect: (index, item) => {
+    // Handle selection
+  }
+});
+```
+
+#### For External-Handling Components (Checkbox, Select)
+
+These components require keyboard event handling at the application level:
+
+```typescript
+// Checkbox with toggle handling
+const checkbox = render("checkbox", {
+  checked: $bindable(false),
+  label: "Enable feature",
+  onChange: (checked) => {
+    console.log(`Checkbox toggled to: ${checked}`);
+  }
+});
+
+// Handle Enter/Space for checkbox toggle via screen key handler
+screen.key(['enter', 'space'], () => {
+  if (screen.focused === checkboxElement.element) {
+    checkboxElement.update({ checked: !checkboxElement.element.checked });
+    screen.render();
+  }
+});
+
+// Select with dropdown handling
+const select = render("select", {
+  options: ["Option 1", "Option 2", "Option 3"],
+  value: $bindable(""),
+  onChange: (value) => {
+    console.log(`Selected option: ${value}`);
+  }
+});
+
+// Handle dropdown open/close and navigation
+screen.key(['enter', 'space'], () => {
+  if (screen.focused === selectElement.element) {
+    selectElement.update({ open: !selectElement.element.open });
+    screen.render();
+  }
+});
+```
+
+#### General Screen Key Handling
+
+For global key handling:
 
 ```typescript
 screen.on('keypress', function(ch, key) {

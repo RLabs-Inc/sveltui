@@ -54,40 +54,31 @@ function setupCheckboxEvents(
   element: blessed.Widgets.BlessedElement,
   props: Record<string, any>
 ): void {
-  // Handle key events
-  element.on("keypress", (ch, key) => {
-    if (!key) return;
+  // Handle standard key events using blessed's built-in key handling
+  element.key(['space', 'enter', 'return'], (ch, key) => {
+    if (props.disabled) return;
     
-    const keyName = key.name || "";
-    
-    // Skip tab handling - let parent handle it
-    if (keyName === "tab") return;
-    
-    // Try to use the component's handler if provided
-    if (
-      props.handleKeyNavigation &&
-      typeof props.handleKeyNavigation === "function"
-    ) {
-      if (props.handleKeyNavigation(keyName)) {
+    // Use custom handler if provided
+    if (props.handleKeyNavigation && typeof props.handleKeyNavigation === 'function') {
+      if (props.handleKeyNavigation(key.name)) {
         updateCheckboxDisplay(element, props);
         element.screen.render();
-      }
-    } else {
-      // Default handling for space/enter/return
-      if (["enter", "return", "space"].includes(keyName)) {
-        toggleCheckbox(props);
-        
-        if (props.onChange) {
-          props.onChange(props.checked);
-        }
-        
-        updateCheckboxDisplay(element, props);
-        element.screen.render();
+        return;
       }
     }
+    
+    // Default handling for toggling the checkbox
+    toggleCheckbox(props);
+    
+    if (props.onChange) {
+      props.onChange(props.checked);
+    }
+    
+    updateCheckboxDisplay(element, props);
+    element.screen.render();
   });
   
-  // Handle mouse events
+  // Handle mouse events (click to toggle)
   element.on("click", () => {
     if (props.disabled) return;
     

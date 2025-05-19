@@ -1,66 +1,47 @@
-import { 
-  initializeScreen,
-  render, 
-  setTheme, 
-  getTheme,
-  TerminalTheme
-} from "../src/core/renderer.svelte.ts";
+// checkbox-demo.svelte.ts
+//
+// This example demonstrates proper keyboard handling for Checkbox components
+// as documented in docs/KEY_HANDLING.md
 
-// Create reactive state with Svelte 5 runes
-let todos = $state({
-  readDocs: false,
-  writeCode: false,
-  testCode: false,
-  fixBugs: true,
-  deployCode: false
-});
+import * as blessed from 'blessed';
+import { initializeScreen, render, setTheme, DarkTheme } from '../src';
 
-let settings = $state({
-  notifications: true,
-  darkMode: true,
-  autoSave: true,
-  analytics: false,
-  highContrast: false
-});
+// Set the theme
+setTheme(DarkTheme);
 
-// Track if all todos are completed (will use indeterminate state)
-let allTodosCompleted = $derived(() => {
-  const todoValues = Object.values(todos);
-  const completed = todoValues.filter(Boolean).length;
-  return completed === todoValues.length ? true :
-         completed === 0 ? false : null; // null will show indeterminate
-});
+// Checkbox state
+let option1 = $state(false);
+let option2 = $state(true);
+let option3 = $state(false);
+let statusText = $state("Use [Tab] to navigate, [Space/Enter] to toggle checkboxes");
 
 // Initialize the screen
 const screen = initializeScreen({
-  title: "SveltUI Checkbox Component Demo",
+  title: "SveltUI Checkbox Demo",
+  smartCSR: true,
+  fullUnicode: true,
+  dockBorders: true
 });
 
-// Apply terminal theme
-setTheme(TerminalTheme);
-
-// Create a main container box
+// Create main container
 const main = render("box", {
+  parent: screen,
   width: "100%",
   height: "100%",
-  border: true,
-  style: {
-    border: {
-      fg: getTheme().colors.primary
-    }
+  tags: true,
+  border: {
+    type: "line",
+    fg: "blue"
   }
 });
 
-// Create a header
-const header = render("text", {
+// Header
+render("text", {
   parent: main.element,
   top: 1,
   left: "center",
-  content: "SveltUI Checkbox Component Demo",
-  style: { 
-    bold: true,
-    fg: getTheme().colors.primary
-  }
+  content: "{bold}Checkbox Demo - Keyboard Handling{/bold}",
+  tags: true
 });
 
 // Instructions
@@ -68,178 +49,157 @@ render("text", {
   parent: main.element,
   top: 3,
   left: "center",
-  content: "Navigate with Tab/Shift+Tab | Toggle with Space or Enter",
-  style: { 
-    fg: getTheme().colors.secondary
-  }
+  content: "This demo shows proper keyboard handling for checkbox components.",
+  tags: true
 });
 
-// First section - Todo List
-render("text", {
+// Form container
+const form = render("box", {
   parent: main.element,
   top: 5,
   left: "center",
-  content: "— Todo List —",
-  style: { 
-    bold: true,
-    fg: getTheme().colors.primary
+  width: "80%",
+  height: 12,
+  tags: true,
+  border: {
+    type: "line"
+  },
+  label: " Settings "
+});
+
+// Checkbox 1
+const checkbox1 = render("checkbox", {
+  parent: form.element,
+  top: 1,
+  left: 2,
+  width: "95%",
+  height: 1,
+  content: "",
+  checked: option1,
+  label: " Enable notifications "
+});
+
+// Checkbox 2
+const checkbox2 = render("checkbox", {
+  parent: form.element,
+  top: 3,
+  left: 2,
+  width: "95%",
+  height: 1,
+  content: "",
+  checked: option2,
+  label: " Auto-update on startup "
+});
+
+// Checkbox 3
+const checkbox3 = render("checkbox", {
+  parent: form.element,
+  top: 5,
+  left: 2,
+  width: "95%",
+  height: 1,
+  content: "",
+  checked: option3,
+  label: " Send anonymous usage data "
+});
+
+// Submit button
+const submitButton = render("box", {
+  parent: form.element,
+  bottom: 1,
+  right: 2,
+  width: 12,
+  height: 1,
+  content: "Save",
+  tags: true,
+  align: "center",
+  valign: "middle",
+  style: {
+    bg: "blue",
+    fg: "white",
+    focus: {
+      bg: "cyan",
+      fg: "black"
+    },
+    hover: {
+      bg: "cyan",
+      fg: "black"
+    }
   }
 });
 
-// "Select All" checkbox with indeterminate state
-const allTodos = render("checkbox", {
+// Status bar
+const statusBar = render("box", {
   parent: main.element,
-  top: 7,
-  left: "center",
-  checked: allTodosCompleted === true,
-  indeterminate: allTodosCompleted === null,
-  label: "All Todo Items",
+  bottom: 0,
+  left: 0,
+  width: "100%",
+  height: 1,
+  tags: true,
   style: {
-    bold: true,
-    fg: getTheme().colors.primary
-  },
-  onChange: (checked) => {
-    // Mark all todos with the same state
-    for (const key in todos) {
-      todos[key] = checked;
-    }
+    bg: "blue",
+    fg: "white"
+  }
+});
+
+const statusElement = render("text", {
+  parent: statusBar.element,
+  left: 1,
+  content: statusText,
+  tags: true
+});
+
+// === KEY HANDLING FOR EXTERNAL-HANDLING COMPONENTS ===
+
+// Handle checkbox toggling with Enter or Space
+screen.key(['enter', 'space'], () => {
+  // Check which element is focused
+  if (screen.focused === checkbox1.element) {
+    // Toggle checkbox state
+    option1 = !option1;
+    checkbox1.update({ checked: option1 });
+    statusText = `Notifications ${option1 ? "enabled" : "disabled"}`;
+    statusElement.update({ content: statusText });
+    screen.render();
+  } 
+  else if (screen.focused === checkbox2.element) {
+    option2 = !option2;
+    checkbox2.update({ checked: option2 });
+    statusText = `Auto-update ${option2 ? "enabled" : "disabled"}`;
+    statusElement.update({ content: statusText });
+    screen.render();
+  }
+  else if (screen.focused === checkbox3.element) {
+    option3 = !option3;
+    checkbox3.update({ checked: option3 });
+    statusText = `Usage data sharing ${option3 ? "enabled" : "disabled"}`;
+    statusElement.update({ content: statusText });
+    screen.render();
+  }
+  else if (screen.focused === submitButton.element) {
+    // Handle "Submit" button click
+    statusText = "Settings saved!";
+    statusElement.update({ content: statusText });
     screen.render();
   }
 });
 
-// Individual todo checkboxes
-const todoElements = [];
-let row = 9;
-
-for (const [key, value] of Object.entries(todos)) {
-  const formatted = key
-    .replace(/([A-Z])/g, ' $1') // Add space before capitals
-    .replace(/^./, (str) => str.toUpperCase()); // Capitalize first letter
-    
-  const checkbox = render("checkbox", {
-    parent: main.element,
-    top: row,
-    left: "center",
-    checked: value,
-    label: formatted,
-    onChange: (checked) => {
-      todos[key] = checked;
-      screen.render();
-    }
-  });
-  
-  todoElements.push(checkbox.element);
-  row += 2;
-}
-
-// Second section - Settings
-render("text", {
-  parent: main.element,
-  top: row + 1,
-  left: "center",
-  content: "— Settings —",
-  style: { 
-    bold: true,
-    fg: getTheme().colors.primary
-  }
+// Global exit handler
+screen.key(['q', 'C-c'], () => {
+  return process.exit(0);
 });
 
-// Settings checkboxes
-const settingsElements = [];
-row += 3;
-
-for (const [key, value] of Object.entries(settings)) {
-  const formatted = key
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, (str) => str.toUpperCase());
-    
-  const checkbox = render("checkbox", {
-    parent: main.element,
-    top: row,
-    left: "center",
-    checked: value,
-    label: formatted,
-    onChange: (checked) => {
-      settings[key] = checked;
-      
-      // Special case for dark mode
-      if (key === 'darkMode') {
-        // Would toggle theme if we had a light theme setup
-      }
-      
-      screen.render();
-    }
-  });
-  
-  settingsElements.push(checkbox.element);
-  row += 2;
-}
-
-// Add a disabled checkbox example
-render("checkbox", {
-  parent: main.element,
-  top: row,
-  left: "center",
-  checked: true,
-  disabled: true,
-  label: "Premium Feature (Disabled)",
-});
-
-// Exit instructions
+// Helper text at the bottom
 render("text", {
   parent: main.element,
   bottom: 2,
   left: "center",
-  content: "Press q to exit",
-  style: { 
-    fg: getTheme().colors.secondary 
-  }
-});
-
-// Set up key bindings
-screen.key(['q', 'C-c'], () => process.exit(0));
-
-// Set up tab navigation as global screen handlers
-let focusIndex = $state(0);
-const focusElements = [
-  allTodos.element,
-  ...todoElements,
-  ...settingsElements
-];
-
-// Function to update focus based on current index
-function updateFocus() {
-  // Make sure index is in bounds
-  if (focusIndex < 0) focusIndex = focusElements.length - 1;
-  if (focusIndex >= focusElements.length) focusIndex = 0;
-  
-  // Focus the current element
-  focusElements[focusIndex].focus();
-  screen.render();
-}
-
-// Handle tab key for forward navigation
-screen.key(['tab'], () => {
-  focusIndex++;
-  updateFocus();
-  return false; // Allow event to continue
-});
-
-// Handle shift+tab for backward navigation
-screen.key(['S-tab'], () => {
-  focusIndex--;
-  updateFocus();
-  return false; // Allow event to continue
-});
-
-// Handle specific keys globally 
-screen.key(['space', 'enter', 'return'], (ch, key) => {
-  // Let the focused element handle these keys
-  return false;
+  content: "Press [q] to quit",
+  tags: true
 });
 
 // Set initial focus
-focusElements[0].focus();
+checkbox1.element.focus();
 
-// Render the screen
+// Initial render
 screen.render();

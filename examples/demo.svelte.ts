@@ -55,16 +55,18 @@ const listElement = render("list", {
   keys: true,
   // Minimal configuration to let blessed handle interactions
   style: {
-    selected: {       // Style for selected item
-      bg: 'blue',
-      fg: 'white',
+    selected: {
+      // Style for selected item
+      bg: "blue",
+      fg: "white",
     },
     item: {
-      hover: {        // Style for hover
-        bg: 'gray',
-      }
-    }
-  }
+      hover: {
+        // Style for hover
+        bg: "gray",
+      },
+    },
+  },
   // Moved onSelect handler to the element's 'select' event
 });
 
@@ -85,7 +87,7 @@ const inputElement = render("input", {
     message = `You entered: ${inputValue}`;
     statusElement.update({ content: message });
     // Clear the input
-    inputElement.update({ value: "" }); 
+    inputElement.update({ value: "" });
     // Return focus to list after submission
     listElement.element.focus();
     screen.render();
@@ -111,49 +113,49 @@ const helpText = render("text", {
   left: "center",
   content: "Press [Tab] to focus input, [Esc] to exit input mode",
   style: {
-    fg: "gray"
-  }
+    fg: "gray",
+  },
 });
 
 // Simple key handlers without using component-specific key handlers
 // Use global keys for everything to avoid conflicts
 
 // Exit key handler
-screen.key(['q', 'C-c'], function() {
+screen.key(["q", "C-c"], function () {
   process.exit(0);
 });
 
 // Add a global keypress handler just for the counter
-screen.on('keypress', function(ch, key) {
+screen.on("keypress", function (ch, key) {
   // Skip when input is focused
   if (inputElement.element === screen.focused) return;
-  
+
   // Handle + key for incrementing counter
-  if (ch === '+') {
+  if (ch === "+") {
     count++;
     // Update derived values
     headerElement.update({ content: `SveltUI Demo - Count: ${count}` });
-    main.update({ style: { border: { fg: count > 5 ? "red" : "blue" }}});
+    main.update({ style: { border: { fg: count > 5 ? "red" : "blue" } } });
     screen.render();
   }
   // Handle - key for decrementing counter
-  else if (ch === '-') {
+  else if (ch === "-") {
     count--;
-    // Update derived values 
+    // Update derived values
     headerElement.update({ content: `SveltUI Demo - Count: ${count}` });
-    main.update({ style: { border: { fg: count > 5 ? "red" : "blue" }}});
+    main.update({ style: { border: { fg: count > 5 ? "red" : "blue" } } });
     screen.render();
   }
 });
 
 // Tab key to focus input
-screen.key('tab', function() {
+screen.key("tab", function () {
   inputElement.element.focus();
   screen.render();
 });
 
 // Escape key to leave input focus
-screen.key('escape', function() {
+screen.key("escape", function () {
   if (inputElement.element === screen.focused) {
     listElement.element.focus();
     screen.render();
@@ -164,7 +166,7 @@ screen.key('escape', function() {
 // This avoids duplicating the built-in arrow key functionality
 
 // Update selectedIndex when list selection changes
-listElement.element.on('select', function(item, index) {
+listElement.element.on("select", function (item, index) {
   selectedIndex = index;
   message = `Selected: ${items[index]}`;
   statusElement.update({ content: message });
@@ -178,7 +180,7 @@ listElement.element.focus();
 screen.render();
 
 // Handle process exit gracefully
-process.on('SIGINT', () => {
+process.on("SIGINT", () => {
   screen.destroy();
   process.exit(0);
 });

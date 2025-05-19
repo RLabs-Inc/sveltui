@@ -15,6 +15,13 @@ import {
 } from "./theme-manager";
 import type { Theme, Color } from "./types";
 import { TerminalTheme, DarkTheme, LightTheme } from "./theme";
+import {
+  setupTabNavigation,
+  setupExitKeys,
+  setupInputHandling,
+  focusFirst,
+  safeToString
+} from "./key-utils";
 
 // Export theme-related functions and types
 export { 
@@ -30,6 +37,15 @@ export {
   LightTheme,
   type Theme,
   type Color
+};
+
+// Export key utility functions
+export {
+  setupTabNavigation,
+  setupExitKeys,
+  setupInputHandling,
+  focusFirst,
+  safeToString
 };
 
 // Active screen
@@ -89,6 +105,7 @@ export function render(
       screen?.render();
     },
     unmount: () => {
+      // Destroy the element
       element.destroy();
       screen?.render();
     },
