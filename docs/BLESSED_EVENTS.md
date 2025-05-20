@@ -1,6 +1,6 @@
 # Blessed Events and Key Handling
 
-This document explains how keyboard and mouse events work in the blessed library, which is the foundation for SveltUI.
+This document explains how keyboard and mouse events work in the blessed library, which is the foundation for SvelTUI.
 
 ## Key Events in Blessed
 
@@ -137,7 +137,7 @@ box.on("element click", function (el, mouse) {
 });
 ```
 
-## Best Practices for SveltUI Components
+## Best Practices for SvelTUI Components
 
 ### Self-Handling Components
 

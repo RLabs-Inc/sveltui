@@ -11,10 +11,7 @@
     "dev": "vite",
     "preview": "vite preview",
     "example": "vite-node examples/demo.svelte.ts",
-    "theme-showcase": "vite-node examples/theme-showcase.svelte.ts",
-    "theme-simple": "vite-node examples/theme-simple-demo.svelte.ts",
-    "components-demo": "vite-node examples/components-demo.svelte.ts",
-    "checkbox-demo": "vite-node examples/checkbox-demo.svelte.ts"
+    "theme-showcase": "vite-node examples/theme-showcase.svelte.ts"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.0.3",

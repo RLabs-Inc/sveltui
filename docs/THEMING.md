@@ -1,10 +1,10 @@
-# SveltUI Theming System
+# SvelTUI Theming System
 
-This document provides detailed information about SveltUI's theming system.
+This document provides detailed information about SvelTUI's theming system.
 
 ## Overview
 
-SveltUI includes a flexible theming system that allows you to customize the appearance of your terminal UI applications. The theming system is designed to be:
+SvelTUI includes a flexible theming system that allows you to customize the appearance of your terminal UI applications. The theming system is designed to be:
 
 - **Simple**: Easy to understand and use
 - **Flexible**: Supports both built-in and custom themes
@@ -13,7 +13,7 @@ SveltUI includes a flexible theming system that allows you to customize the appe
 
 ## Theme Structure
 
-A theme in SveltUI consists of several sections:
+A theme in SvelTUI consists of several sections:
 
 ```typescript
 interface Theme {
@@ -22,7 +22,7 @@ interface Theme {
   description: string;
   author: string;
   version: string;
-  
+
   // Base colors
   colors: {
     primary: Color;
@@ -34,13 +34,13 @@ interface Theme {
     error: Color;
     info: Color;
   };
-  
+
   // Derived colors (calculated or explicitly set)
   derived?: {
     surfaceColor?: Color;
     mutedText?: Color;
   };
-  
+
   // Component-specific styling
   components?: {
     box?: {...},
@@ -53,7 +53,7 @@ interface Theme {
 
 ## Color Types
 
-Colors in SveltUI can be specified in several formats:
+Colors in SvelTUI can be specified in several formats:
 
 - **Named terminal colors**: `"red"`, `"blue"`, `"green"`, etc.
 - **Bright terminal colors**: `"brightred"`, `"brightblue"`, etc.
@@ -62,7 +62,7 @@ Colors in SveltUI can be specified in several formats:
 
 ## Built-in Themes
 
-SveltUI comes with three built-in themes:
+SvelTUI comes with three built-in themes:
 
 ### Terminal Theme
 
@@ -75,13 +75,13 @@ const TerminalTheme = {
   colors: {
     primary: "blue",
     secondary: "cyan",
-    background: null,     // Use terminal default
-    foreground: null,     // Use terminal default
+    background: null, // Use terminal default
+    foreground: null, // Use terminal default
     success: "green",
     warning: "yellow",
     error: "red",
     info: "blue",
-  }
+  },
 };
 ```
 
@@ -98,7 +98,7 @@ const DarkTheme = {
     background: "#121212",
     foreground: "#ffffff",
     // ...
-  }
+  },
 };
 ```
 
@@ -115,7 +115,7 @@ const LightTheme = {
     background: "#f5f5f5",
     foreground: "#333333",
     // ...
-  }
+  },
 };
 ```
 
@@ -144,7 +144,7 @@ const currentTheme = getTheme();
 
 ### Available Theme Functions
 
-SveltUI provides several functions for working with themes:
+SvelTUI provides several functions for working with themes:
 
 - `getTheme()`: Get the current theme
 - `setTheme(theme)`: Set the active theme
@@ -166,7 +166,7 @@ import { createTheme, setTheme } from "sveltui";
 const purpleTheme = createTheme("Purple", {
   primary: "#9966ff",
   background: "#1a1a2e",
-  foreground: "#e6e6ff"
+  foreground: "#e6e6ff",
 });
 
 // Use the theme
@@ -202,10 +202,10 @@ const customTheme: Theme = {
       border: {
         color: "#ff5500",
         focusColor: "#00aaff",
-      }
+      },
     },
     // Other component styling...
-  }
+  },
 };
 
 setTheme(customTheme);
@@ -237,7 +237,7 @@ colors:
   secondary: "#00ccbb"
   background: "#05233b"
   foreground: "#e1f2ff"
-  
+
   success: "#00cc77"
   warning: "#ffbb00"
   error: "#ff5555"
@@ -259,7 +259,7 @@ components:
 
 ## Component Theming
 
-Each component type in SveltUI can have specific styling defined in the theme:
+Each component type in SvelTUI can have specific styling defined in the theme:
 
 ### Box Component
 
@@ -301,7 +301,7 @@ components: {
       selected: {
         background: Color;
         foreground: Color;
-      };
+      }
       hover: {
         background: Color;
       }
@@ -328,14 +328,14 @@ components: {
 
 ## Default Color Derivation
 
-When certain colors aren't explicitly set in a theme, SveltUI will derive them from base colors:
+When certain colors aren't explicitly set in a theme, SvelTUI will derive them from base colors:
 
 - **surfaceColor**: Slightly lighter than `background` (for panels)
 - **mutedText**: `foreground` with reduced opacity
 
 ## CLI Text Styling
 
-SveltUI also provides utilities for styling CLI text output based on the current theme:
+SvelTUI also provides utilities for styling CLI text output based on the current theme:
 
 ```typescript
 import { text } from "sveltui";
@@ -356,12 +356,12 @@ console.log(text.bold("Bold text"));
 Here's a complete example of setting up a themed application:
 
 ```typescript
-import { 
-  initializeScreen, 
-  render, 
-  setTheme, 
+import {
+  initializeScreen,
+  render,
+  setTheme,
   loadTheme,
-  DarkTheme 
+  DarkTheme,
 } from "sveltui";
 
 // Try to load a custom theme, fall back to dark theme

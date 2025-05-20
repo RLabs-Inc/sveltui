@@ -1,4 +1,4 @@
-import type { Color } from "./types";
+import type { Color } from "../types";
 
 // Simple color utilities for theme variation
 
@@ -189,4 +189,18 @@ function hslToHex(h: number, s: number, l: number): string {
   };
 
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+/**
+ * Check if a given color is dark or light according to its luminace
+ */
+export function isDarkColor(color: Color): boolean {
+  if (color === null) return false;
+
+  if (color.startsWith("#")) {
+    const [h, s, l] = hexToHsl(color);
+    return l < 0.5;
+  }
+
+  return false;
 }

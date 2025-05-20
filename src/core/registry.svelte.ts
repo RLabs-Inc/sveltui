@@ -1,6 +1,6 @@
 /**
- * Component Registry for SveltUI
- * 
+ * Component Registry for SvelTUI
+ *
  * This file manages the registration and retrieval of component definitions.
  * Each component is registered with create/update methods and default props.
  */
@@ -8,12 +8,31 @@
 import * as blessed from "blessed";
 
 // Import component adapters
-import { createBox, updateBox, boxDefaultProps } from "./adapters/display/box-adapter.svelte";
-import { createText, updateText, textDefaultProps } from "./adapters/display/text-adapter.svelte";
-import { createInput, updateInput, inputDefaultProps } from "./adapters/input/input-adapter.svelte";
-import { createList, updateList, listDefaultProps } from "./adapters/container/list-adapter.svelte";
-import { createSelect, updateSelect, selectDefaultProps } from "./adapters/input/select-adapter.svelte";
-import { createCheckbox, updateCheckbox, checkboxDefaultProps } from "./adapters/input/checkbox-adapter.svelte";
+import {
+  createBox,
+  updateBox,
+  boxDefaultProps,
+} from "../components/ui/adapters/display/box-adapter.svelte";
+import {
+  createText,
+  updateText,
+  textDefaultProps,
+} from "../components/ui/adapters/display/text-adapter.svelte";
+import {
+  createInput,
+  updateInput,
+  inputDefaultProps,
+} from "../components/ui/adapters/input/input-adapter.svelte";
+import {
+  createList,
+  updateList,
+  listDefaultProps,
+} from "../components/ui/adapters/container/list-adapter.svelte";
+import {
+  createCheckbox,
+  updateCheckbox,
+  checkboxDefaultProps,
+} from "../components/ui/adapters/input/checkbox-adapter.svelte";
 
 // Component definition type
 export interface ComponentDefinition {
@@ -59,41 +78,34 @@ export function initializeRegistry(): void {
   registerComponent("box", {
     create: createBox,
     update: updateBox,
-    defaultProps: boxDefaultProps
+    defaultProps: boxDefaultProps,
   });
 
   // Register Text component
   registerComponent("text", {
     create: createText,
     update: updateText,
-    defaultProps: textDefaultProps
+    defaultProps: textDefaultProps,
   });
 
   // Register Input component
   registerComponent("input", {
     create: createInput,
     update: updateInput,
-    defaultProps: inputDefaultProps
+    defaultProps: inputDefaultProps,
   });
 
   // Register List component
   registerComponent("list", {
     create: createList,
     update: updateList,
-    defaultProps: listDefaultProps
-  });
-
-  // Register Select component
-  registerComponent("select", {
-    create: createSelect,
-    update: updateSelect,
-    defaultProps: selectDefaultProps
+    defaultProps: listDefaultProps,
   });
 
   // Register Checkbox component
   registerComponent("checkbox", {
     create: createCheckbox,
     update: updateCheckbox,
-    defaultProps: checkboxDefaultProps
+    defaultProps: checkboxDefaultProps,
   });
 }

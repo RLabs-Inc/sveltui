@@ -6,26 +6,25 @@ initializeRegistry();
 export * from "./src/core/renderer.svelte";
 export * from "./src/core/reconciler.svelte";
 export * from "./src/core/registry.svelte";
-export * from "./src/core/blessed-utils.svelte";
 
 // Export type definitions
-export * from "./src/core/types";
+export * from "./src/types";
 
 // Export theme-related modules
-export * from "./src/core/theme";
-export * from "./src/core/theme-manager";
-export * from "./src/core/color-utils";
+export * from "./src/theme/theme.svelte";
+export * from "./src/theme/theme-manager.svelte";
 
-// Export text utilities for CLI apps
-export * from "./src/core/text-utils";
+// Export utilities for CLI apps
+export * from "./src/utils/color-utils.svelte";
+export * from "./src/utils/blessed-utils.svelte";
+export * from "./src/utils/component-utils.svelte";
 
 // Export components
-export { default as Box } from "./src/components/Box.svelte";
-export { default as Text } from "./src/components/Text.svelte";
-export { default as Input } from "./src/components/Input.svelte";
-export { default as List } from "./src/components/List.svelte";
-export { default as Select } from "./src/components/Select.svelte";
-export { default as Checkbox } from "./src/components/Checkbox.svelte";
+export { default as Box } from "./src/components/ui/Box.svelte";
+export { default as Text } from "./src/components/ui/Text.svelte";
+export { default as Input } from "./src/components/ui/Input.svelte";
+export { default as List } from "./src/components/ui/List.svelte";
+export { default as Checkbox } from "./src/components/ui/Checkbox.svelte";
 
 // Version export
 export const VERSION = "0.0.1";

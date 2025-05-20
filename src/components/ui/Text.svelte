@@ -5,7 +5,6 @@
    * This component displays text content with styling options.
    */
   
-  import type { ComponentProps } from '../core/types';
   
   let {
     // Content

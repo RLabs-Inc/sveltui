@@ -1,6 +1,6 @@
-# SveltUI Component Best Practices
+# SvelTUI Component Best Practices
 
-This document outlines best practices for working with SveltUI components, with a focus on keyboard navigation and interaction patterns.
+This document outlines best practices for working with SvelTUI components, with a focus on keyboard navigation and interaction patterns.
 
 ## Keyboard Navigation
 
@@ -14,27 +14,27 @@ let focusIndex = $state(0);
 const focusElements = [
   component1.element,
   component2.element,
-  component3.element
+  component3.element,
 ];
 
 function updateFocus() {
   // Make sure index is in bounds
   if (focusIndex < 0) focusIndex = focusElements.length - 1;
   if (focusIndex >= focusElements.length) focusIndex = 0;
-  
+
   // Focus the current element
   focusElements[focusIndex].focus();
   screen.render();
 }
 
 // Handle tab key for forward navigation
-screen.key(['tab'], () => {
+screen.key(["tab"], () => {
   focusIndex++;
   updateFocus();
 });
 
 // Handle shift+tab for backward navigation
-screen.key(['S-tab'], () => {
+screen.key(["S-tab"], () => {
   focusIndex--;
   updateFocus();
 });
@@ -45,6 +45,7 @@ screen.key(['S-tab'], () => {
 For component-specific key actions (like toggling a checkbox or navigating a dropdown), let the component handle these internally. Each component has built-in key handling through its adapter.
 
 Components provide these key handling functions:
+
 - `handleKeyNavigation`: For handling specific keys like Enter, Space, Arrow keys
 - `handleFocus` and `handleBlur`: For focus and blur events
 
@@ -53,14 +54,14 @@ Components provide these key handling functions:
 const checkbox = render("checkbox", {
   checked: $bindable(false),
   onChange: (checked) => {
-    console.log(`Checkbox is now ${checked ? 'checked' : 'unchecked'}`);
+    console.log(`Checkbox is now ${checked ? "checked" : "unchecked"}`);
   },
   handleFocus: () => {
-    console.log('Checkbox is focused');
+    console.log("Checkbox is focused");
   },
   handleBlur: () => {
-    console.log('Checkbox lost focus');
-  }
+    console.log("Checkbox lost focus");
+  },
 });
 ```
 
@@ -78,15 +79,16 @@ const checkbox = render("checkbox", {
   label: "Select All",
   onChange: (checked) => {
     // Indeterminate gets cleared when toggled
-    checkbox.update({ 
+    checkbox.update({
       checked: checked,
-      indeterminate: false
+      indeterminate: false,
     });
-  }
+  },
 });
 ```
 
 Key events handled by checkboxes:
+
 - `Space`, `Enter`, `Return`: Toggle the checkbox state
 
 ### Select Dropdowns
@@ -107,11 +109,12 @@ const select = render("select", {
   },
   onClose: () => {
     console.log("Dropdown closed");
-  }
+  },
 });
 ```
 
 Key events handled by selects:
+
 - `Space`, `Enter`, `Return`: Open/close the dropdown
 - `Up`, `Down`: Navigate through options when dropdown is open
 - `Escape`: Close the dropdown
@@ -129,8 +132,8 @@ myComponent.element.focus();
 screen.render();
 
 // 2. Use element focus event to track focus changes
-screen.on('element focus', (element) => {
-  console.log('Focus changed to:', element.type);
+screen.on("element focus", (element) => {
+  console.log("Focus changed to:", element.type);
 });
 
 // 3. Update focused state in components
@@ -139,8 +142,8 @@ const button = render("box", {
     button.update({
       style: {
         bg: "blue",
-        fg: "white"
-      }
+        fg: "white",
+      },
     });
     screen.render();
   },
@@ -148,11 +151,11 @@ const button = render("box", {
     button.update({
       style: {
         bg: "",
-        fg: ""
-      }
+        fg: "",
+      },
     });
     screen.render();
-  }
+  },
 });
 ```
 
@@ -170,12 +173,12 @@ Example debug helper:
 ```typescript
 // Debug focus display
 const debugText = render("text", {
-  content: "No element focused"
+  content: "No element focused",
 });
 
-screen.on('element focus', (element) => {
+screen.on("element focus", (element) => {
   debugText.update({
-    content: `Focused: ${element.type}`
+    content: `Focused: ${element.type}`,
   });
   screen.render();
 });
@@ -183,7 +186,7 @@ screen.on('element focus', (element) => {
 
 ## Demo Examples
 
-SveltUI provides focused demo files for each component type:
+SvelTUI provides focused demo files for each component type:
 
 - `bun run checkbox-demo`: Demonstrates the Checkbox component
 - `bun run select-demo`: Demonstrates the Select component

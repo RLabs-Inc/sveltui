@@ -1,6 +1,11 @@
-import type { Theme, Color } from "./types";
-import { TerminalTheme, DarkTheme, LightTheme } from "./theme";
-import { lighten, withAlpha } from "./color-utils";
+import type { Theme, Color } from "../types";
+import { TerminalTheme, DarkTheme, LightTheme } from "./theme.svelte";
+import {
+  darken,
+  isDarkColor,
+  lighten,
+  withAlpha,
+} from "../utils/color-utils.svelte";
 import * as yaml from "js-yaml";
 
 // Conditionally load Node.js modules
@@ -10,22 +15,23 @@ let BUILT_IN_THEMES_DIR: string = "";
 let CUSTOM_THEMES_DIR: string = "";
 
 // Check if we're running in Node.js environment
-const isNodeEnv = typeof process !== 'undefined' && 
-  process.versions != null && 
+const isNodeEnv =
+  typeof process !== "undefined" &&
+  process.versions != null &&
   process.versions.node != null;
 
 // Only import fs/path in Node environment
 if (isNodeEnv) {
   try {
     // Dynamic imports to avoid Vite warnings
-    fs = require('fs');
-    path = require('path');
-    
+    fs = require("fs");
+    path = require("path");
+
     // Set theme directories
     BUILT_IN_THEMES_DIR = path.resolve(process.cwd(), "themes/built-in");
     CUSTOM_THEMES_DIR = path.resolve(process.cwd(), "themes/custom");
   } catch (e) {
-    console.warn('Unable to import Node.js modules:', e);
+    console.warn("Unable to import Node.js modules:", e);
   }
 }
 
@@ -43,7 +49,9 @@ if (isNodeEnv && fs && path) {
     if (fs.existsSync(BUILT_IN_THEMES_DIR)) {
       const themeFiles = fs
         .readdirSync(BUILT_IN_THEMES_DIR)
-        .filter((file: string) => file.endsWith(".yaml") || file.endsWith(".yml"));
+        .filter(
+          (file: string) => file.endsWith(".yaml") || file.endsWith(".yml")
+        );
 
       themeFiles.forEach((file: string) => {
         try {
@@ -121,7 +129,9 @@ export function getThemeFiles(): { builtIn: string[]; custom: string[] } {
     if (fs.existsSync(BUILT_IN_THEMES_DIR)) {
       result.builtIn = fs
         .readdirSync(BUILT_IN_THEMES_DIR)
-        .filter((file: string) => file.endsWith(".yaml") || file.endsWith(".yml"))
+        .filter(
+          (file: string) => file.endsWith(".yaml") || file.endsWith(".yml")
+        )
         .map((file: string) => path.join(BUILT_IN_THEMES_DIR, file));
     }
   } catch (error) {
@@ -132,7 +142,9 @@ export function getThemeFiles(): { builtIn: string[]; custom: string[] } {
     if (fs.existsSync(CUSTOM_THEMES_DIR)) {
       result.custom = fs
         .readdirSync(CUSTOM_THEMES_DIR)
-        .filter((file: string) => file.endsWith(".yaml") || file.endsWith(".yml"))
+        .filter(
+          (file: string) => file.endsWith(".yaml") || file.endsWith(".yml")
+        )
         .map((file: string) => path.join(CUSTOM_THEMES_DIR, file));
     }
   } catch (error) {
@@ -151,7 +163,7 @@ export function loadTheme(filePath: string): Theme | null {
     console.warn("Theme loading requires Node.js environment");
     return null;
   }
-  
+
   try {
     const fileContent = fs.readFileSync(filePath, "utf8");
     const themeData = yaml.load(fileContent) as Theme;
@@ -167,39 +179,6 @@ export function loadTheme(filePath: string): Theme | null {
     console.error(`Error loading theme: ${error}`);
     return null;
   }
-}
-
-/**
- * Get derived colors for the theme
- */
-export function getDerivedColors(theme: Theme = activeTheme) {
-  // Safety check - if theme is undefined or doesn't have colors
-  if (!theme || !theme.colors) {
-    console.warn(
-      "getDerivedColors: Theme or theme.colors is undefined, using default values"
-    );
-    return {
-      surfaceColor: null,
-      mutedText: null,
-    };
-  }
-
-  const derived = {
-    // Surface color is slightly lighter/darker than background
-    surfaceColor:
-      theme.colors.background === null
-        ? null
-        : lighten(theme.colors.background, 0.05),
-
-    // Muted text is the same color with some transparency or slightly darker
-    mutedText:
-      theme.colors.foreground === null
-        ? null
-        : withAlpha(theme.colors.foreground, 0.7),
-  };
-
-  // Override with any explicitly defined values in the theme
-  return { ...derived, ...theme.derived };
 }
 
 /**
@@ -228,7 +207,7 @@ export function createTheme(
       warning: "yellow",
       error: "red",
       info: "blue",
-    }
+    },
   };
 }
 
@@ -248,7 +227,20 @@ export function applyThemeToProps(
     return { ...props };
   }
 
-  const derivedColors = getDerivedColors(theme);
+  const derived = $derived.by(() => {
+    if (isDarkColor(theme.colors.background)) {
+      return {
+        surfaceColor: darken(theme.colors.background, 0.1),
+        mutedText: lighten(theme.colors.foreground, 0.5),
+      };
+    } else {
+      return {
+        surfaceColor: lighten(theme.colors.background, 0.1),
+        mutedText: darken(theme.colors.foreground, 0.5),
+      };
+    }
+  });
+
   const result = { ...props };
 
   // Common theme application logic based on element type
@@ -260,8 +252,8 @@ export function applyThemeToProps(
       }
 
       // For panels, use surface color
-      if (props.type === "panel" && derivedColors.surfaceColor !== null) {
-        result.bg = derivedColors.surfaceColor;
+      if (props.type === "panel" && derived.surfaceColor !== null) {
+        result.bg = derived.surfaceColor;
       }
 
       // Apply foreground color if defined
@@ -278,8 +270,8 @@ export function applyThemeToProps(
       }
 
       // If text is marked as muted, use muted text color
-      if (props.muted && derivedColors.mutedText !== null) {
-        result.fg = derivedColors.mutedText;
+      if (props.muted) {
+        result.fg = derived.mutedText;
       }
 
       break;

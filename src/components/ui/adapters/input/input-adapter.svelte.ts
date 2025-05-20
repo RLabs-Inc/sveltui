@@ -1,24 +1,19 @@
 /**
  * Input Adapter for SveltUI
- * 
+ *
  * This adapter connects the Input Svelte component to blessed's implementation.
  * It handles the creation, event binding, and updating of input elements.
  */
 
-import * as blessed from 'blessed';
-import { 
-  createBaseElement, 
-  setupBaseEvents, 
-  updateBaseProps 
-} from '../base-adapter.svelte';
+import * as blessed from "blessed";
+import {
+  createBaseElement,
+  setupBaseEvents,
+  updateBaseProps,
+} from "../base-adapter.svelte";
 
 // Input-specific excluded props
-const INPUT_EXCLUDED_PROPS = [
-  'value', 
-  'placeholder',
-  'onChange',
-  'onSubmit'
-];
+const INPUT_EXCLUDED_PROPS = ["value", "placeholder", "onChange", "onSubmit"];
 
 /**
  * Create an input blessed element
@@ -33,20 +28,20 @@ export function createInput(
       ...props,
       inputOnFocus: true, // Automatically enter input mode when focused
     },
-    { type: 'textbox', parent, interactive: true }
+    { type: "textbox", parent, interactive: true }
   );
-  
+
   // Set up input-specific events
   setupInputEvents(input, props);
-  
+
   // Set up base events
   setupBaseEvents(input, props);
-  
+
   // Set the initial value if provided
   if (props.value) {
     (input as any).setValue(props.value);
   }
-  
+
   return input;
 }
 
@@ -59,22 +54,21 @@ function setupInputEvents(
 ): void {
   // Handle input changes
   if (props.onChange) {
-    element.on('input', (value) => {
+    element.on("input", (value) => {
       props.onChange(value);
     });
   }
-  
+
   // Handle form submission
   if (props.onSubmit) {
-    element.on('submit', (value) => {
+    element.on("submit", (value) => {
       props.onSubmit(value);
     });
   }
-  
+
   // Configure special keys
-  element.key(['escape'], (ch, key) => {
+  element.key(["escape"], (ch, key) => {
     // Blur on escape
-    element.screen.focused = null;
     element.screen.render();
   });
 }
@@ -87,15 +81,15 @@ export function updateInput(
   props: Record<string, any>
 ): void {
   // Update the value if provided
-  if ('value' in props && 'setValue' in element) {
+  if ("value" in props && "setValue" in element) {
     (element as any).setValue(props.value);
   }
-  
+
   // Update placeholder if provided
-  if ('placeholder' in props) {
+  if ("placeholder" in props) {
     (element as any).placeholder = props.placeholder;
   }
-  
+
   // Update other properties
   updateBaseProps(element, props, INPUT_EXCLUDED_PROPS);
 }
@@ -104,9 +98,9 @@ export function updateInput(
  * Default input props
  */
 export const inputDefaultProps = {
-  value: '',
-  placeholder: '',
-  width: '50%',
+  value: "",
+  placeholder: "",
+  width: "50%",
   height: 3,
-  border: true
+  border: true,
 };

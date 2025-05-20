@@ -1,5 +1,5 @@
 import * as blessed from "blessed";
-import { applyThemeToProps } from "./theme-manager";
+import { applyThemeToProps } from "../theme/theme-manager.svelte";
 
 // Create a blessed element based on type and props
 export function createBlessedElement(
@@ -11,7 +11,7 @@ export function createBlessedElement(
 
   // Apply theme to props before creating the element
   const themedProps = applyThemeToProps(elementType, props);
-  
+
   switch (elementType.toLowerCase()) {
     case "box":
       element = blessed.box({
@@ -36,7 +36,10 @@ export function createBlessedElement(
         keys: true,
         mouse: true,
         // Selection
-        selected: themedProps.selected !== undefined ? themedProps.selected : (themedProps.selectedIndex || 0),
+        selected:
+          themedProps.selected !== undefined
+            ? themedProps.selected
+            : themedProps.selectedIndex || 0,
         // Visual styling
         border: themedProps.border,
         width: themedProps.width,
@@ -47,7 +50,7 @@ export function createBlessedElement(
           selected: {
             bg: "blue",
             fg: "white",
-          }
+          },
         },
       });
 
@@ -59,7 +62,7 @@ export function createBlessedElement(
           themedProps.onSelect(item, index);
         });
       }
-      
+
       // Remove custom key handlers since they're causing double navigation
       break;
     case "input":
@@ -86,12 +89,12 @@ export function createBlessedElement(
           themedProps.onSubmit(value);
         });
       }
-      
+
       // Configure special keys
       element.key(["escape"], (ch, key) => {
         // Blur on escape
-        element.screen.focused = null;
-        if (key.name === 'escape') {
+        element.screen.focused = undefined;
+        if (key.name === "escape") {
           // Force blur
           element.screen.render();
         }
@@ -101,6 +104,66 @@ export function createBlessedElement(
         (element as any).setValue(themedProps.value);
       }
       break;
+
+    case "checkbox":
+      element = blessed.checkbox({
+        ...mapProps(themedProps),
+        parent,
+        content: themedProps.content || "",
+        keys: true,
+        mouse: true,
+        focusable: true,
+        inputOnFocus: true,
+        censor: false,
+        Secret: false,
+      });
+
+      element.key(["escape"], (ch, key) => {
+        // Blur on escape
+        element.screen.focused = undefined;
+        if (key.name === "escape") {
+          // Force blur
+          element.screen.render();
+        }
+      });
+
+      element.key(["enter", "space"], (ch, key) => {
+        // Blur on enter
+        element.screen.focused = element;
+        if (key.name === "enter" || key.name === "space") {
+          element.on("checked", (checked) => {
+            themedProps.setChecked(!checked);
+          });
+          // Render
+          element.screen.render();
+        }
+      });
+
+      if (themedProps.indeterminate) {
+        (element as any).setIndeterminate(themedProps.indeterminate);
+      }
+
+      if (themedProps.disabled) {
+        (element as any).setDisabled(themedProps.disabled);
+      }
+
+      if (themedProps.label) {
+        (element as any).setLabel(themedProps.label);
+      }
+
+      if (themedProps.onFocus) {
+        element.on("focus", () => {
+          themedProps.onFocus();
+        });
+      }
+
+      if (themedProps.onBlur) {
+        element.on("blur", () => {
+          themedProps.onBlur();
+        });
+      }
+      break;
+
     default:
       element = blessed.box({
         ...mapProps(themedProps),
@@ -162,8 +225,13 @@ export function updateBlessedElement(
       (element as any).setValue(value);
     } else if (key === "items" && "setItems" in element) {
       (element as any).setItems(value);
-    } else if ((key === "selectedIndex" || key === "selected") && "select" in element) {
+    } else if (
+      (key === "selectedIndex" || key === "selected") &&
+      "select" in element
+    ) {
       (element as any).select(value);
+    } else if (key === "checked" && "setChecked" in element) {
+      (element as any).setChecked(value);
     } else if (key !== "parent") {
       (element as any)[key] = value;
     }

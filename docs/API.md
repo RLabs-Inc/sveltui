@@ -1,6 +1,6 @@
-# SveltUI API Documentation
+# SvelTUI API Documentation
 
-This document provides detailed information about the SveltUI API, including core functions, components, and usage patterns.
+This document provides detailed information about the SvelTUI API, including core functions, components, and usage patterns.
 
 ## Table of Contents
 
@@ -28,16 +28,21 @@ This document provides detailed information about the SveltUI API, including cor
 Initializes a new blessed screen instance for rendering terminal UI elements.
 
 ```typescript
-function initializeScreen(options?: blessed.Widgets.IScreenOptions): blessed.Widgets.Screen
+function initializeScreen(
+  options?: blessed.Widgets.IScreenOptions
+): blessed.Widgets.Screen;
 ```
 
 **Parameters:**
+
 - `options` (optional): Configuration options for the blessed screen.
 
 **Returns:**
+
 - A blessed screen instance that serves as the root for all UI elements.
 
 **Example:**
+
 ```typescript
 const screen = initializeScreen({
   title: "My Terminal UI App",
@@ -47,6 +52,7 @@ const screen = initializeScreen({
 ```
 
 **Options:**
+
 - `title`: The terminal window title
 - `smartCSR`: Enable efficient redrawing (recommended: `true`)
 - `fullUnicode`: Support for unicode characters
@@ -61,21 +67,24 @@ function render(
   elementType: string,
   props: Record<string, any> = {},
   target: blessed.Widgets.Screen | blessed.Widgets.BlessedElement = screen!
-): RenderResult
+): RenderResult;
 ```
 
 **Parameters:**
+
 - `elementType`: The type of element to create (e.g., "box", "text", "list", "input")
 - `props`: Properties to apply to the element
 - `target`: The parent element (defaults to the screen)
 
 **Returns:**
 A `RenderResult` object with:
+
 - `element`: The blessed element instance
 - `update(newProps)`: Method to update the element with new properties
 - `unmount()`: Method to remove the element from the screen
 
 **Example:**
+
 ```typescript
 const box = render("box", {
   width: "50%",
@@ -103,13 +112,14 @@ box.unmount();
 
 ## Component API
 
-SveltUI provides several built-in components that wrap blessed elements.
+SvelTUI provides several built-in components that wrap blessed elements.
 
 ### Box
 
 A basic container element.
 
 **Properties:**
+
 - `width`: Width of the box (number, string, or percentage)
 - `height`: Height of the box (number, string, or percentage)
 - `top`: Top position (number, string, or percentage)
@@ -121,6 +131,7 @@ A basic container element.
   - `fg`: Foreground color
 
 **Example:**
+
 ```typescript
 const main = render("box", {
   width: "100%",
@@ -139,6 +150,7 @@ const main = render("box", {
 Displays text content.
 
 **Properties:**
+
 - `content`: The text content to display
 - `width`: Width of the text element
 - `height`: Height of the text element
@@ -152,12 +164,13 @@ Displays text content.
 - `tags`: Whether to process color tags in the content (boolean)
 
 **Example:**
+
 ```typescript
 const text = render("text", {
   parent: main.element,
   top: 1,
   left: "center",
-  content: "Hello SveltUI!",
+  content: "Hello SvelTUI!",
   style: {
     fg: "white",
     bold: true,
@@ -166,10 +179,11 @@ const text = render("text", {
 ```
 
 **Color Tags (when `tags: true`):**
+
 ```typescript
 render("text", {
   tags: true,
-  content: "{red-fg}Red Text{/red-fg} and {blue-bg}Blue Background{/blue-bg}"
+  content: "{red-fg}Red Text{/red-fg} and {blue-bg}Blue Background{/blue-bg}",
 });
 ```
 
@@ -178,6 +192,7 @@ render("text", {
 A text input field.
 
 **Properties:**
+
 - `value`: Current input value
 - `placeholder`: Placeholder text when empty
 - `width`: Width of the input
@@ -191,6 +206,7 @@ A text input field.
 - `onSubmit`: Handler for submit events (Enter key)
 
 **Example:**
+
 ```typescript
 const input = render("input", {
   parent: main.element,
@@ -215,6 +231,7 @@ const input = render("input", {
 A selectable list of items.
 
 **Properties:**
+
 - `items`: Array of items to display
 - `selected`: Index of selected item
 - `width`: Width of the list
@@ -230,6 +247,7 @@ A selectable list of items.
 - `onSelect`: Handler for item selection
 
 **Example:**
+
 ```typescript
 const list = render("list", {
   parent: main.element,
@@ -255,18 +273,19 @@ const list = render("list", {
 
 ### Key Handling
 
-SveltUI provides multiple ways to handle keyboard input.
+SvelTUI provides multiple ways to handle keyboard input.
 
 **Global Key Event:**
+
 ```typescript
 // Recommended: Use keypress for most reliable key handling
-screen.on('keypress', function(ch, key) {
+screen.on("keypress", function (ch, key) {
   // ch: Character (string or undefined)
   // key: Key information object with properties like name, ctrl, shift, etc.
-  
-  if (key.name === 'q' || (key.ctrl && key.name === 'c')) {
+
+  if (key.name === "q" || (key.ctrl && key.name === "c")) {
     process.exit(0);
-  } else if (ch === '+') {
+  } else if (ch === "+") {
     count++;
     updateUI();
   }
@@ -274,19 +293,21 @@ screen.on('keypress', function(ch, key) {
 ```
 
 **Specific Key Handlers:**
+
 ```typescript
 // Alternative: Specific key handlers
-screen.key('q', () => process.exit(0));
-screen.key('+', () => {
+screen.key("q", () => process.exit(0));
+screen.key("+", () => {
   count++;
   updateUI();
 });
 ```
 
 **Component-specific Keys:**
+
 ```typescript
 // Add key handlers to specific components
-listElement.element.key('enter', () => {
+listElement.element.key("enter", () => {
   // Handle enter on the list
 });
 ```
@@ -296,6 +317,7 @@ listElement.element.key('enter', () => {
 Managing focus is crucial for keyboard navigation.
 
 **Setting Focus:**
+
 ```typescript
 // Focus a specific element
 listElement.element.focus();
@@ -303,6 +325,7 @@ screen.render();
 ```
 
 **Checking Focus:**
+
 ```typescript
 if (screen.focused === inputElement.element) {
   // Input has focus
@@ -310,9 +333,10 @@ if (screen.focused === inputElement.element) {
 ```
 
 **Tab Navigation:**
+
 ```typescript
 // Handle tab key for focus cycling
-screen.key('tab', () => {
+screen.key("tab", () => {
   if (screen.focused === listElement.element) {
     inputElement.element.focus();
   } else {
@@ -327,6 +351,7 @@ screen.key('tab', () => {
 Components can respond to various events.
 
 **Click Events:**
+
 ```typescript
 const button = render("box", {
   content: "Click Me",
@@ -335,11 +360,12 @@ const button = render("box", {
   border: true,
   onClick: () => {
     console.log("Button clicked!");
-  }
+  },
 });
 ```
 
 **Input Events:**
+
 ```typescript
 render("input", {
   // onChange fires on every keystroke
@@ -349,17 +375,18 @@ render("input", {
   // onSubmit fires when Enter is pressed
   onSubmit: (value) => {
     console.log("Input submitted:", value);
-  }
+  },
 });
 ```
 
 **List Selection:**
+
 ```typescript
 render("list", {
   items: ["One", "Two", "Three"],
   onSelect: (item, index) => {
     console.log(`Selected ${item} at index ${index}`);
-  }
+  },
 });
 ```
 
@@ -367,79 +394,86 @@ render("list", {
 
 ### Styling
 
-SveltUI supports rich styling options for all components.
+SvelTUI supports rich styling options for all components.
 
 **Text Styling:**
+
 ```typescript
 render("text", {
   content: "Styled Text",
   style: {
-    fg: "white",     // Foreground color
-    bg: "blue",      // Background color
-    bold: true,      // Bold text
+    fg: "white", // Foreground color
+    bg: "blue", // Background color
+    bold: true, // Bold text
     underline: true, // Underlined text
-    blink: true,     // Blinking text
-    inverse: true,   // Inverse colors
-  }
+    blink: true, // Blinking text
+    inverse: true, // Inverse colors
+  },
 });
 ```
 
 **Border Styling:**
+
 ```typescript
 render("box", {
   border: true,
   style: {
     border: {
-      fg: "red",    // Border color
-      bg: "black",  // Border background
+      fg: "red", // Border color
+      bg: "black", // Border background
       type: "line", // Border type
-    }
-  }
+    },
+  },
 });
 ```
 
 **Available Colors:**
+
 - Basic: `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`
 - Bright: `brightblack`, `brightred`, `brightgreen`, `brightyellow`, `brightblue`, `brightmagenta`, `brightcyan`, `brightwhite`
 - Hex: `#ff0000`, `#00ff00`, `#0000ff`, etc.
 
 ### Layout Techniques
 
-SveltUI supports flexible layout options.
+SvelTUI supports flexible layout options.
 
 **Absolute Positioning:**
+
 ```typescript
 render("text", {
-  top: 10,   // 10 lines from top
-  left: 20,  // 20 columns from left
-  content: "Positioned text"
+  top: 10, // 10 lines from top
+  left: 20, // 20 columns from left
+  content: "Positioned text",
 });
 ```
 
 **Percentage-based Sizing:**
+
 ```typescript
 render("box", {
-  width: "50%",  // 50% of parent width
+  width: "50%", // 50% of parent width
   height: "30%", // 30% of parent height
-  content: "Percentage-based box"
+  content: "Percentage-based box",
 });
 ```
 
 **Centered Content:**
+
 ```typescript
 render("text", {
-  top: "center",  // Vertically centered
+  top: "center", // Vertically centered
   left: "center", // Horizontally centered
-  content: "Centered text"
+  content: "Centered text",
 });
 ```
 
 **Relative Positioning:**
+
 ```typescript
 render("text", {
-  top: "50%+1",  // 1 line below center
+  top: "50%+1", // 1 line below center
   left: "25%+5", // 5 columns right of 25% mark
-  content: "Relative positioned text"
+  content: "Relative positioned text",
 });
 ```
 
@@ -448,28 +482,33 @@ render("text", {
 Understanding the component lifecycle helps manage resources effectively.
 
 **Creation:**
+
 ```typescript
 // Create and render a component
-const element = render("box", { /* props */ });
+const element = render("box", {
+  /* props */
+});
 ```
 
 **Updates:**
+
 ```typescript
 // Update an existing component
-element.update({ 
+element.update({
   content: "New content",
-  style: { fg: "green" }
+  style: { fg: "green" },
 });
 screen.render(); // Ensure changes are rendered
 ```
 
 **Cleanup:**
+
 ```typescript
 // Remove a component
 element.unmount();
 
 // Clean exit when application ends
-process.on('SIGINT', () => {
+process.on("SIGINT", () => {
   screen.destroy();
   process.exit(0);
 });

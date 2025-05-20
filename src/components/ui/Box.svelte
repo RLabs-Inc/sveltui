@@ -6,8 +6,6 @@
    * or display text content.
    */
   
-  import type { ComponentProps } from '../core/types';
-  
   let {
     // Layout properties
     width = '100%',
@@ -28,7 +26,7 @@
     onClick = undefined as ((event: any) => void) | undefined,
     
     // Children
-    children = undefined as any[]
+    children = undefined
   } = $props();
 </script>
 

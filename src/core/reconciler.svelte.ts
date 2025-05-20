@@ -1,5 +1,5 @@
 import * as blessed from "blessed";
-import type { ComponentInstance } from "./types";
+import type { ComponentInstance } from "../types";
 
 // Component registry - using Svelte's runes for reactivity
 let components = $state(new Map<string, ComponentInstance>());
@@ -14,11 +14,11 @@ export function generateComponentId(): string {
 // Track a component instance
 export function trackComponent(
   element: blessed.Widgets.BlessedElement,
-  type: string, 
+  type: string,
   initialProps: Record<string, any>
 ): ComponentInstance {
   const id = generateComponentId();
-  
+
   // Create separate reactive variables for props
   let props = $state(initialProps);
   let children = $state([] as ComponentInstance[]);
@@ -28,10 +28,18 @@ export function trackComponent(
     id,
     type,
     element,
-    get props() { return props; },
-    set props(newProps) { props = newProps; },
-    get children() { return children; },
-    set children(newChildren) { children = newChildren; }
+    get props() {
+      return props;
+    },
+    set props(newProps) {
+      props = newProps;
+    },
+    get children() {
+      return children;
+    },
+    set children(newChildren) {
+      children = newChildren;
+    },
   };
 
   // Store the component in the registry
@@ -64,7 +72,7 @@ export function setupComponentUpdates(
 ): void {
   // Simply run the initial update
   updateFn(instance.element, instance.props);
-  
+
   // We'll handle updates directly when props change
   // This is more direct than using reactive effects
 }

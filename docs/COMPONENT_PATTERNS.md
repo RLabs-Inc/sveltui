@@ -1,10 +1,10 @@
-# SveltUI Component Implementation Patterns
+# SvelTUI Component Implementation Patterns
 
-This document defines the standard patterns and organization for implementing components in the SveltUI library. Following these patterns ensures consistency, maintainability, and optimal developer experience.
+This document defines the standard patterns and organization for implementing components in the SvelTUI library. Following these patterns ensures consistency, maintainability, and optimal developer experience.
 
 ## Core Philosophy
 
-SveltUI combines the powerful reactivity system of Svelte 5 with the rich terminal UI capabilities of blessed. Our implementation should:
+SvelTUI combines the powerful reactivity system of Svelte 5 with the rich terminal UI capabilities of blessed. Our implementation should:
 
 1. **Leverage Svelte 5's strengths** - Use runes for reactivity and state management
 2. **Provide a clean abstraction** - Hide blessed implementation details from component users
@@ -26,7 +26,7 @@ src/
 │   ├── renderer.svelte.ts  (Screen initialization and rendering)
 │   ├── reconciler.svelte.ts  (Component reconciliation)
 │   ├── registry.svelte.ts  (Component registration)
-│   ├── blessed-utils.svelte.ts  (Shared blessed utilities) 
+│   ├── blessed-utils.svelte.ts  (Shared blessed utilities)
 │   ├── theme.ts  (Theme definitions)
 │   ├── theme-manager.ts  (Theme loading and application)
 │   ├── types.ts  (Shared type definitions)
@@ -46,7 +46,7 @@ src/
 
 ## Component Implementation Pattern
 
-Each component in SveltUI follows a consistent three-part implementation pattern:
+Each component in SvelTUI follows a consistent three-part implementation pattern:
 
 ### 1. Svelte Component Interface (`.svelte` file)
 
@@ -61,31 +61,31 @@ This defines the public API using Svelte 5's runes and serves as the component i
   let {
     // Public properties that can be bound
     value = $bindable(''),
-    
+
     // Option props with defaults
     width = '50%',
-    
+
     // Event handlers
     onChange = undefined as ((value: string) => void) | undefined,
   } = $props();
-  
+
   // Local reactive state
   let isFocused = $state(false);
-  
+
   // Derived values
   let displayValue = $derived(`Value: ${value}`);
-  
+
   // Handle component-specific logic
   function handleChange(newValue: string) {
     value = newValue;
     if (onChange) onChange(newValue);
   }
-  
+
   // Focus/blur handlers
   function handleFocus() {
     isFocused = true;
   }
-  
+
   function handleBlur() {
     isFocused = false;
   }
@@ -100,8 +100,8 @@ This bridges between the Svelte component and blessed, containing all blessed-sp
 
 ```typescript
 // checkbox-adapter.svelte.ts
-import * as blessed from 'blessed';
-import { getTheme } from '../theme-manager';
+import * as blessed from "blessed";
+import { getTheme } from "../theme-manager";
 
 // Utilities for creating blessed elements
 export function createCheckboxElement(
@@ -119,13 +119,13 @@ export function createCheckboxElement(
     vi: true,
     mouse: true,
   });
-  
+
   // Set up event handlers
   setupCheckboxEvents(element, props);
-  
+
   // Initial display update
   updateCheckboxDisplay(element, props);
-  
+
   return element;
 }
 
@@ -135,31 +135,33 @@ function setupCheckboxEvents(
   props: Record<string, any>
 ) {
   // Set up key events
-  element.on('keypress', (ch, key) => {
+  element.on("keypress", (ch, key) => {
     if (!key) return;
-    
-    const keyName = key.name || '';
-    
+
+    const keyName = key.name || "";
+
     // Skip tab handling
-    if (keyName === 'tab') return;
-    
+    if (keyName === "tab") return;
+
     // Check for handler
-    if (props.handleKeyNavigation && 
-        typeof props.handleKeyNavigation === 'function') {
+    if (
+      props.handleKeyNavigation &&
+      typeof props.handleKeyNavigation === "function"
+    ) {
       if (props.handleKeyNavigation(keyName)) {
         updateCheckboxDisplay(element, props);
         element.screen.render();
       }
     } else {
       // Default handling for space/enter/return
-      if (['enter', 'return', 'space'].includes(keyName)) {
+      if (["enter", "return", "space"].includes(keyName)) {
         toggleCheckbox(props);
         updateCheckboxDisplay(element, props);
         element.screen.render();
       }
     }
   });
-  
+
   // More event handlers as needed...
 }
 
@@ -176,12 +178,15 @@ export function updateCheckboxDisplay(
 
 ### 3. Registry Component Definition
 
-This connects the component to the SveltUI registry, making it available for use.
+This connects the component to the SvelTUI registry, making it available for use.
 
 ```typescript
 // In registry.svelte.ts
 
-import { createCheckboxElement, updateCheckboxDisplay } from './adapters/input/checkbox-adapter.svelte';
+import {
+  createCheckboxElement,
+  updateCheckboxDisplay,
+} from "./adapters/input/checkbox-adapter.svelte";
 
 // Register Checkbox component
 registerComponent("checkbox", {
@@ -189,7 +194,7 @@ registerComponent("checkbox", {
   update: (element, props) => {
     // Update display
     updateCheckboxDisplay(element, props);
-    
+
     // Update other properties
     for (const [key, value] of Object.entries(props)) {
       if (!CHECKBOX_SPECIAL_PROPS.includes(key)) {
@@ -252,4 +257,4 @@ Each component should include:
 2. **API Reference** - Detailed property and event documentation
 3. **Advanced Patterns** - Document complex usage patterns
 
-By following these patterns, SveltUI will maintain a consistent, maintainable, and developer-friendly component ecosystem.
+By following these patterns, SvelTUI will maintain a consistent, maintainable, and developer-friendly component ecosystem.

@@ -1,8 +1,8 @@
-# SveltUI Keyboard Handling System
+# SvelTUI Keyboard Handling System
 
 ## Overview
 
-The SveltUI keyboard handling system provides a standardized way to handle keyboard events in terminal user interfaces built with SveltUI. The system is designed to be intuitive, consistent, and flexible, supporting both common keyboard patterns and custom key bindings.
+The SvelTUI keyboard handling system provides a standardized way to handle keyboard events in terminal user interfaces built with SvelTUI. The system is designed to be intuitive, consistent, and flexible, supporting both common keyboard patterns and custom key bindings.
 
 ## Core Components
 
@@ -15,44 +15,44 @@ The keyboard handling system consists of:
 
 ## Standard Navigation Keys
 
-SveltUI provides consistent keyboard navigation across all applications:
+SvelTUI provides consistent keyboard navigation across all applications:
 
-| Key | Action |
-|-----|--------|
-| `Tab` | Move focus to the next interactive element |
-| `Shift+Tab` | Move focus to the previous interactive element |
+| Key               | Action                                                                |
+| ----------------- | --------------------------------------------------------------------- |
+| `Tab`             | Move focus to the next interactive element                            |
+| `Shift+Tab`       | Move focus to the previous interactive element                        |
 | `Enter` / `Space` | Activate the focused element (click buttons, toggle checkboxes, etc.) |
-| `Escape` | Exit from the current input mode or close dialogs |
-| `Arrow Keys` | Navigate within components (list items, select options) |
+| `Escape`          | Exit from the current input mode or close dialogs                     |
+| `Arrow Keys`      | Navigate within components (list items, select options)               |
 
 ## Component Categories
 
-SveltUI components are divided into two categories based on how they handle keyboard events:
+SvelTUI components are divided into two categories based on how they handle keyboard events:
 
 ### Self-Handling Components
 
 Components that internally handle their own keyboard events:
 
-| Component | Key Bindings |
-|-----------|-------------|
-| `Input` | - Character keys: Text input<br>- Arrow keys: Move cursor<br>- Enter: Submit<br>- Escape: Exit input mode |
-| `List` | - Up/Down arrows: Navigate items<br>- Enter: Select item<br>- Home/End: Jump to first/last item |
+| Component | Key Bindings                                                                                              |
+| --------- | --------------------------------------------------------------------------------------------------------- |
+| `Input`   | - Character keys: Text input<br>- Arrow keys: Move cursor<br>- Enter: Submit<br>- Escape: Exit input mode |
+| `List`    | - Up/Down arrows: Navigate items<br>- Enter: Select item<br>- Home/End: Jump to first/last item           |
 
 ### External-Handling Components
 
 Components that require key handlers to be registered:
 
-| Component | Key Bindings |
-|-----------|-------------|
-| `Checkbox` | - Space/Enter: Toggle state |
-| `Select` | - Space/Enter: Open/close dropdown<br>- Up/Down arrows: Navigate options when open |
-| `Button` | - Space/Enter: Activate button |
+| Component  | Key Bindings                                                                       |
+| ---------- | ---------------------------------------------------------------------------------- |
+| `Checkbox` | - Space/Enter: Toggle state                                                        |
+| `Select`   | - Space/Enter: Open/close dropdown<br>- Up/Down arrows: Navigate options when open |
+| `Button`   | - Space/Enter: Activate button                                                     |
 
 ## Using the Key Handler System
 
 ### Tab Navigation and Focus Management
 
-Focus management is handled automatically by the SveltUI renderer. Elements with the `focusable` property are included in the tab navigation order.
+Focus management is handled automatically by the SvelTUI renderer. Elements with the `focusable` property are included in the tab navigation order.
 
 You can control the tab order using the `tabIndex` property:
 
@@ -110,7 +110,7 @@ const checkbox = render("checkbox", {
       return true; // Return true to indicate the key was handled
     }
     return false; // Return false for default handling
-  }
+  },
 });
 ```
 
@@ -217,9 +217,9 @@ function openModal() {
     closeModal();
     return false;
   };
-  
+
   registerGlobalKeyHandler("escape", escapeHandler, 100);
-  
+
   // Return function to clean up on close
   return () => {
     unregisterGlobalKeyHandler("escape", escapeHandler);
@@ -234,4 +234,4 @@ closeHandlers();
 
 ## Conclusion
 
-The SveltUI keyboard handling system provides a consistent, accessible way to implement keyboard navigation and shortcuts in terminal applications. By following these patterns, developers can create applications that are intuitive and efficient for keyboard users.
+The SvelTUI keyboard handling system provides a consistent, accessible way to implement keyboard navigation and shortcuts in terminal applications. By following these patterns, developers can create applications that are intuitive and efficient for keyboard users.

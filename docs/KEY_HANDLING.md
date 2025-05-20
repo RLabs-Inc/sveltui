@@ -1,10 +1,10 @@
-# SveltUI Keyboard Handling
+# SvelTUI Keyboard Handling
 
-This document explains the recommended keyboard handling patterns in SveltUI applications.
+This document explains the recommended keyboard handling patterns in SvelTUI applications.
 
 ## Core Principles
 
-SveltUI's keyboard handling follows these core principles:
+SvelTUI's keyboard handling follows these core principles:
 
 1. **Leverage Blessed's Native Capabilities**: Use blessed's built-in focus and key handling systems rather than creating parallel systems.
 2. **Component-Level Key Handling**: Handle keys at the component level where possible.
@@ -13,20 +13,20 @@ SveltUI's keyboard handling follows these core principles:
 
 ## Key Handling Utilities
 
-SveltUI provides several utility functions to simplify keyboard handling:
+SvelTUI provides several utility functions to simplify keyboard handling:
 
 ### `setupTabNavigation(screen, elements)`
 
 Sets up tab navigation between a set of elements:
 
 ```typescript
-import { setupTabNavigation } from 'sveltui';
+import { setupTabNavigation } from "sveltui";
 
 // Define tab order
 const focusableElements = [
   inputElement.element,
   checkboxElement.element,
-  buttonElement.element
+  buttonElement.element,
 ];
 
 // Set up tab navigation
@@ -41,7 +41,7 @@ cleanupTabNav();
 Sets up standard exit keys (q, Ctrl+C) for the application:
 
 ```typescript
-import { setupExitKeys } from 'sveltui';
+import { setupExitKeys } from "sveltui";
 
 // Set up exit keys
 const cleanupExitKeys = setupExitKeys(screen, () => {
@@ -58,7 +58,7 @@ cleanupExitKeys();
 Configures input elements with proper escape/submit handling:
 
 ```typescript
-import { setupInputHandling } from 'sveltui';
+import { setupInputHandling } from "sveltui";
 
 // Set up input handling
 const cleanupInput = setupInputHandling(inputElement.element, {
@@ -70,7 +70,7 @@ const cleanupInput = setupInputHandling(inputElement.element, {
   onSubmit: (value) => {
     // Handle submitted value
     console.log(`Submitted: ${value}`);
-  }
+  },
 });
 
 // Later, when cleaning up:
@@ -82,13 +82,13 @@ cleanupInput();
 Helper to focus the first element in a group:
 
 ```typescript
-import { focusFirst } from 'sveltui';
+import { focusFirst } from "sveltui";
 
 // Focus the first element
 focusFirst([
   inputElement.element,
   checkboxElement.element,
-  buttonElement.element
+  buttonElement.element,
 ]);
 ```
 
@@ -97,7 +97,7 @@ focusFirst([
 Helper for safely converting values (including objects) to strings:
 
 ```typescript
-import { safeToString } from 'sveltui';
+import { safeToString } from "sveltui";
 
 // Safely convert a value to string
 const displayValue = safeToString(complexObject);
@@ -118,12 +118,12 @@ const inputElement = render("input", {
   value: inputValue,
   onChange: (value) => {
     inputValue = value;
-  }
+  },
 });
 
 setupInputHandling(inputElement.element, {
   onEscape: () => nextElement.element.focus(),
-  onSubmit: (value) => console.log(`Submitted: ${value}`)
+  onSubmit: (value) => console.log(`Submitted: ${value}`),
 });
 ```
 
@@ -136,7 +136,7 @@ const checkboxElement = render("checkbox", {
   checked: isChecked,
   onChange: (checked) => {
     isChecked = checked;
-  }
+  },
 });
 
 // Key handling is built into the checkbox adapter
@@ -153,7 +153,7 @@ const listElement = render("list", {
   onSelect: (index, item) => {
     selectedIndex = index;
     console.log(`Selected: ${item}`);
-  }
+  },
 });
 
 // Arrow key navigation is built into the list adapter
@@ -171,20 +171,20 @@ function setupKeyHandling() {
     inputElement.element,
     checkboxElement.element,
     buttonElement.element,
-    listElement.element
+    listElement.element,
   ];
-  
+
   // Set up tab navigation
   setupTabNavigation(screen, focusableElements);
-  
+
   // Set up exit keys
   setupExitKeys(screen);
-  
+
   // Set up input handling
   setupInputHandling(inputElement.element, {
-    onEscape: () => checkboxElement.element.focus()
+    onEscape: () => checkboxElement.element.focus(),
   });
-  
+
   // Set initial focus
   focusFirst(focusableElements);
 }
@@ -196,13 +196,13 @@ You can add custom key handlers for specific components:
 
 ```typescript
 // Component-specific handlers
-listElement.element.key(['a'], () => {
+listElement.element.key(["a"], () => {
   // Select all items
-  console.log('Select all');
+  console.log("Select all");
 });
 
 // Global key handlers
-screen.key(['?'], () => {
+screen.key(["?"], () => {
   // Show help
   showHelpBox();
 });
@@ -224,24 +224,24 @@ screen.key(['?'], () => {
 
 ## Key Behavior by Component Type
 
-| Component | Key | Behavior |
-|-----------|-----|----------|
-| Input | Tab | Move to next element |
-| | Shift+Tab | Move to previous element |
-| | Enter | Submit value |
-| | Escape | Exit input mode |
-| | Characters | Text input |
-| Checkbox | Tab | Move to next element |
-| | Shift+Tab | Move to previous element |
-| | Space/Enter | Toggle state |
-| List | Tab | Move to next element |
-| | Shift+Tab | Move to previous element |
-| | Up/Down | Navigate items |
-| | Enter | Select current item |
-| Button | Tab | Move to next element |
-| | Shift+Tab | Move to previous element |
-| | Space/Enter | Activate button |
+| Component | Key         | Behavior                 |
+| --------- | ----------- | ------------------------ |
+| Input     | Tab         | Move to next element     |
+|           | Shift+Tab   | Move to previous element |
+|           | Enter       | Submit value             |
+|           | Escape      | Exit input mode          |
+|           | Characters  | Text input               |
+| Checkbox  | Tab         | Move to next element     |
+|           | Shift+Tab   | Move to previous element |
+|           | Space/Enter | Toggle state             |
+| List      | Tab         | Move to next element     |
+|           | Shift+Tab   | Move to previous element |
+|           | Up/Down     | Navigate items           |
+|           | Enter       | Select current item      |
+| Button    | Tab         | Move to next element     |
+|           | Shift+Tab   | Move to previous element |
+|           | Space/Enter | Activate button          |
 
 ## Example Application
 
-See the `examples/keyboard-demo.svelte.ts` file for a complete example showing proper keyboard handling in a SveltUI application.
+See the `examples/keyboard-demo.svelte.ts` file for a complete example showing proper keyboard handling in a SvelTUI application.

@@ -1,8 +1,8 @@
-# SveltUI
+# SvelTUI
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-SveltUI is a modern library for building Terminal User Interfaces (TUIs) that combines the elegance of Svelte 5's reactivity system with the power of the blessed terminal library.
+SvelTUI is a modern library for building Terminal User Interfaces (TUIs) that combines the elegance of Svelte 5's reactivity system with the power of the blessed terminal library.
 
 <p align="center">
   <img src="https://via.placeholder.com/800x400?text=SveltUI+Terminal+Interface" alt="SveltUI Demo Screenshot" width="80%">
@@ -125,24 +125,28 @@ const listElement = render("list", {
     // Update other elements when selection changes
     textElement.update({ content: `Selected: ${item}` });
     screen.render();
-  }
+  },
 });
 
 // Use the keypress event for key handling (recommended approach)
-screen.on('keypress', function(ch, key) {
-  if (key.name === 'q' || key.name === 'escape' || (key.ctrl && key.name === 'c')) {
+screen.on("keypress", function (ch, key) {
+  if (
+    key.name === "q" ||
+    key.name === "escape" ||
+    (key.ctrl && key.name === "c")
+  ) {
     process.exit(0);
-  } else if (ch === '+') {
+  } else if (ch === "+") {
     count++;
     // Important: Manually update UI elements when state changes
     textElement.update({ content: `Count: ${count}` });
     screen.render();
-  } else if (ch === '-') {
+  } else if (ch === "-") {
     count--;
     // Important: Manually update UI elements when state changes
     textElement.update({ content: `Count: ${count}` });
     screen.render();
-  } else if (key.name === 'tab') {
+  } else if (key.name === "tab") {
     // Give focus to the input field - user can press Escape to exit input mode
     inputElement.element.focus();
     screen.render();
@@ -154,7 +158,7 @@ render("text", {
   parent: main.element,
   bottom: 2,
   content: "Press [Tab] to focus input, [Esc] to exit input mode",
-  style: { fg: "gray" }
+  style: { fg: "gray" },
 });
 
 // Give initial focus to the list
@@ -168,14 +172,14 @@ screen.render();
 
 SveltUI includes these built-in components:
 
-| Component | Description | Properties |
-|-----------|-------------|------------|
-| **Box** | Container element | `width`, `height`, `border`, `style` |
-| **Text** | Text display | `content`, `style`, `left`, `top` |
-| **Input** | Text input field | `value`, `placeholder`, `onChange`, `onSubmit` |
-| **List** | Selectable list | `items`, `selected`, `onSelect`, `style` |
-| **Checkbox** | Interactive checkbox | `checked`, `label`, `onChange`, `disabled` |
-| **Select** | Dropdown selection | `options`, `value`, `onChange`, `placeholder` |
+| Component    | Description          | Properties                                     |
+| ------------ | -------------------- | ---------------------------------------------- |
+| **Box**      | Container element    | `width`, `height`, `border`, `style`           |
+| **Text**     | Text display         | `content`, `style`, `left`, `top`              |
+| **Input**    | Text input field     | `value`, `placeholder`, `onChange`, `onSubmit` |
+| **List**     | Selectable list      | `items`, `selected`, `onSelect`, `style`       |
+| **Checkbox** | Interactive checkbox | `checked`, `label`, `onChange`, `disabled`     |
+| **Select**   | Dropdown selection   | `options`, `value`, `onChange`, `placeholder`  |
 
 All components support standard positioning properties like `left`, `top`, `width`, and `height`.
 
@@ -186,7 +190,14 @@ SveltUI includes a powerful theming system that allows you to customize the appe
 ### Using Built-in Themes
 
 ```typescript
-import { initializeScreen, render, setTheme, DarkTheme, LightTheme, TerminalTheme } from "sveltui";
+import {
+  initializeScreen,
+  render,
+  setTheme,
+  DarkTheme,
+  LightTheme,
+  TerminalTheme,
+} from "sveltui";
 
 // Use the dark theme
 setTheme(DarkTheme);
@@ -208,7 +219,7 @@ import { createTheme, setTheme } from "sveltui";
 const purpleTheme = createTheme("Purple", {
   primary: "#9966ff",
   background: "#1a1a2e",
-  foreground: "#e6e6ff"
+  foreground: "#e6e6ff",
 });
 
 setTheme(purpleTheme);
@@ -240,7 +251,7 @@ colors:
   secondary: "#00ccbb"
   background: "#05233b"
   foreground: "#e1f2ff"
-  
+
   # Status colors
   success: "#00cc77"
   warning: "#ffbb00"
@@ -296,7 +307,7 @@ const input = render("input", {
   },
   onSubmit: (value) => {
     // Handle form submission
-  }
+  },
 });
 
 // List Component
@@ -304,7 +315,7 @@ const list = render("list", {
   items: ["Item 1", "Item 2", "Item 3"],
   onSelect: (index, item) => {
     // Handle selection
-  }
+  },
 });
 ```
 
@@ -319,11 +330,11 @@ const checkbox = render("checkbox", {
   label: "Enable feature",
   onChange: (checked) => {
     console.log(`Checkbox toggled to: ${checked}`);
-  }
+  },
 });
 
 // Handle Enter/Space for checkbox toggle via screen key handler
-screen.key(['enter', 'space'], () => {
+screen.key(["enter", "space"], () => {
   if (screen.focused === checkboxElement.element) {
     checkboxElement.update({ checked: !checkboxElement.element.checked });
     screen.render();
@@ -336,11 +347,11 @@ const select = render("select", {
   value: $bindable(""),
   onChange: (value) => {
     console.log(`Selected option: ${value}`);
-  }
+  },
 });
 
 // Handle dropdown open/close and navigation
-screen.key(['enter', 'space'], () => {
+screen.key(["enter", "space"], () => {
   if (screen.focused === selectElement.element) {
     selectElement.update({ open: !selectElement.element.open });
     screen.render();
@@ -353,14 +364,14 @@ screen.key(['enter', 'space'], () => {
 For global key handling:
 
 ```typescript
-screen.on('keypress', function(ch, key) {
+screen.on("keypress", function (ch, key) {
   // Skip handling when input is focused
   if (inputElement.element === screen.focused) return;
-  
+
   // Handle keys based on character or key name
-  if (ch === '+') {
+  if (ch === "+") {
     // Handle + key
-  } else if (key.name === 'escape') {
+  } else if (key.name === "escape") {
     // Handle escape key
   }
 });
@@ -375,12 +386,12 @@ Manage focus explicitly for better user experience:
 listElement.element.focus();
 
 // Add tab key handler to focus input
-screen.key('tab', () => {
+screen.key("tab", () => {
   inputElement.element.focus();
 });
 
 // Add escape handler to return focus to list
-screen.key('escape', () => {
+screen.key("escape", () => {
   if (inputElement.element === screen.focused) {
     listElement.element.focus();
   }
@@ -400,6 +411,7 @@ screen.render(); // Don't forget this!
 ## Runtime Support
 
 This project supports:
+
 - **Node.js** 16+
 - **Bun** 1.0+
 

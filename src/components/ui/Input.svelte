@@ -1,20 +1,18 @@
 <script lang="ts">
   /**
-   * List component for displaying selectable items
+   * Input component for text input
    * 
-   * This component displays a list of items that can be navigated and selected.
+   * This component provides a text input field that users can type in.
    */
-  
-  import type { ComponentProps } from '../core/types';
 
   let {
-    // List data
-    items = [] as string[],
-    selectedIndex = $bindable(0),
+    // Input state
+    value = $bindable(''),
+    placeholder = '',
     
     // Layout properties
     width = '50%',
-    height = '50%',
+    height = 3,
     top = undefined as (number | string | undefined),
     left = undefined as (number | string | undefined),
     right = undefined as (number | string | undefined),
@@ -25,7 +23,8 @@
     style = {},
     
     // Events
-    onSelect = undefined as ((index: number, item: string) => void) | undefined,
+    onChange = undefined as ((value: string) => void) | undefined,
+    onSubmit = undefined as ((value: string) => void) | undefined,
     onFocus = undefined as (() => void) | undefined,
     onBlur = undefined as (() => void) | undefined
   } = $props();

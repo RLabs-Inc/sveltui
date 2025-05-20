@@ -2,18 +2,18 @@ import { initializeScreen, render } from "../src/core/renderer.svelte.ts";
 
 // Create reactive state with Svelte runes
 let count = $state(0);
-let message = $state("Welcome to SveltUI!");
+let message = $state("Welcome to SvelTUI!");
 let selectedIndex = $state(0);
 let items = $state(["Dashboard", "Settings", "Profile", "Help"]);
 let inputValue = $state("");
 
 // Create derived values
 let borderColor = $derived(count > 5 ? "red" : "blue");
-let headerText = $derived(`SveltUI Demo - Count: ${count}`);
+let headerText = $derived(`SvelTUI Demo - Count: ${count}`);
 
 // Initialize the terminal screen
 const screen = initializeScreen({
-  title: "SveltUI Demo",
+  title: "SvelTUI Demo",
 });
 
 // We'll add keyboard event handlers after creating all elements
@@ -134,7 +134,7 @@ screen.on("keypress", function (ch, key) {
   if (ch === "+") {
     count++;
     // Update derived values
-    headerElement.update({ content: `SveltUI Demo - Count: ${count}` });
+    headerElement.update({ content: `SvelTUI Demo - Count: ${count}` });
     main.update({ style: { border: { fg: count > 5 ? "red" : "blue" } } });
     screen.render();
   }
@@ -142,7 +142,7 @@ screen.on("keypress", function (ch, key) {
   else if (ch === "-") {
     count--;
     // Update derived values
-    headerElement.update({ content: `SveltUI Demo - Count: ${count}` });
+    headerElement.update({ content: `SvelTUI Demo - Count: ${count}` });
     main.update({ style: { border: { fg: count > 5 ? "red" : "blue" } } });
     screen.render();
   }

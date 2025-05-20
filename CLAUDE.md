@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SveltUI is a terminal UI framework that combines Svelte 5's reactivity system with the blessed library to create interactive terminal interfaces. It allows developers to build responsive, component-based terminal applications using familiar Svelte patterns.
+SvelTUI is a terminal UI framework that combines Svelte 5's reactivity system with the blessed library to create interactive terminal interfaces. It allows developers to build responsive, component-based terminal applications using familiar Svelte patterns.
 
 ## Commands
 
@@ -23,7 +23,7 @@ bun run example
 
 # Run component demos
 bun run checkbox-demo  # Checkbox component demo
-bun run select-demo    # Select component demo 
+bun run select-demo    # Select component demo
 
 # Run the theme demos
 bun run theme-demo     # Full theme demo with dual preview lists
@@ -33,29 +33,33 @@ bun run theme-showcase # Showcase of theme colors and components
 
 ## Architecture Overview
 
-SveltUI is a terminal UI (TUI) library that combines Svelte 5's reactivity system with the blessed library for terminal interfaces.
+SvelTUI is a terminal UI (TUI) library that combines Svelte 5's reactivity system with the blessed library for terminal interfaces.
 
 ### Core Components
 
 1. **Renderer System** (`src/core/renderer.svelte.ts`)
+
    - Initializes the blessed screen
    - Handles rendering elements to the terminal
    - Manages the update lifecycle
 
 2. **Component Registry** (`src/core/registry.svelte.ts`)
+
    - Maintains a registry of available components
    - Provides component definitions with create/update methods
    - Initializes built-in components like Box, Text, Input, List, Checkbox, and Select
    - Supports multiple component definitions and variants
 
 3. **Reconciler** (`src/core/reconciler.svelte.ts`)
+
    - Tracks component instances and their state
    - Manages component lifecycles
    - Handles reactive updates to components
 
 4. **Blessed Utils** (`src/core/blessed-utils.svelte.ts`)
+
    - Provides utilities for creating and updating blessed elements
-   - Maps SveltUI props to blessed props
+   - Maps SvelTUI props to blessed props
    - Sets up event handlers for components
 
 5. **Theme System** (`src/core/theme.ts`, `src/core/theme-manager.ts`)
@@ -67,12 +71,13 @@ SveltUI is a terminal UI (TUI) library that combines Svelte 5's reactivity syste
 
 ### UI Components
 
-Components are defined as Svelte 5 components with the new runes syntax (`$props`, `$state`, etc.). 
-The rendering is handled by the SveltUI core rather than Svelte's own DOM-based renderer.
+Components are defined as Svelte 5 components with the new runes syntax (`$props`, `$state`, etc.).
+The rendering is handled by the SvelTUI core rather than Svelte's own DOM-based renderer.
 
 ### Reactivity System
 
-SveltUI uses a simplified reactivity model based on Svelte 5 runes:
+SvelTUI uses a simplified reactivity model based on Svelte 5 runes:
+
 - `$state`: For top-level reactive state variables
 - Uses direct updates instead of complex effect chains
 - Updates are triggered at the point of state change, not through observers
@@ -88,211 +93,6 @@ The project uses Svelte 5's native runes system through Vite:
 3. All `.svelte.ts` files use runes natively
 
 The update model is direct: when state changes, the relevant updates are immediately applied rather than relying on reactive effects to detect changes. This makes the code more predictable and easier to debug.
-
-#### Key Handling System
-
-SveltUI provides utilities for keyboard handling in the `key-utils.ts` module. These utilities work with blessed's native key handling system to provide simple patterns for implementing keyboard navigation and interaction.
-
-##### Key Handling Utilities
-
-```javascript
-import {
-  setupTabNavigation,
-  setupExitKeys,
-  setupInputHandling,
-  focusFirst,
-  safeToString
-} from 'sveltui';
-
-// Set up tab navigation between elements
-const focusableElements = [
-  listElement.element,
-  inputElement.element,
-  checkboxElement.element,
-  buttonElement.element
-];
-setupTabNavigation(screen, focusableElements);
-
-// Set up exit keys
-setupExitKeys(screen);
-
-// Set up input handling with proper escape behavior
-setupInputHandling(inputElement.element, {
-  onEscape: () => {
-    // Move focus to another element when escape is pressed
-    checkboxElement.element.focus();
-    screen.render();
-  },
-  onSubmit: (value) => {
-    // Handle submitted value
-    console.log(`Submitted: ${value}`);
-  }
-});
-
-// Set initial focus
-focusFirst(focusableElements);
-```
-
-##### Component-Level Key Handling
-
-Components handle their own key events using blessed's key event system:
-
-```javascript
-// Register key handlers for a button
-buttonElement.element.key(['space', 'enter'], () => {
-  // Handle button activation
-  console.log('Button activated');
-  screen.render();
-});
-
-// Register key handlers for a list
-listElement.element.key('enter', () => {
-  // Handle list selection
-  const index = listElement.element.selected;
-  const item = listElement.element.items[index];
-  console.log(`Selected: ${safeToString(item)}`);
-  screen.render();
-});
-```
-
-##### Global Keyboard Shortcuts
-
-For global shortcuts, register handlers at the screen level:
-
-```javascript
-// Register global shortcuts
-screen.key(['?'], () => {
-  // Show help
-  console.log('Show help dialog');
-  screen.render();
-});
-
-// Counter increment/decrement
-screen.key('+', () => {
-  // Skip when input is focused
-  if (screen.focused === inputElement.element) return;
-  
-  counter++;
-  counterElement.update({ content: `Counter: ${counter}` });
-  screen.render();
-});
-```
-
-See the `/docs/KEY_HANDLING.md` file for a complete guide to keyboard handling patterns in SveltUI.
-
-2. Always call `screen.render()` after state changes to update the UI.
-
-3. Remember to handle both character (`ch`) and key object properties for maximum compatibility.
-
-4. Explicitly maintain references to UI elements and update them directly:
-```javascript
-const headerElement = render("text", {
-  content: "Header content"
-});
-
-// Later when updating:
-headerElement.update({ content: "New content" });
-screen.render();
-```
-
-5. Understand input field focus behavior - users can press Escape to exit input mode:
-```javascript
-// Input fields capture keypresses while focused
-// Users need to press Escape to exit input mode
-screen.key('tab', () => {
-  inputElement.element.focus();
-  screen.render();
-});
-
-// Consider adding help text to guide users
-render("text", {
-  content: "Press [Tab] to focus input, [Esc] to exit input mode",
-  style: { fg: "gray" }
-});
-```
-
-6. For menu/list navigation, consider implementing a custom solution with direct key handlers:
-```javascript
-// Custom menu navigation with arrow keys
-screen.key('up', () => {
-  if (selectedIndex > 0) {
-    selectedIndex--;
-    updateMenu();
-    screen.render();
-  }
-});
-
-screen.key('down', () => {
-  if (selectedIndex < items.length - 1) {
-    selectedIndex++;
-    updateMenu();
-    screen.render();
-  }
-});
-```
-
-7. Use tags for colored text in blessed:
-```javascript
-// Enable tags in your component
-const box = render("box", {
-  tags: true,  // Important: enable tag parsing
-  content: "{blue-bg}{white-fg}Highlighted Text{/white-fg}{/blue-bg}"
-});
-
-// Available styles include:
-// Colors: black, red, green, yellow, blue, magenta, cyan, white
-// Modifiers: bold, underline, blink, inverse
-// Use as: {red-fg}Red Text{/red-fg} or {blue-bg}Blue Background{/blue-bg}
-```
-
-8. Be careful with element event handlers - verify the parameter order and types:
-```javascript
-// In blessed-utils.svelte.ts for list items:
-element.on("select item", (item, index) => {
-  // Ensure item is a string before passing to callback
-  const itemValue = typeof item === 'string' ? item : String(item);
-  props.onSelect(index, itemValue);
-});
-```
-
-9. Using the theming system:
-```javascript
-// Import theme functions and built-in themes
-import { 
-  setTheme, 
-  getTheme, 
-  loadTheme, 
-  TerminalTheme, 
-  DarkTheme,
-  LightTheme 
-} from "sveltui";
-
-// Use a built-in theme
-setTheme(DarkTheme);
-
-// Load a theme from a YAML file
-const customTheme = loadTheme("./themes/custom/ocean.yaml");
-if (customTheme) {
-  setTheme(customTheme);
-}
-
-// Use theme colors in component styling
-const button = render("box", {
-  content: "Click me",
-  style: {
-    bg: getTheme().colors.primary,
-    fg: "white",
-    focus: {
-      bg: getTheme().colors.secondary
-    }
-  }
-});
-
-// Handle undefined theme properties safely
-function getThemeColor(color, fallback) {
-  return color || fallback;
-}
-```
 
 ## Reference Resources
 
@@ -350,11 +150,11 @@ The project follows a specific organizational pattern detailed in `/docs/COMPONE
 
 ### Component Implementation Pattern
 
-SveltUI components follow a three-part implementation pattern to separate concerns:
+SvelTUI components follow a three-part implementation pattern to separate concerns:
 
 1. **Svelte Component Interface (`.svelte` file)**: Defines the public API using Svelte 5 runes
 2. **Adapter Implementation (`.svelte.ts` file)**: Connects Svelte to blessed, handling implementation details
-3. **Registry Definition**: Registers the component in the SveltUI system
+3. **Registry Definition**: Registers the component in the SvelTUI system
 
 For detailed information, see `/docs/COMPONENT_PATTERNS.md`.
 
@@ -371,37 +171,37 @@ Svelte components should follow this structure:
   let {
     // Public properties that can be bound
     value = $bindable(''),
-    
+
     // Event handlers with proper typing
     onChange = undefined as ((value: string) => void) | undefined,
-    
+
     // Optional style and layout properties
     width = '50%',
     height = 3,
     style = {},
   } = $props();
-  
+
   // Internal state
   let isFocused = $state(false);
-  
+
   // Derived values
   let displayValue = $derived(`Value: ${value}`);
-  
+
   // Component methods
   function handleChange(newValue: string) {
     value = newValue;
     if (onChange) onChange(newValue);
   }
-  
+
   // Focus/blur handlers
   function handleFocus() {
     isFocused = true;
   }
-  
+
   function handleBlur() {
     isFocused = false;
   }
-  
+
   // Keyboard navigation (for interactive components)
   function handleKeyNavigation(key: string): boolean {
     // Return true if the key was handled
@@ -417,8 +217,8 @@ Svelte components should follow this structure:
 Component adapters should follow this structure:
 
 ```typescript
-import * as blessed from 'blessed';
-import { getTheme } from '../theme-manager';
+import * as blessed from "blessed";
+import { getTheme } from "../theme-manager";
 
 // Create the blessed element
 export function createComponentElement(
@@ -432,13 +232,13 @@ export function createComponentElement(
     tags: true,
     focusable: true,
   });
-  
+
   // Set up event handlers
   setupEvents(element, props);
-  
+
   // Initialize display
   updateDisplay(element, props);
-  
+
   return element;
 }
 
@@ -448,10 +248,10 @@ export function updateComponentDisplay(
   props: Record<string, any>
 ): void {
   // Update element display based on props
-  
+
   // Apply theming
   const theme = getTheme();
-  
+
   // Update content/appearance
 }
 

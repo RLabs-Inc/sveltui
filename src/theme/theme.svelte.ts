@@ -1,5 +1,5 @@
 // Import types from the main types file
-import type { Color, Theme } from "./types";
+import type { Color, Theme } from "../types";
 
 // Re-export types for backward compatibility
 export type { Color, Theme };

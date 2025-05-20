@@ -2,33 +2,26 @@ import * as blessed from "blessed";
 import {
   createBlessedElement,
   updateBlessedElement,
-} from "./blessed-utils.svelte";
-import type { RenderResult } from "./types";
-import { 
-  getTheme, 
-  setTheme, 
-  loadTheme, 
-  registerTheme, 
+} from "../utils/blessed-utils.svelte";
+import type { RenderResult } from "../types";
+import {
+  getTheme,
+  setTheme,
+  loadTheme,
+  registerTheme,
   getAvailableThemes,
   getThemeFiles,
-  createTheme 
-} from "./theme-manager";
-import type { Theme, Color } from "./types";
-import { TerminalTheme, DarkTheme, LightTheme } from "./theme";
-import {
-  setupTabNavigation,
-  setupExitKeys,
-  setupInputHandling,
-  focusFirst,
-  safeToString
-} from "./key-utils";
+  createTheme,
+} from "../theme/theme-manager.svelte";
+import type { Theme, Color } from "../types";
+import { TerminalTheme, DarkTheme, LightTheme } from "../theme/theme.svelte";
 
 // Export theme-related functions and types
-export { 
-  getTheme, 
-  setTheme, 
-  loadTheme, 
-  registerTheme, 
+export {
+  getTheme,
+  setTheme,
+  loadTheme,
+  registerTheme,
   getAvailableThemes,
   getThemeFiles,
   createTheme,
@@ -36,16 +29,7 @@ export {
   DarkTheme,
   LightTheme,
   type Theme,
-  type Color
-};
-
-// Export key utility functions
-export {
-  setupTabNavigation,
-  setupExitKeys,
-  setupInputHandling,
-  focusFirst,
-  safeToString
+  type Color,
 };
 
 // Active screen
@@ -57,7 +41,7 @@ export function initializeScreen(
 ): blessed.Widgets.Screen {
   const defaultOptions: blessed.Widgets.IScreenOptions = {
     smartCSR: true,
-    title: "SveltUI Application",
+    title: "SvelTUI Application",
     ...options,
   };
 
@@ -65,7 +49,7 @@ export function initializeScreen(
 
   // We'll handle exit keys in the application code
   // This allows for more flexibility in key handling
-  
+
   // Initial render
   screen.render();
 

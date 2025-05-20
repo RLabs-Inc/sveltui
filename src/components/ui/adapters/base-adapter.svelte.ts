@@ -1,29 +1,29 @@
 /**
- * Base Adapter for SveltUI Components
- * 
+ * Base Adapter for SvelTUI Components
+ *
  * This file provides shared functionality for all component adapters,
  * creating a consistent interface between Svelte components and blessed.
  */
 
-import * as blessed from 'blessed';
-import { getTheme } from '../theme-manager';
+import * as blessed from "blessed";
+import { getTheme } from "../../../theme/theme-manager.svelte";
 
 /**
  * Common properties to exclude when updating blessed elements
  * These props are handled specially and should not be directly assigned
  */
 export const COMMON_EXCLUDED_PROPS = [
-  'parent',
-  'style',
-  'onChange',
-  'onSelect',
-  'onFocus',
-  'onBlur',
-  'onClick',
-  'handleKeyNavigation',
-  'handleFocus',
-  'handleBlur',
-  'isFocused'
+  "parent",
+  "style",
+  "onChange",
+  "onSelect",
+  "onFocus",
+  "onBlur",
+  "onClick",
+  "handleKeyNavigation",
+  "handleFocus",
+  "handleBlur",
+  "isFocused",
 ];
 
 /**
@@ -39,14 +39,14 @@ export function createBaseElement(
 ): blessed.Widgets.BlessedElement {
   // Extract common configuration
   const { type, parent, interactive = false } = options;
-  
+
   // Basic element configuration
   const elementConfig: any = {
     ...props,
     parent,
     tags: true, // Enable color tags in content
   };
-  
+
   // For interactive elements, add input properties
   if (interactive) {
     elementConfig.focusable = true;
@@ -55,27 +55,27 @@ export function createBaseElement(
     elementConfig.vi = true;
     elementConfig.mouse = true;
   }
-  
+
   // Create the element based on type
   let element: blessed.Widgets.BlessedElement;
-  
+
   switch (type) {
-    case 'box':
+    case "box":
       element = blessed.box(elementConfig);
       break;
-    case 'text':
+    case "text":
       element = blessed.text(elementConfig);
       break;
-    case 'list':
+    case "list":
       element = blessed.list(elementConfig);
       break;
-    case 'textbox':
+    case "textbox":
       element = blessed.textbox(elementConfig);
       break;
     default:
       element = blessed.box(elementConfig);
   }
-  
+
   return element;
 }
 
@@ -88,42 +88,42 @@ export function setupBaseEvents(
 ): void {
   // Focus and blur events
   if (props.handleFocus || props.onFocus) {
-    element.on('focus', () => {
+    element.on("focus", () => {
       // Call the internal focus handler if provided
-      if (props.handleFocus && typeof props.handleFocus === 'function') {
+      if (props.handleFocus && typeof props.handleFocus === "function") {
         props.handleFocus();
       }
-      
+
       // Call the external focus event if provided
-      if (props.onFocus && typeof props.onFocus === 'function') {
+      if (props.onFocus && typeof props.onFocus === "function") {
         props.onFocus();
       }
-      
+
       // Ensure the screen renders
       element.screen.render();
     });
   }
-  
+
   if (props.handleBlur || props.onBlur) {
-    element.on('blur', () => {
+    element.on("blur", () => {
       // Call the internal blur handler if provided
-      if (props.handleBlur && typeof props.handleBlur === 'function') {
+      if (props.handleBlur && typeof props.handleBlur === "function") {
         props.handleBlur();
       }
-      
+
       // Call the external blur event if provided
-      if (props.onBlur && typeof props.onBlur === 'function') {
+      if (props.onBlur && typeof props.onBlur === "function") {
         props.onBlur();
       }
-      
+
       // Ensure the screen renders
       element.screen.render();
     });
   }
-  
+
   // Click event
-  if (props.onClick && typeof props.onClick === 'function') {
-    element.on('click', props.onClick);
+  if (props.onClick && typeof props.onClick === "function") {
+    element.on("click", props.onClick);
   }
 }
 
@@ -137,7 +137,7 @@ export function updateBaseProps(
 ): void {
   // Combine common excluded props with component-specific ones
   const allExcludedProps = [...COMMON_EXCLUDED_PROPS, ...excludedProps];
-  
+
   // Update element properties
   for (const [key, value] of Object.entries(props)) {
     if (!allExcludedProps.includes(key)) {
@@ -150,12 +150,12 @@ export function updateBaseProps(
  * Gets a theme color with fallback
  */
 export function getThemeColor(
-  colorPath: string, 
-  fallback: string = 'white'
+  colorPath: string,
+  fallback: string = "white"
 ): string {
   const theme = getTheme();
-  const parts = colorPath.split('.');
-  
+  const parts = colorPath.split(".");
+
   let current: any = theme;
   for (const part of parts) {
     if (current && part in current) {
@@ -164,6 +164,6 @@ export function getThemeColor(
       return fallback;
     }
   }
-  
+
   return current || fallback;
 }

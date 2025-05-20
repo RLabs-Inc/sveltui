@@ -1,6 +1,6 @@
-# SveltUI Usage Guide
+# SvelTUI Usage Guide
 
-This document provides examples and patterns for building terminal interfaces with SveltUI.
+This document provides examples and patterns for building terminal interfaces with SvelTUI.
 
 ## Table of Contents
 
@@ -15,14 +15,14 @@ This document provides examples and patterns for building terminal interfaces wi
 
 ## Basic Usage
 
-Here's a simple example of a SveltUI application:
+Here's a simple example of a SvelTUI application:
 
 ```typescript
 import { initializeScreen, render } from "sveltui";
 
 // Create reactive state with Svelte runes
 let count = $state(0);
-let message = $state("Welcome to SveltUI");
+let message = $state("Welcome to SvelTUI");
 
 // Initialize the terminal screen
 const screen = initializeScreen({
@@ -44,7 +44,7 @@ const header = render("text", {
   parent: main.element,
   top: 1,
   left: "center",
-  content: "SveltUI Example",
+  content: "SvelTUI Example",
   style: { bold: true },
 });
 
@@ -78,9 +78,9 @@ const button = render("box", {
 });
 
 // Handle keyboard navigation and input
-screen.key(['escape', 'q', 'C-c'], () => process.exit(0));
+screen.key(["escape", "q", "C-c"], () => process.exit(0));
 
-screen.key('+', () => {
+screen.key("+", () => {
   count++;
   content.update({ content: `Count: ${count} - ${message}` });
   screen.render();
@@ -190,7 +190,7 @@ render("text", {
 });
 
 // Key handling
-screen.key(['escape', 'q', 'C-c'], () => process.exit(0));
+screen.key(["escape", "q", "C-c"], () => process.exit(0));
 
 // Render
 screen.render();
@@ -334,33 +334,33 @@ const successMessage = render("text", {
 // Validation function
 function validate() {
   errors = {};
-  
+
   if (!username) {
     errors.username = "Username is required";
   } else if (username.length < 3) {
     errors.username = "Username must be at least 3 characters";
   }
-  
+
   if (!password) {
     errors.password = "Password is required";
   } else if (password.length < 6) {
     errors.password = "Password must be at least 6 characters";
   }
-  
+
   if (!email) {
     errors.email = "Email is required";
-  } else if (!email.includes('@')) {
+  } else if (!email.includes("@")) {
     errors.email = "Email must be valid";
   }
-  
+
   // Update error display
-  const errorList = Object.values(errors).join('\n');
+  const errorList = Object.values(errors).join("\n");
   errorDisplay.update({ content: errorList });
   screen.render();
 }
 
 // Key navigation
-screen.key('tab', () => {
+screen.key("tab", () => {
   const focused = screen.focused;
   if (focused === usernameInput.element) {
     passwordInput.element.focus();
@@ -375,7 +375,7 @@ screen.key('tab', () => {
 });
 
 // Exit keys
-screen.key(['escape', 'q', 'C-c'], () => process.exit(0));
+screen.key(["escape", "q", "C-c"], () => process.exit(0));
 
 // Initial focus
 usernameInput.element.focus();
@@ -447,13 +447,7 @@ const statusBar = render("text", {
 });
 
 // Create menu items
-const menuItems = [
-  "Main Menu",
-  "File Operations",
-  "Settings",
-  "Help",
-  "Exit"
-];
+const menuItems = ["Main Menu", "File Operations", "Settings", "Help", "Exit"];
 
 const menuList = render("list", {
   parent: menuContainer.element,
@@ -497,22 +491,26 @@ const menuList = render("list", {
 // Update content based on active menu
 function updateContent() {
   let content;
-  
+
   switch (activeMenu) {
     case "main":
-      content = "Main Menu\n\nWelcome to the application.\nUse the menu on the left to navigate.";
+      content =
+        "Main Menu\n\nWelcome to the application.\nUse the menu on the left to navigate.";
       break;
     case "files":
-      content = "File Operations\n\n- Create new file\n- Open existing file\n- Save current file\n- Export as...";
+      content =
+        "File Operations\n\n- Create new file\n- Open existing file\n- Save current file\n- Export as...";
       break;
     case "settings":
-      content = "Settings\n\n- Application preferences\n- User profile\n- Theme: Dark\n- Language: English";
+      content =
+        "Settings\n\n- Application preferences\n- User profile\n- Theme: Dark\n- Language: English";
       break;
     case "help":
-      content = "Help\n\n- Documentation\n- About\n- Check for updates\n- Report an issue";
+      content =
+        "Help\n\n- Documentation\n- About\n- Check for updates\n- Report an issue";
       break;
   }
-  
+
   contentArea.update({ content });
   statusMessage = `Current section: ${activeMenu}`;
   statusBar.update({ content: statusMessage });
@@ -526,7 +524,7 @@ updateContent();
 menuList.element.focus();
 
 // Key handling
-screen.key(['escape', 'q', 'C-c'], () => process.exit(0));
+screen.key(["escape", "q", "C-c"], () => process.exit(0));
 
 screen.render();
 ```
@@ -577,7 +575,7 @@ const chartContainer = render("box", {
 });
 
 // Find maximum value for scaling
-const maxValue = Math.max(...data.map(item => item.value));
+const maxValue = Math.max(...data.map((item) => item.value));
 const chartHeight = 15;
 const barWidth = 8;
 
@@ -585,7 +583,7 @@ const barWidth = 8;
 data.forEach((item, index) => {
   const barHeight = Math.round((item.value / maxValue) * chartHeight);
   const barLeft = index * (barWidth + 2) + 2;
-  
+
   // Create bar
   render("box", {
     parent: chartContainer.element,
@@ -597,20 +595,20 @@ data.forEach((item, index) => {
       bg: "blue",
     },
   });
-  
+
   // Create label
   render("text", {
     parent: chartContainer.element,
     bottom: 1,
-    left: barLeft + barWidth/2 - 1,
+    left: barLeft + barWidth / 2 - 1,
     content: item.month,
   });
-  
+
   // Create value label
   render("text", {
     parent: chartContainer.element,
     bottom: barHeight + 2,
-    left: barLeft + barWidth/2 - 1,
+    left: barLeft + barWidth / 2 - 1,
     content: item.value.toString(),
     style: { fg: "yellow" },
   });
@@ -625,7 +623,7 @@ render("text", {
 });
 
 // Key handling
-screen.key(['escape', 'q', 'C-c'], () => process.exit(0));
+screen.key(["escape", "q", "C-c"], () => process.exit(0));
 
 screen.render();
 ```
@@ -649,12 +647,12 @@ function batchUpdates() {
   count++;
   temperature += 2;
   humidity -= 1;
-  
+
   // Update multiple elements
   countDisplay.update({ content: `Count: ${count}` });
   tempDisplay.update({ content: `Temp: ${temperature}°C` });
   humidityDisplay.update({ content: `Humidity: ${humidity}%` });
-  
+
   // Render once at the end
   screen.render();
 }
@@ -666,13 +664,13 @@ function batchUpdates() {
 let lastKeyTime = 0;
 const throttleDelay = 100; // ms
 
-screen.on('keypress', function(ch, key) {
+screen.on("keypress", function (ch, key) {
   const now = Date.now();
   if (now - lastKeyTime < throttleDelay) {
     return; // Skip if too soon after last keystroke
   }
   lastKeyTime = now;
-  
+
   // Handle keypress
 });
 ```
@@ -717,14 +715,14 @@ function createFormField(label, value, top) {
     height: 5,
     top: top,
   });
-  
+
   render("text", {
     parent: container.element,
     content: label,
     left: 2,
     top: 1,
   });
-  
+
   const input = render("input", {
     parent: container.element,
     left: 20,
@@ -732,7 +730,7 @@ function createFormField(label, value, top) {
     width: 30,
     value: value,
   });
-  
+
   return {
     container,
     input,
@@ -751,11 +749,13 @@ const emailField = createFormField("Email:", "", 8);
 **Issue: UI elements not displaying correctly**
 
 Potential causes:
+
 - Elements are outside the visible area
 - Parent container is too small
 - Z-index issues with overlapping elements
 
 Solution:
+
 ```typescript
 // Add border to help visualize container boundaries
 render("box", {
@@ -768,11 +768,13 @@ render("box", {
 **Issue: Keyboard input not working**
 
 Potential causes:
+
 - No element has focus
 - Event handlers are not properly attached
 - Input events are being captured by the wrong element
 
 Solution:
+
 ```typescript
 // Explicitly set focus and check focused element
 someElement.element.focus();
@@ -785,9 +787,11 @@ console.log("Key handlers:", Object.keys(screen.keypressHandlers));
 **Issue: Screen not updating**
 
 Potential cause:
+
 - Missing `screen.render()` call after updates
 
 Solution:
+
 ```typescript
 // Always call render after making changes
 element.update({ content: "New content" });
@@ -797,9 +801,11 @@ screen.render(); // Don't forget this!
 **Issue: Components disappearing**
 
 Potential cause:
+
 - Components being replaced or removed accidentally
 
 Solution:
+
 ```typescript
 // Store all important components in an object for tracking
 const components = {
@@ -842,7 +848,7 @@ const debugPanel = render("box", {
 
 function updateDebug() {
   debugPanel.update({
-    content: `Count: ${count}, Selected: ${selectedIndex}, Focus: ${screen.focused?.type}`
+    content: `Count: ${count}, Selected: ${selectedIndex}, Focus: ${screen.focused?.type}`,
   });
   screen.render();
 }
@@ -855,7 +861,7 @@ function updateDebug() {
 function testInputComponent() {
   const screen = initializeScreen({ title: "Input Test" });
   let value = "";
-  
+
   const input = render("input", {
     width: 30,
     height: 3,
@@ -864,14 +870,14 @@ function testInputComponent() {
       value = v;
       debug.update({ content: `Submitted: ${value}` });
       screen.render();
-    }
+    },
   });
-  
+
   const debug = render("text", {
     top: 5,
     content: "Type something...",
   });
-  
+
   input.element.focus();
   screen.render();
 }
