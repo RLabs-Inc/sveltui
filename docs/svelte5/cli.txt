@@ -1,0 +1,622 @@
+<SYSTEM>This is the developer documentation for the Svelte CLI.</SYSTEM>
+
+
+# Overview
+
+The command line interface (CLI), `sv`, is a toolkit for creating and maintaining Svelte applications.
+
+## Usage
+
+The easiest way to run `sv` is with [`npx`](https://docs.npmjs.com/cli/v8/commands/npx) (or the equivalent command if you're using a different package manager — for example, `pnpx` if you're using [pnpm](https://pnpm.io/)):
+
+```bash
+npx sv <command> <args>
+```
+
+If you're inside a project where `sv` is already installed, this will use the local installation, otherwise it will download the latest version and run it without installing it, which is particularly useful for [`sv create`](sv-create).
+
+## Acknowledgements
+
+Thank you to [Christopher Brown](https://github.com/chbrown) who originally owned the `sv` name on npm for graciously allowing it to be used for the Svelte CLI. You can find the original `sv` package at [`@chbrown/sv`](https://www.npmjs.com/package/@chbrown/sv).
+
+# Frequently asked questions
+
+## How do I run the `sv` CLI?
+
+Running `sv` looks slightly different for each package manager. Here is a list of the most common commands:
+
+- **npm** : `npx sv create`
+- **pnpm** : `pnpx sv create` or `pnpm dlx sv create`
+- **Bun** : `bunx sv create`
+- **Deno** : `deno run npm:sv create`
+- **Yarn** : `yarn dlx sv create`
+
+## `npx sv` is not working
+
+Some package managers prefer to run locally installed tools instead of downloading and executing packages from the registry. This issue mostly occurs with `npm` and `yarn`. This usually results in an error message or looks like the command you were trying to execute did not do anything.
+
+Here is a list of issues with possible solutions that users have encountered in the past:
+
+- [`npx sv` create does nothing](https://github.com/sveltejs/cli/issues/472)
+- [`sv` command name collides with `runit`](https://github.com/sveltejs/cli/issues/259)
+- [`sv` in windows powershell conflicts with `Set-Variable`](https://github.com/sveltejs/cli/issues/317)
+
+# sv create
+
+`sv create` sets up a new SvelteKit project, with options to [setup additional functionality](sv-add#Official-add-ons).
+
+## Usage
+
+```bash
+npx sv create [options] [path]
+```
+
+## Options
+
+### `--template <name>`
+
+Which project template to use:
+
+- `minimal` — barebones scaffolding for your new app
+- `demo` — showcase app with a word guessing game that works without JavaScript
+- `library` — template for a Svelte library, set up with `svelte-package`
+
+### `--types <option>`
+
+Whether and how to add typechecking to the project:
+
+- `ts` — default to `.ts` files and use `lang="ts"` for `.svelte` components
+- `jsdoc` — use [JSDoc syntax](https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html) for types
+
+### `--no-types`
+
+Prevent typechecking from being added. Not recommended!
+
+### `--no-add-ons`
+
+Run the command without the interactive add-ons prompt
+
+### `--install <package-manager>`
+
+Installs dependencies with a specified package manager:
+
+- `npm`
+- `pnpm`
+- `yarn`
+- `bun`
+- `deno`
+
+### `--no-install`
+
+Prevents installing dependencies.
+
+<!-- ## Programmatic interface
+
+```js
+// TODO: this gives type checking errors in the docs site when not commented out. Need to release sv, install it in the site, and uncomment this.
+// import { create } from 'sv';
+
+// // todo: check if this is right
+// create(cwd, {
+// 	// add your options here
+// 	// todo: list available option
+// });
+```
+-->
+
+# sv add
+
+`sv add` updates an existing project with new functionality.
+
+## Usage
+
+```bash
+npx sv add
+```
+
+```bash
+npx sv add [add-ons]
+```
+
+You can select multiple space-separated add-ons from [the list below](#Official-add-ons), or you can use the interactive prompt.
+
+## Options
+
+- `-C`, `--cwd` — path to the root of your Svelte(Kit) project
+- `--no-preconditions` — skip checking preconditions <!-- TODO what does this mean? -->
+- `--install` — installs dependencies with a specified package manager
+- `--no-install` — prevents installing dependencies
+
+## Official add-ons
+
+<!-- TODO: it'd be nice for this to live on the "add-ons" page, but we first need svelte.dev to support making pages from headings -->
+
+- [`drizzle`](drizzle)
+- [`eslint`](eslint)
+- [`lucia`](lucia)
+- [`mdsvex`](mdsvex)
+- [`paraglide`](paraglide)
+- [`playwright`](playwright)
+- [`prettier`](prettier)
+- [`storybook`](storybook)
+- [`sveltekit-adapter`](sveltekit-adapter)
+- [`tailwindcss`](tailwind)
+- [`vitest`](vitest)
+
+# sv check
+
+`sv check` finds errors and warnings in your project, such as:
+
+- unused CSS
+- accessibility hints
+- JavaScript/TypeScript compiler errors
+
+Requires Node 16 or later.
+
+## Installation
+
+You will need to have the `svelte-check` package installed in your project:
+
+```bash
+npm i -D svelte-check
+```
+
+## Usage
+
+```bash
+npx sv check
+```
+
+## Options
+
+### `--workspace <path>`
+
+Path to your workspace. All subdirectories except `node_modules` and those listed in `--ignore` are checked.
+
+### `--output <format>`
+
+How to display errors and warnings. See [machine-readable output](#Machine-readable-output).
+
+- `human`
+- `human-verbose`
+- `machine`
+- `machine-verbose`
+
+### `--watch`
+
+Keeps the process alive and watches for changes.
+
+### `--preserveWatchOutput`
+
+Prevents the screen from being cleared in watch mode.
+
+### `--tsconfig <path>`
+
+Pass a path to a `tsconfig` or `jsconfig` file. The path can be relative to the workspace path or absolute. Doing this means that only files matched by the `files`/`include`/`exclude` pattern of the config file are diagnosed. It also means that errors from TypeScript and JavaScript files are reported. If not given, will traverse upwards from the project directory looking for the next `jsconfig`/`tsconfig.json` file.
+
+### `--no-tsconfig`
+
+Use this if you only want to check the Svelte files found in the current directory and below and ignore any `.js`/`.ts` files (they will not be type-checked)
+
+### `--ignore <paths>`
+
+Files/folders to ignore, relative to workspace root. Paths should be comma-separated and quoted. Example:
+
+```bash
+npx sv check --ignore "dist,build"
+```
+
+<!-- TODO what the hell does this mean? is it possible to use --tsconfig AND --no-tsconfig? if so what would THAT mean? -->
+
+Only has an effect when used in conjunction with `--no-tsconfig`. When used in conjunction with `--tsconfig`, this will only have effect on the files watched, not on the files that are diagnosed, which is then determined by the `tsconfig.json`.
+
+### `--fail-on-warnings`
+
+If provided, warnings will cause `sv check` to exit with an error code.
+
+### `--compiler-warnings <warnings>`
+
+A quoted, comma-separated list of `code:behaviour` pairs where `code` is a [compiler warning code](../svelte/compiler-warnings) and `behaviour` is either `ignore` or `error`:
+
+```bash
+npx sv check --compiler-warnings "css_unused_selector:ignore,a11y_missing_attribute:error"
+```
+
+### `--diagnostic-sources <sources>`
+
+A quoted, comma-separated list of sources that should run diagnostics on your code. By default, all are active:
+
+<!-- TODO would be nice to have a clearer definition of what these are -->
+- `js` (includes TypeScript)
+- `svelte`
+- `css`
+
+Example:
+
+```bash
+npx sv check --diagnostic-sources "js,svelte"
+```
+
+### `--threshold <level>`
+
+Filters the diagnostics:
+
+- `warning` (default) — both errors and warnings are shown
+- `error` — only errors are shown
+
+## Troubleshooting
+
+[See the language-tools documentation](https://github.com/sveltejs/language-tools/blob/master/docs/README.md) for more information on preprocessor setup and other troubleshooting.
+
+## Machine-readable output
+
+Setting the `--output` to `machine` or `machine-verbose` will format output in a way that is easier to read
+by machines, e.g. inside CI pipelines, for code quality checks, etc.
+
+Each row corresponds to a new record. Rows are made up of columns that are separated by a
+single space character. The first column of every row contains a timestamp in milliseconds
+which can be used for monitoring purposes. The second column gives us the "row type", based
+on which the number and types of subsequent columns may differ.
+
+The first row is of type `START` and contains the workspace folder (wrapped in quotes). Example:
+
+```
+1590680325583 START "/home/user/language-tools/packages/language-server/test/plugins/typescript/testfiles"
+```
+
+Any number of `ERROR` or `WARNING` records may follow. Their structure is identical and depends on the output argument.
+
+If the argument is `machine` it will tell us the filename, the starting line and column numbers, and the error message. The filename is relative to the workspace directory. The filename and the message are both wrapped in quotes. Example:
+
+```
+1590680326283 ERROR "codeactions.svelte" 1:16 "Cannot find module 'blubb' or its corresponding type declarations."
+1590680326778 WARNING "imported-file.svelte" 0:37 "Component has unused export property 'prop'. If it is for external reference only, please consider using `export const prop`"
+```
+
+If the argument is `machine-verbose` it will tell us the filename, the starting line and column numbers, the ending line and column numbers, the error message, the code of diagnostic, the human-friendly description of the code and the human-friendly source of the diagnostic (eg. svelte/typescript). The filename is relative to the workspace directory. Each diagnostic is represented as an [ndjson](https://en.wikipedia.org/wiki/JSON_streaming#Newline-Delimited_JSON) line prefixed by the timestamp of the log. Example:
+
+```
+1590680326283 {"type":"ERROR","fn":"codeaction.svelte","start":{"line":1,"character":16},"end":{"line":1,"character":23},"message":"Cannot find module 'blubb' or its corresponding type declarations.","code":2307,"source":"js"}
+1590680326778 {"type":"WARNING","filename":"imported-file.svelte","start":{"line":0,"character":37},"end":{"line":0,"character":51},"message":"Component has unused export property 'prop'. If it is for external reference only, please consider using `export
+const prop`","code":"unused-export-let","source":"svelte"}
+```
+
+The output concludes with a `COMPLETED` message that summarizes total numbers of files, errors and warnings that were encountered during the check. Example:
+
+```
+1590680326807 COMPLETED 20 FILES 21 ERRORS 1 WARNINGS 3 FILES_WITH_PROBLEMS
+```
+
+If the application experiences a runtime error, this error will appear as a `FAILURE` record. Example:
+
+```
+1590680328921 FAILURE "Connection closed"
+```
+
+## Credits
+
+- Vue's [VTI](https://github.com/vuejs/vetur/tree/master/vti) which laid the foundation for `svelte-check`
+
+## FAQ
+
+### Why is there no option to only check specific files (for example only staged files)?
+
+`svelte-check` needs to 'see' the whole project for checks to be valid. Suppose you renamed a component prop but didn't update any of the places where the prop is used — the usage sites are all errors now, but you would miss them if checks only ran on changed files.
+
+# sv migrate
+
+`sv migrate` migrates Svelte(Kit) codebases. It delegates to the [`svelte-migrate`](https://www.npmjs.com/package/svelte-migrate) package.
+
+Some migrations may annotate your codebase with tasks for completion that you can find by searching for `@migration`.
+
+## Usage
+
+```bash
+npx sv migrate
+```
+
+You can also specify a migration directly via the CLI:
+```bash
+npx sv migrate [migration]
+```
+
+## Migrations
+
+### `app-state`
+
+Migrates `$app/stores` usage to `$app/state` in `.svelte` files. See the [migration guide](/docs/kit/migrating-to-sveltekit-2#SvelteKit-2.12:-$app-stores-deprecated) for more details.
+
+### `svelte-5`
+
+Upgrades a Svelte 4 app to use Svelte 5, and updates individual components to use [runes](../svelte/what-are-runes) and other Svelte 5 syntax ([see migration guide](../svelte/v5-migration-guide)).
+
+### `self-closing-tags`
+
+Replaces all the self-closing non-void elements in your `.svelte` files. See the [pull request](https://github.com/sveltejs/kit/pull/12128) for more details.
+
+### `svelte-4`
+
+Upgrades a Svelte 3 app to use Svelte 4 ([see migration guide](../svelte/v4-migration-guide)).
+
+### `sveltekit-2`
+
+Upgrades a SvelteKit 1 app to SvelteKit 2 ([see migration guide](../kit/migrating-to-sveltekit-2)).
+
+### `package`
+
+Upgrades a library using `@sveltejs/package` version 1 to version 2. See the [pull request](https://github.com/sveltejs/kit/pull/8922) for more details.
+
+### `routes`
+
+Upgrades a pre-release SvelteKit app to use the filesystem routing conventions in SvelteKit 1. See the [pull request](https://github.com/sveltejs/kit/discussions/5774) for more details.
+
+# drizzle
+
+[Drizzle ORM](https://orm.drizzle.team/) is a TypeScript ORM offering both relational and SQL-like query APIs, and which is serverless-ready by design.
+
+## Usage
+
+```bash
+npx sv add drizzle
+```
+
+## What you get
+
+- a setup that keeps your database access in SvelteKit's server files
+- an `.env` file to store your credentials
+- compatibility with the Lucia auth add-on
+- an optional Docker configuration to help with running a local database
+
+## Options
+
+### database
+
+Which database variant to use:
+
+- `postgresql` — the most popular open source database
+- `mysql` — another popular open source database
+- `sqlite` — file-based database not requiring a database server
+
+```bash
+npx sv add drizzle=database:postgresql
+```
+
+### client
+
+The SQL client to use, depends on `database`:
+
+- For `postgresql`: `postgres.js`, `neon`,
+- For `mysql`: `mysql2`, `planetscale`
+- For `sqlite`: `better-sqlite3`, `libsql`, `turso`
+
+```bash
+npx sv add drizzle=database:postgresql+client:postgres.js
+```
+
+Drizzle is compatible with well over a dozen database drivers. We just offer a few of the most common ones here for simplicity, but if you'd like to use another one you can choose one as a placeholder and swap it out for another after setup by choosing from [Drizzle's full list of compatible drivers](https://orm.drizzle.team/docs/connect-overview#next-steps).
+
+### docker
+
+Whether to add Docker Compose configuration. Only available for [`database`](#Options-database) `postgresql` or `mysql`
+
+```bash
+npx sv add drizzle=database:postgresql+client:postgres.js+docker:yes
+```
+
+# eslint
+
+[ESLint](https://eslint.org/) finds and fixes problems in your code.
+
+## Usage
+
+```bash
+npx sv add eslint
+```
+
+## What you get
+
+- the relevant packages installed including `eslint-plugin-svelte`
+- an `eslint.config.js` file
+- updated `.vscode/settings.json`
+- configured to work with TypeScript and `prettier` if you're using those packages
+
+# lucia
+
+An auth setup following [the Lucia auth guide](https://lucia-auth.com/).
+
+## Usage
+
+```bash
+npx sv add lucia
+```
+
+## What you get
+
+- an auth setup for SvelteKit and Drizzle following the best practices from the Lucia auth guide
+- optional demo registration and login pages
+
+## Options
+
+### demo
+
+Whether to include demo registration and login pages.
+
+```bash
+npx sv add lucia=demo:yes
+```
+
+# mdsvex
+
+[mdsvex](https://mdsvex.pngwn.io) is a markdown preprocessor for Svelte components - basically MDX for Svelte. It allows you to use Svelte components in your markdown, or markdown in your Svelte components.
+
+## Usage
+
+```bash
+npx sv add mdsvex
+```
+
+## What you get
+
+- mdsvex installed and configured in your `svelte.config.js`
+
+# paraglide
+
+[Paraglide from Inlang](https://inlang.com/m/gerre34r/library-inlang-paraglideJs) is a compiler-based i18n library that emits tree-shakable message functions with small bundle sizes, no async waterfalls, full type-safety, and more.
+
+## Usage
+
+```bash
+npx sv add paraglide
+```
+
+## What you get
+
+- Inlang project settings
+- paraglide Vite plugin
+- SvelteKit `reroute` and `handle` hooks
+- `text-direction` and `lang` attributes in `app.html`
+- updated `.gitignore`
+- an optional demo page showing how to use paraglide
+
+## Options
+
+### languageTags
+
+The languages you'd like to support specified as IETF BCP 47 language tags.
+
+```bash
+npx sv add paraglide="languageTags:en,es"
+```
+
+### demo
+
+Whether to generate an optional demo page showing how to use paraglide.
+
+```bash
+npx sv add paraglide="demo:yes"
+```
+
+# playwright
+
+[Playwright](https://playwright.dev) browser testing.
+
+## Usage
+
+```bash
+npx sv add playwright
+```
+
+## What you get
+
+- scripts added in your `package.json`
+- a Playwright config file
+- an updated `.gitignore`
+- a demo test
+
+# prettier
+
+[Prettier](https://prettier.io) is an opinionated code formatter.
+
+## Usage
+
+```bash
+npx sv add prettier
+```
+
+## What you get
+
+- scripts in your `package.json`
+- `.prettierignore` and `.prettierrc` files
+- updates to your eslint config if you're using that package
+
+# storybook
+
+[Storybook](https://storybook.js.org/) is a frontend component workshop.
+
+## Usage
+
+```bash
+npx sv add storybook
+```
+
+## What you get
+
+- `npx storybook init` run for you from the same convenient `sv` CLI used for all other add-ons
+- [Storybook for SvelteKit](https://storybook.js.org/docs/get-started/frameworks/sveltekit) or [Storybook for Svelte & Vite](https://storybook.js.org/docs/get-started/frameworks/svelte-vite) with default config provided, easy mocking of many SvelteKit modules, automatic link handling, and more.
+
+# sveltekit-adapter
+
+[SvelteKit adapters](/docs/kit/adapters) allow you to deploy your site to numerous platforms. This add-on allows you to configure officially provided SvelteKit adapters, but a number of [community-provided adapters](https://www.sveltesociety.dev/packages?category=sveltekit-adapters) are also available.
+
+## Usage
+
+```bash
+npx sv add sveltekit-adapter
+```
+
+## What you get
+
+- the chosen SvelteKit adapter installed and configured in your `svelte.config.js`
+
+## Options
+
+### adapter
+
+Which SvelteKit adapter to use:
+
+- `auto` — [`@sveltejs/adapter-auto`](/docs/kit/adapter-auto) automatically chooses the proper adapter to use, but is less configurable
+- `node` — [`@sveltejs/adapter-node`](/docs/kit/adapter-node) generates a standalone Node server
+- `static` — [`@sveltejs/adapter-static`](/docs/kit/adapter-static) allows you to use SvelteKit as a static site generator (SSG)
+- `vercel` — [`@sveltejs/adapter-vercel`](/docs/kit/adapter-vercel) allows you to deploy to Vercel
+- `cloudflare` — [`@sveltejs/adapter-cloudflare`](/docs/kit/adapter-cloudflare) allows you to deploy to Cloudflare
+- `netlify` — [`@sveltejs/adapter-netlify`](/docs/kit/adapter-netlify) allows you to deploy to Netlify
+
+```bash
+npx sv add sveltekit-adapter=adapter:node
+```
+
+# tailwindcss
+
+[Tailwind CSS](https://tailwindcss.com/) allows you to rapidly build modern websites without ever leaving your HTML.
+
+## Usage
+
+```bash
+npx sv add tailwindcss
+```
+
+## What you get
+
+- Tailwind setup following the [Tailwind for SvelteKit guide](https://tailwindcss.com/docs/installation/framework-guides/sveltekit)
+- Tailwind Vite plugin
+- updated `app.css` and `+layout.svelte` (for SvelteKit) or `App.svelte` (for non-SvelteKit Vite apps)
+- integration with `prettier` if using that package
+
+## Options
+
+### plugins
+
+Which plugin to use:
+
+- `typography` — [`@tailwindcss/typography`](https://github.com/tailwindlabs/tailwindcss-typography)
+- `forms` — [`@tailwindcss/forms`](https://github.com/tailwindlabs/tailwindcss-forms)
+
+```bash
+npx sv add tailwindcss="plugins:typography"
+```
+
+# vitest
+
+[Vitest](https://vitest.dev/) is a Vite-native testing framework.
+
+## Usage
+
+```bash
+npx sv add vitest
+```
+
+## What you get
+
+- the relevant packages installed and scripts added to your `package.json`
+- client/server-aware testing setup for Svelte in your Vite config file
+- demo tests

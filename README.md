@@ -2,420 +2,225 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-SvelTUI is a modern library for building Terminal User Interfaces (TUIs) that combines the elegance of Svelte 5's reactivity system with the power of the blessed terminal library.
+A true Svelte 5 renderer for terminal user interfaces, inspired by Ink for React.
 
 <p align="center">
-  <img src="https://via.placeholder.com/800x400?text=SveltUI+Terminal+Interface" alt="SveltUI Demo Screenshot" width="80%">
+  <img src="https://via.placeholder.com/800x400?text=SvelTUI:+Svelte+for+Terminal" alt="SvelTUI Demo Screenshot" width="80%">
 </p>
 
-## Why SveltUI?
+## Overview
 
-- **Reactive by design** - Leverage Svelte 5's runes for a truly reactive terminal UI experience
-- **Component-based** - Build your terminal UIs using a familiar component-based approach
-- **Simple API** - Intuitive API designed for developer productivity
-- **TypeScript support** - Fully typed for better development experience
-- **Lightweight** - Minimal overhead and dependencies
+SvelTUI allows you to build beautiful terminal user interfaces using Svelte 5 components. Unlike wrapper libraries, SvelTUI implements a custom Svelte compiler plugin that renders Svelte components directly to the terminal, bringing the full power of Svelte to terminal applications.
+
+## Why SvelTUI?
+
+- **Direct Svelte 5 Integration** - Uses Svelte 5's mount/unmount APIs for true integration
+- **Write Regular Svelte** - Use standard Svelte 5 components with familiar syntax and runes
+- **Reactive Terminal UIs** - Svelte 5's reactivity system makes terminal UIs dynamic
+- **Efficient Updates** - Batched operations and reconciliation for minimal terminal redraws
+- **Complete Feature Support** - Full Svelte 5 feature set including state, effects, and lifecycle
+- **TypeScript Support** - Fully typed for better development experience
 
 ## Installation
 
-To install dependencies:
-
 ```bash
+# Install dependencies
 bun install
-```
 
-## Running
-
-To start the development server:
-
-```bash
-bun run dev
-```
-
-To run the demo examples:
-
-```bash
-# Main demo
+# Run the example application
 bun run example
-
-# Component demos
-bun run components-demo # All components with focus on debugging
-bun run checkbox-demo   # Checkbox component demo
-bun run select-demo     # Select dropdown component demo
-
-# Theme demos
-bun run theme-demo     # Full theme demo with dual preview lists
-bun run theme-simple   # Simple theme demonstration
-bun run theme-showcase # Showcase of theme colors and components
-```
-
-## Building
-
-To build the library:
-
-```bash
-bun run build
 ```
 
 ## Features
 
-- **Reactive Components** - Terminal UI components powered by Svelte 5 runes
-- **State Management** - Automatic UI updates when state changes
-- **Component Architecture** - Familiar component-based architecture for terminal UIs
-- **Svelte Integration** - Leverage your existing Svelte knowledge
-- **Keyboard Navigation** - Built-in support for keyboard shortcuts and navigation with [detailed guidelines](docs/KEY_HANDLING.md)
-- **Theming System** - Customizable themes with YAML support
-- **Styling** - Rich styling options for terminal interfaces
-- **Event Handling** - Comprehensive event system for user interactions
-- **CLI Support** - Tools for styled terminal output in CLI applications
-
-## Technical Foundation
-
-SveltUI is built on:
-
-- **Svelte 5** - Using the latest runes API for reactivity
-- **Blessed** - Powerful terminal UI library for Node.js
-- **TypeScript** - Full type support for better developer experience
-- **Vite** - Modern build tooling for fast development
-
-The `.svelte.ts` file extension is used for files that leverage Svelte 5 runes.
+- **Write Once, Render Anywhere** - Same components work in browser and terminal
+- **Full Svelte 5 Support** - Complete Svelte 5 feature set in the terminal
+- **Custom Components** - Create your own terminal UI components with Svelte
+- **Reactive Updates** - Efficient reactivity in the terminal
+- **Layout Engine** - Flexbox-like layout in the terminal with Yoga integration
+- **Keyboard & Mouse Navigation** - Built-in event handling support
+- **Theming System** - Comprehensive theming capabilities
+- **Focus Management** - Intelligent focus handling for interactive components
+- **Bidirectional DOM Binding** - Clean DOM-to-terminal element binding
 
 ## Basic Usage
 
-```typescript
-import { initializeScreen, render } from "sveltui";
+```svelte
+<!-- App.svelte -->
+<script>
+  // Svelte 5 runes for reactivity
+  let count = $state(0);
+  let items = $state(["Item 1", "Item 2", "Item 3"]);
+  let selected = $state(0);
 
-// Create reactive state with Svelte runes
-let count = $state(0);
-let message = $state("Hello SveltUI!");
+  // Reactivity with $derived
+  $derived selectedItem = items[selected];
+  $derived hasItems = items.length > 0;
 
-// Derived values automatically update
-let displayMessage = $derived(`Message: ${message} (Count: ${count})`);
-
-// Initialize the terminal screen
-const screen = initializeScreen({
-  title: "My TUI App",
-});
-
-// Create a container box
-const main = render("box", {
-  width: "100%",
-  height: "100%",
-  border: true,
-});
-
-// Add some text that will automatically update - keep a reference for updating later
-const textElement = render("text", {
-  parent: main.element,
-  top: "center",
-  left: "center",
-  content: displayMessage,
-});
-
-// Create an interactive list
-const listElement = render("list", {
-  parent: main.element,
-  top: 5,
-  left: "center",
-  width: "60%",
-  height: 5,
-  items: ["Item 1", "Item 2", "Item 3"],
-  border: true,
-  onSelect: (index, item) => {
-    // Update other elements when selection changes
-    textElement.update({ content: `Selected: ${item}` });
-    screen.render();
-  },
-});
-
-// Use the keypress event for key handling (recommended approach)
-screen.on("keypress", function (ch, key) {
-  if (
-    key.name === "q" ||
-    key.name === "escape" ||
-    (key.ctrl && key.name === "c")
-  ) {
-    process.exit(0);
-  } else if (ch === "+") {
+  function increment() {
     count++;
-    // Important: Manually update UI elements when state changes
-    textElement.update({ content: `Count: ${count}` });
-    screen.render();
-  } else if (ch === "-") {
-    count--;
-    // Important: Manually update UI elements when state changes
-    textElement.update({ content: `Count: ${count}` });
-    screen.render();
-  } else if (key.name === "tab") {
-    // Give focus to the input field - user can press Escape to exit input mode
-    inputElement.element.focus();
-    screen.render();
   }
-});
 
-// Add help text to guide users
-render("text", {
-  parent: main.element,
-  bottom: 2,
-  content: "Press [Tab] to focus input, [Esc] to exit input mode",
-  style: { fg: "gray" },
-});
+  function handleSelect(event) {
+    selected = event.detail.index;
+  }
+  
+  // Effects for side effects
+  $effect(() => {
+    console.log(`Selection changed: ${selectedItem}`);
+  });
+</script>
 
-// Give initial focus to the list
-listElement.element.focus();
-
-// Show the screen
-screen.render();
+<box border label="SvelTUI Demo">
+  <text>Count: {count}</text>
+  <button on:press={increment}>Increment</button>
+  
+  <list 
+    items={items}
+    selected={selected}
+    on:select={handleSelect}
+  />
+  
+  <text>Selected: {selectedItem}</text>
+</box>
 ```
 
-## Components
+```typescript
+// main.ts
+import { render } from 'sveltui';
+import App from './App.svelte';
 
-SveltUI includes these built-in components:
+render(App, {
+  // Optional configuration
+  title: 'My Terminal App',
+  fullscreen: true,
+  debug: false,
+  theme: 'dark'
+});
+```
 
-| Component    | Description          | Properties                                     |
-| ------------ | -------------------- | ---------------------------------------------- |
-| **Box**      | Container element    | `width`, `height`, `border`, `style`           |
-| **Text**     | Text display         | `content`, `style`, `left`, `top`              |
-| **Input**    | Text input field     | `value`, `placeholder`, `onChange`, `onSubmit` |
-| **List**     | Selectable list      | `items`, `selected`, `onSelect`, `style`       |
-| **Checkbox** | Interactive checkbox | `checked`, `label`, `onChange`, `disabled`     |
-| **Select**   | Dropdown selection   | `options`, `value`, `onChange`, `placeholder`  |
+## Architecture
 
-All components support standard positioning properties like `left`, `top`, `width`, and `height`.
+SvelTUI implements a custom Svelte 5 renderer for the terminal, with direct integration via Svelte 5's mount/unmount APIs.
+
+The architecture consists of:
+
+1. **Custom Compiler Plugin** - Transforms Svelte components for terminal rendering
+2. **Terminal Renderer** - Renders components to the terminal using Svelte 5's mount/unmount APIs
+3. **Virtual Terminal DOM** - Maintains a virtual representation of the terminal UI with bidirectional binding
+4. **Reconciler** - Efficiently batch-processes updates to the terminal
+5. **Layout Engine** - Calculates component positions and dimensions with Yoga support
+6. **Runtime DOM Connector** - Bridges Svelte 5's runtime to our terminal DOM
+
+For more details, see the [Architecture Documentation](docs/ARCHITECTURE.md).
+
+## Component Implementation
+
+SvelTUI components are built using Svelte 5's component model and runes system:
+
+```svelte
+<script>
+  // Import theme
+  import { getTheme } from '../theme/currentTheme.svelte';
+  
+  // Props with defaults
+  let {
+    value = '',
+    width = 20,
+    height = 1,
+    border = true,
+  } = $props();
+  
+  // Local state
+  let focused = $state(false);
+  
+  // Get theme
+  const theme = getTheme();
+  
+  // Event handlers
+  function handleFocus() {
+    focused = true;
+  }
+  
+  function handleBlur() {
+    focused = false;
+  }
+</script>
+
+<input
+  value={value}
+  width={width}
+  height={height}
+  border={border}
+  style={{
+    bg: focused ? theme.colors.focusBg : theme.colors.bg,
+    fg: theme.colors.fg,
+    border: {
+      fg: focused ? theme.colors.focusBorder : theme.colors.border
+    }
+  }}
+  on:focus={handleFocus}
+  on:blur={handleBlur}
+/>
+```
+
+For more details, see the [Component Implementation Strategy](docs/COMPONENT_IMPLEMENTATION_STRATEGY.md).
+
+## Built-in Components
+
+SvelTUI includes a set of built-in components for common terminal UI elements:
+
+| Component | Description |
+|-----------|-------------|
+| `<box>` | Container component with borders and title support |
+| `<text>` | Text display with styling options |
+| `<list>` | Interactive, selectable list |
+| `<input>` | Text input field |
+| `<checkbox>` | Checkbox for boolean selection |
+| `<button>` | Pressable button |
+| `<progress>` | Progress bar |
 
 ## Theming
 
-SveltUI includes a powerful theming system that allows you to customize the appearance of your terminal UI.
-
-### Using Built-in Themes
+SvelTUI supports a flexible theming system:
 
 ```typescript
-import {
-  initializeScreen,
-  render,
-  setTheme,
-  DarkTheme,
-  LightTheme,
-  TerminalTheme,
-} from "sveltui";
+// Apply a theme
+import { setTheme } from 'sveltui';
+setTheme('dark');
 
-// Use the dark theme
-setTheme(DarkTheme);
+// Use theme in components
+import { getTheme } from 'sveltui';
+const theme = getTheme();
 
-// Create your UI components as usual
-const screen = initializeScreen();
-const box = render("box", {
-  // ...props
-});
+<text style={{ fg: theme.colors.primary }}>Themed Text</text>
 ```
 
-### Creating Custom Themes
+## Development
 
-You can create custom themes programmatically:
+SvelTUI is under active development. Contributions are welcome!
 
-```typescript
-import { createTheme, setTheme } from "sveltui";
+```bash
+# Run development server
+bun run dev
 
-const purpleTheme = createTheme("Purple", {
-  primary: "#9966ff",
-  background: "#1a1a2e",
-  foreground: "#e6e6ff",
-});
+# Build the library
+bun run build
 
-setTheme(purpleTheme);
+# Run tests
+bun run test
 ```
 
-### Loading Themes from YAML
+## Roadmap
 
-You can also load themes from YAML files:
-
-```typescript
-import { loadTheme, setTheme } from "sveltui";
-
-const oceanTheme = loadTheme("./themes/ocean.yaml");
-if (oceanTheme) {
-  setTheme(oceanTheme);
-}
-```
-
-Example YAML theme file:
-
-```yaml
-name: "Ocean"
-description: "A soothing blue theme"
-author: "RLabs Inc."
-version: "1.0.0"
-
-colors:
-  primary: "#0077cc"
-  secondary: "#00ccbb"
-  background: "#05233b"
-  foreground: "#e1f2ff"
-
-  # Status colors
-  success: "#00cc77"
-  warning: "#ffbb00"
-  error: "#ff5555"
-  info: "#55aaff"
-
-derived:
-  surfaceColor: "#072e4f"
-  mutedText: "#a0c0e0"
-
-components:
-  box:
-    border:
-      color: "#0099ff"
-  list:
-    item:
-      selected:
-        background: "#0088dd"
-```
-
-### CLI Text Styling
-
-You can use the theme for CLI text output:
-
-```typescript
-import { text } from "sveltui";
-
-console.log(text.primary("This text uses the primary color"));
-console.log(text.success("Operation completed successfully"));
-console.log(text.error("An error occurred"));
-console.log(text.muted("This is less important information"));
-```
-
-## Best Practices
-
-For detailed component best practices, see [COMPONENT_BEST_PRACTICES.md](docs/COMPONENT_BEST_PRACTICES.md).
-
-### Key Handling
-
-When handling keyboard interactions, use the appropriate method for each component type. For detailed documentation, refer to [KEY_HANDLING.md](docs/KEY_HANDLING.md).
-
-#### For Self-Handling Components (Input, List)
-
-These components handle their own keyboard events internally:
-
-```typescript
-// Input Component
-const input = render("input", {
-  value: myValue,
-  onChange: (value) => {
-    myValue = value;
-    // Update UI as needed
-  },
-  onSubmit: (value) => {
-    // Handle form submission
-  },
-});
-
-// List Component
-const list = render("list", {
-  items: ["Item 1", "Item 2", "Item 3"],
-  onSelect: (index, item) => {
-    // Handle selection
-  },
-});
-```
-
-#### For External-Handling Components (Checkbox, Select)
-
-These components require keyboard event handling at the application level:
-
-```typescript
-// Checkbox with toggle handling
-const checkbox = render("checkbox", {
-  checked: $bindable(false),
-  label: "Enable feature",
-  onChange: (checked) => {
-    console.log(`Checkbox toggled to: ${checked}`);
-  },
-});
-
-// Handle Enter/Space for checkbox toggle via screen key handler
-screen.key(["enter", "space"], () => {
-  if (screen.focused === checkboxElement.element) {
-    checkboxElement.update({ checked: !checkboxElement.element.checked });
-    screen.render();
-  }
-});
-
-// Select with dropdown handling
-const select = render("select", {
-  options: ["Option 1", "Option 2", "Option 3"],
-  value: $bindable(""),
-  onChange: (value) => {
-    console.log(`Selected option: ${value}`);
-  },
-});
-
-// Handle dropdown open/close and navigation
-screen.key(["enter", "space"], () => {
-  if (screen.focused === selectElement.element) {
-    selectElement.update({ open: !selectElement.element.open });
-    screen.render();
-  }
-});
-```
-
-#### General Screen Key Handling
-
-For global key handling:
-
-```typescript
-screen.on("keypress", function (ch, key) {
-  // Skip handling when input is focused
-  if (inputElement.element === screen.focused) return;
-
-  // Handle keys based on character or key name
-  if (ch === "+") {
-    // Handle + key
-  } else if (key.name === "escape") {
-    // Handle escape key
-  }
-});
-```
-
-### Focus Management
-
-Manage focus explicitly for better user experience:
-
-```typescript
-// Focus the list initially
-listElement.element.focus();
-
-// Add tab key handler to focus input
-screen.key("tab", () => {
-  inputElement.element.focus();
-});
-
-// Add escape handler to return focus to list
-screen.key("escape", () => {
-  if (inputElement.element === screen.focused) {
-    listElement.element.focus();
-  }
-});
-```
-
-### Rendering Updates
-
-Always call `screen.render()` after updating components:
-
-```typescript
-count++;
-headerElement.update({ content: `Count: ${count}` });
-screen.render(); // Don't forget this!
-```
-
-## Runtime Support
-
-This project supports:
-
-- **Node.js** 16+
-- **Bun** 1.0+
-
-It was initially created using `bun init` in bun v1.1.42. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+- Complete Yoga layout engine integration
+- Enhanced animation and transition system
+- More built-in UI components
+- State persistence
+- Improved testing infrastructure
+- Interactive component inspector
+- Performance optimizations
+- Accessibility enhancements
 
 ## License
 

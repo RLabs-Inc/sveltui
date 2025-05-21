@@ -1,82 +1,122 @@
-<script lang="ts">
-  /**
-   * A checkbox component for terminal UIs.
-   * Supports checked, unchecked, and indeterminate states.
-   * 
-   * Tab navigation between multiple Checkbox components should be implemented
-   * at the application level using screen.key(['tab']) handlers.
-   */
+/**
+ * Checkbox Component
+ * 
+ * A checkbox input component for boolean selection
+ */
 
+<script lang="ts">
+  const dispatch = createEventDispatcher();
+  
+  // Define component props with defaults
   let {
-    // Current checked state
+    // Position properties
+    left = 0,
+    top = 0,
+    right,
+    bottom,
+    
+    // Dimension properties
+    width = 'shrink',
+    height = 1,
+    // Checkbox state
     checked = $bindable(false),
     
-    // Indeterminate state (displays differently than checked/unchecked)
-    indeterminate = $bindable(false),
+    // Checkbox label
+    label = '',
     
-    // Label text for the checkbox
-    label = "",
-    
-    // Whether the checkbox is disabled
+    // Checkbox is disabled
     disabled = false,
     
-    // Style and layout properties
-    width = "100%",
-    height = 1,
+    // Appearance properties
+    border = false,
+    
+    // Checkbox characters
+    checkedChar = '✓',
+    uncheckedChar = '☐',
+    
+    // Style properties
     style = {},
     
-    // Events
-    onChange = undefined as ((checked: boolean) => void) | undefined,
+    // Focus behavior
+    focusable = true,
     
-    // Focus handlers - useful for updating UI when component gains/loses focus
-    handleFocus = undefined as (() => void) | undefined,
-    handleBlur = undefined as (() => void) | undefined
+    // Keyboard and mouse support
+    keys = true,
+    mouse = true,
+    
+    // Z-index for layering
+    zIndex,
+    
+    // Whether the element is visible
+    hidden = false,
+    
+    // Additional props will be passed to the checkbox element
+    ...restProps
   } = $props();
   
-  // Track focus state
-  let isFocused = $state(false);
+  // Track checkbox state internally
+  let isChecked = $state(checked);
   
-  // Toggle the checkbox
-  function toggle() {
+  // Update internal state when prop changes
+  $effect(() => {
+    isChecked = checked;
+  });
+  
+  // Convert border prop to blessed-compatible value
+  let borderValue = $derived(borderValue = typeof border === 'boolean' ? (border ? 'line' : false) : border);
+
+  // Current checkbox character
+  let currentChar = $derived(currentChar = isChecked ? checkedChar : uncheckedChar);
+
+  // Full content with label
+  let content = $derived(content = `${currentChar} ${label}`);
+
+  // Handle toggle
+  function handleToggle() {
     if (disabled) return;
     
-    if (indeterminate) {
-      indeterminate = false;
-      checked = true;
-    } else {
-      checked = !checked;
-    }
+    isChecked = !isChecked;
+    dispatch('change', { checked: isChecked });
+  }
+  
+  // Handle keypress events
+  function handleKeypress(event: any) {
+    if (disabled) return;
     
-    if (onChange) {
-      onChange(checked);
+    if (event.key === 'enter' || event.key === ' ') {
+      handleToggle();
     }
   }
   
-  // Handle key navigation
-  function handleKeyNavigation(key: string): boolean {
-    if (disabled) return false;
-    
-    switch (key) {
-      case 'enter':
-      case 'return': // Add support for return key
-      case 'space':
-        toggle();
-        return true;
-      default:
-        return false;
-    }
+  // Handle mouse events
+  function handleClick() {
+    handleToggle();
   }
   
-  // Focus and blur handlers
-  function handleFocusEvent() {
-    isFocused = true;
-    if (handleFocus) handleFocus();
-  }
-  
-  function handleBlurEvent() {
-    isFocused = false;
-    if (handleBlur) handleBlur();
+  // Focus the checkbox element
+  export function focus() {
+    // This will be handled by the runtime DOM connector
+    dispatch('focus');
   }
 </script>
 
-<!-- No template needed - our renderer handles this -->
+<!-- We'll implement checkbox as a button since blessed doesn't have a dedicated checkbox -->
+<button
+  left={left}
+  top={top}
+  right={right}
+  bottom={bottom}
+  width={width}
+  height={height}
+  content={content}
+  border={borderValue}
+  style={style}
+  keys={keys}
+  mouse={mouse}
+  focusable={focusable && !disabled}
+  zIndex={zIndex}
+  hidden={hidden}
+  onkeypress={handleKeypress}
+  onpress={handleClick}
+  {...restProps}
+></button>

@@ -1,311 +1,170 @@
 # SvelTUI Architecture
 
-This document explains the internal architecture of SvelTUI and how its components work together.
+This document describes the architecture of SvelTUI, a terminal UI framework that uses Svelte 5 as its core.
 
 ## Overview
 
-SvelTUI is built on two key technologies:
+SvelTUI provides a way to build interactive terminal user interfaces using Svelte 5 components. Unlike wrapper libraries, SvelTUI implements a direct Svelte 5 integration via a custom compiler plugin that renders Svelte components to the terminal, bringing the full power of Svelte's reactivity and component model to terminal applications.
 
-1. **Svelte 5 Runes**: For reactivity and component architecture
-2. **Blessed**: For terminal rendering and interactions
+## Core Components
 
-The framework bridges these technologies, allowing developers to build terminal user interfaces using a reactive, component-based approach.
+SvelTUI's architecture consists of several core components that work together to provide a seamless Svelte 5 experience in the terminal:
 
-## Core Architecture
+1. **Compiler Plugin**: A custom Svelte compiler plugin that transforms Svelte components for terminal rendering.
+2. **Terminal Renderer**: Renders components to the terminal using the blessed library and Svelte 5's mount/unmount APIs.
+3. **Virtual Terminal DOM**: Maintains a virtual representation of the terminal UI with bidirectional binding.
+4. **Reconciler**: Efficiently updates the terminal when state changes through batched operations.
+5. **Layout Engine**: Calculates component positions and dimensions using flexible layouts.
+6. **Runtime DOM Connector**: Bridges Svelte 5's runtime to our terminal-optimized DOM implementation.
+7. **Event System**: Maps terminal events to DOM-like events for Svelte components.
 
-Here's a diagram of the core architecture:
+### Compiler Plugin
 
-```
-┌───────────────┐     ┌───────────────┐     ┌───────────────┐
-│   Svelte 5    │     │    SvelTUI    │     │    Blessed    │
-│   Components  │────▶│     Core      │────▶│   Terminal    │
-│   & Runes     │     │               │     │   Rendering   │
-└───────────────┘     └───────────────┘     └───────────────┘
-```
+The compiler plugin transforms Svelte components into terminal-specific code. It intercepts Svelte's DOM operations and replaces them with calls to our terminal DOM API.
 
-### Key Components
+Key files:
+- `src/compiler/index.ts`: Main plugin entry point that handles Svelte's code transformation
+- `src/compiler/transform.ts`: Transformation utilities for DOM methods
+- `src/compiler/nodes.ts`: Node-specific transformations for different AST node types
 
-SvelTUI consists of several key components:
+The compiler plugin runs at build time and transforms code like this:
 
-1. **Renderer (`renderer.svelte.ts`)**:
+```javascript
+// Before transformation (Svelte-generated code)
+document.createElement('div');
+element.setAttribute('class', 'container');
+parent.appendChild(child);
 
-   - Initializes the blessed screen
-   - Provides the `render()` function to create UI elements
-   - Manages the update cycle for components
-
-2. **Blessed Utils (`blessed-utils.svelte.ts`)**:
-
-   - Converts SvelTUI component props to blessed configuration
-   - Creates blessed elements based on component type
-   - Manages updating blessed elements when props change
-
-3. **Component Types (`types.ts`)**:
-
-   - Defines TypeScript interfaces for components and their properties
-   - Provides type safety for the rendering system
-
-4. **Svelte Components**:
-   - Define the API for each UI component
-   - Use runes for reactivity
-   - Provide a clean interface for component users
-
-## Rendering Pipeline
-
-When a component is rendered, it goes through the following pipeline:
-
-```
-┌───────────────┐     ┌───────────────┐     ┌───────────────┐     ┌───────────────┐
-│ Svelte        │     │ render()      │     │ createBlessed │     │ blessed       │
-│ Component     │────▶│ Function      │────▶│ Element       │────▶│ Element       │
-│ Definition    │     │               │     │               │     │ Rendered      │
-└───────────────┘     └───────────────┘     └───────────────┘     └───────────────┘
+// After transformation
+__sveltui_createElement('box');
+__sveltui_setAttribute(element, 'class', 'container');
+__sveltui_appendChild(parent, child);
 ```
 
-1. **Component Definition**: A Svelte component defines its properties and behavior
-2. **Render Function**: The `render()` function is called with the component type and props
-3. **Element Creation**: The `createBlessedElement()` function converts SvelTUI props to blessed configuration
-4. **Element Rendering**: The blessed element is rendered to the terminal
+### Virtual Terminal DOM
 
-## Update Cycle
+The virtual DOM provides a complete DOM-like API that Svelte can use directly. It maintains a hierarchical representation of the UI elements and their properties, with bidirectional binding to terminal elements.
 
-When a component's props change, SvelTUI updates the rendered element:
+Key files:
+- `src/dom/nodes.ts`: Node type definitions and interfaces
+- `src/dom/elements.ts`: Terminal element type definitions and interfaces
+- `src/dom/document.ts`: DOM document implementation
+- `src/dom/factories.ts`: Terminal element factories that create blessed elements
+- `src/dom/index.ts`: DOM API exports
 
-```
-┌───────────────┐     ┌───────────────┐     ┌───────────────┐
-│ State         │     │ update()      │     │ updateBlessed │
-│ Change        │────▶│ Function      │────▶│ Element       │
-│               │     │               │     │               │
-└───────────────┘     └───────────────┘     └───────────────┘
-```
+The virtual DOM implements interfaces like `TerminalNode`, `TerminalElementNode`, and `TerminalTextNode` that mirror the browser DOM. Each DOM node is connected to a terminal element via bidirectional binding, allowing efficient updates.
 
-1. **State Change**: A reactive state variable changes
-2. **Update Function**: The component's `update()` method is called with new props
-3. **Element Update**: The `updateBlessedElement()` function applies changes to the blessed element
+### Terminal Renderer
 
-## Reactivity System
+The renderer integrates directly with Svelte 5's mount/unmount APIs. It manages the terminal screen and efficiently renders components to it.
 
-SvelTUI uses Svelte 5's runes for reactivity:
+Key files:
+- `src/renderer/index.ts`: Main renderer API
+- `src/renderer/screen.ts`: Terminal screen management
+- `src/renderer/render.ts`: Component rendering logic and lifecycle
+- `src/renderer/svelte-renderer.ts`: Direct Svelte 5 integration
 
-```
-┌───────────────┐     ┌───────────────┐     ┌───────────────┐
-│ $state        │     │ State         │     │ Manual        │
-│ Declaration   │────▶│ Change        │────▶│ UI Update     │
-│               │     │               │     │               │
-└───────────────┘     └───────────────┘     └───────────────┘
-```
+The renderer provides a public `render` function that takes a Svelte component and renders it to the terminal. It handles component lifecycle, props updates, and screen management.
 
-1. **State Declaration**: Reactive state is declared using `$state()`
-2. **State Change**: The state value changes
-3. **Manual Update**: The UI is manually updated to reflect the new state
+### Reconciler
 
-Note that unlike browser-based Svelte, SvelTUI doesn't automatically propagate changes to the UI. Instead, developers must explicitly call `element.update()` and `screen.render()` to update the UI.
+The reconciler implements an efficient algorithm for updating the terminal when state changes. It batches operations and applies them in the most efficient way possible.
+
+Key files:
+- `src/reconciler/index.ts`: Main reconciler implementation with operation scheduling
+- `src/reconciler/operations.ts`: Terminal element operations (create, update, delete)
+
+The reconciler collects operations like element creation, updates, and deletions, and processes them in batches. It ensures that only the necessary changes are applied to the terminal, minimizing flickering and redraw operations.
+
+### Layout Engine
+
+The layout engine calculates the positions and dimensions of components. It supports flexbox-like layouts and optionally integrates with the Yoga layout engine for more complex layouts.
+
+Key files:
+- `src/layout/index.ts`: Core layout implementation
+- `src/layout/yoga.ts`: Yoga layout engine integration
+
+The layout engine translates CSS-like layout properties to terminal positions and dimensions, allowing components to be arranged in flexible layouts.
+
+### Runtime DOM Connector
+
+The runtime DOM connector is the bridge between Svelte 5's runtime and our terminal DOM. It maps DOM operations to terminal operations at runtime.
+
+Key files:
+- `src/api/runtime.ts`: Runtime DOM connector with Svelte integration points
+- `src/api/index.ts`: Public API exports
+
+The runtime connector provides implementations of DOM methods like `createElement`, `appendChild`, `setAttribute`, etc. When Svelte's runtime calls these methods, they update both the virtual DOM and the terminal elements via the reconciler.
+
+### Event System
+
+The event system maps terminal events (keyboard, mouse, etc.) to DOM-like events that Svelte components can listen for.
+
+Key part of `src/api/runtime.ts` handles:
+- Mapping terminal events to DOM events
+- Creating synthetic event objects
+- Managing event listeners
+- Bubble events through the component hierarchy
+
+## Integration with Svelte 5
+
+SvelTUI integrates directly with Svelte 5's mount/unmount APIs:
+
+1. The compiler plugin transforms Svelte components to use our terminal DOM API
+2. The runtime connector provides the API implementation that Svelte calls at runtime
+3. The renderer uses Svelte 5's mount API to create components
+4. Svelte's reactivity triggers DOM operations that our runtime connector handles
+5. The reconciler efficiently updates the terminal based on these operations
+
+## Data Flow
+
+1. The Svelte compiler with our plugin transforms Svelte components into terminal-specific code
+2. When a component is rendered, the renderer creates a screen and root element
+3. The component is mounted using Svelte 5's mount API
+4. The mounted component's code calls our runtime DOM connector methods
+5. The runtime connector updates the virtual DOM and queues operations in the reconciler
+6. The reconciler batches operations and applies them efficiently to the terminal
+7. When state changes, Svelte's reactivity triggers DOM updates
+8. These updates flow through the runtime connector to the reconciler
+9. The reconciler applies the minimal set of changes to the terminal
 
 ## Component Lifecycle
 
-Components in SvelTUI have a simpler lifecycle than browser-based Svelte:
+1. User calls `render(App, options)`
+2. Renderer creates a terminal screen and root element
+3. Svelte component is mounted to the root element using Svelte 5's mount API
+4. Component creates virtual DOM nodes through the runtime connector
+5. Reconciler processes operations and updates the terminal
+6. State changes trigger Svelte's reactivity system
+7. Reactivity triggers DOM operations handled by our runtime connector
+8. Reconciler efficiently updates the terminal
+9. When component is unmounted, Svelte 5's unmount API is called
+10. Cleanup destroys terminal elements and frees resources
 
-1. **Creation**: Component is created via `render()`
-2. **Updates**: Component is updated via `element.update()`
-3. **Destruction**: Component is removed via `element.unmount()`
+## Event Handling
 
-## Event System
+1. User interacts with terminal (keyboard, mouse, etc.)
+2. Blessed library generates terminal events
+3. Our event system maps these to DOM-like events
+4. Events are dispatched to the appropriate components
+5. Svelte event handlers respond to events
+6. State changes trigger updates as described above
 
-SvelTUI uses blessed's event system with some enhancements:
+## Theming System
 
-```
-┌───────────────┐     ┌───────────────┐     ┌───────────────┐
-│ Blessed       │     │ SvelTUI       │     │ User          │
-│ Event         │────▶│ Event         │────▶│ Event         │
-│ Triggered     │     │ Normalization │     │ Handler       │
-└───────────────┘     └───────────────┘     └───────────────┘
-```
+SvelTUI includes a theming system that allows customizing the appearance of components:
 
-1. **Event Trigger**: A blessed event is triggered (e.g., keypress, mouse click)
-2. **Event Normalization**: SvelTUI normalizes the event data
-3. **Handler Invocation**: The user's event handler is called with the normalized data
+1. Themes defined in YAML files in the `themes/` directory
+2. Components can access theme values via the theme utilities
+3. Themes can be switched at runtime
 
-## Key Subsystems
+## Future Plans
 
-### Screen Management
-
-The `initializeScreen()` function creates a blessed screen instance and configures it for use with SvelTUI. This screen is used as the root container for all rendered elements.
-
-```typescript
-export function initializeScreen(
-  options: blessed.Widgets.IScreenOptions = {}
-): blessed.Widgets.Screen {
-  const defaultOptions: blessed.Widgets.IScreenOptions = {
-    smartCSR: true,
-    title: "SvelTUI Application",
-    ...options,
-  };
-
-  screen = blessed.screen(defaultOptions);
-  screen.render();
-
-  return screen;
-}
-```
-
-### Component Rendering
-
-The `render()` function is the primary way to create and render components:
-
-```typescript
-export function render(
-  elementType: string,
-  props: Record<string, any> = {},
-  target: blessed.Widgets.Screen | blessed.Widgets.BlessedElement = screen!
-): RenderResult {
-  // Create the element
-  const element = createBlessedElement(elementType, props, target);
-
-  // Create a tracker for props
-  let currentProps = props;
-
-  // Return the result with update and unmount methods
-  return {
-    element,
-    update: (newProps) => {
-      Object.assign(currentProps, newProps);
-      updateBlessedElement(element, currentProps);
-      screen?.render();
-    },
-    unmount: () => {
-      element.destroy();
-      screen?.render();
-    },
-  };
-}
-```
-
-### Blessed Element Creation
-
-The `createBlessedElement()` function converts SvelTUI component props to blessed configuration:
-
-```typescript
-export function createBlessedElement(
-  elementType: string,
-  props: Record<string, any>,
-  parent?: blessed.Widgets.BlessedElement
-): blessed.Widgets.BlessedElement {
-  // Switch based on element type
-  switch (elementType.toLowerCase()) {
-    case "box":
-    // Create a box element
-    // ...
-    case "text":
-    // Create a text element
-    // ...
-    case "list":
-    // Create a list element
-    // ...
-    // ... other element types ...
-  }
-
-  // Set up event handlers
-  setupEventHandlers(element, props);
-
-  return element;
-}
-```
-
-### Element Updates
-
-The `updateBlessedElement()` function applies changes to blessed elements:
-
-```typescript
-export function updateBlessedElement(
-  element: blessed.Widgets.BlessedElement,
-  props: Record<string, any>
-): void {
-  const mappedProps = mapProps(props);
-
-  // Apply changes based on property type
-  for (const [key, value] of Object.entries(mappedProps)) {
-    if (key === "style") {
-      // Update style
-      // ...
-    } else if (key === "content" && "setContent" in element) {
-      // Update content
-      // ...
-    } else if (key === "items" && "setItems" in element) {
-      // Update items
-      // ...
-    }
-    // ... handle other property types ...
-  }
-}
-```
-
-## Design Decisions
-
-### Why Manual UI Updates?
-
-SvelTUI requires manual UI updates (calling `element.update()` and `screen.render()`) rather than automatically updating the UI when state changes. This decision was made for several reasons:
-
-1. **Performance**: Terminal rendering can be expensive, and automatic updates could lead to too many renders
-2. **Control**: Manual updates give developers precise control over when the UI updates
-3. **Batching**: Developers can batch multiple updates together before rendering
-
-### Why Svelte 5 Runes?
-
-SvelTUI uses Svelte 5 runes for reactivity rather than the traditional Svelte component model for several reasons:
-
-1. **Simplicity**: Runes provide a more direct reactivity model that's easier to understand
-2. **Flexibility**: Runes can be used outside of Svelte components, making them more flexible
-3. **Future-proof**: Runes are the future direction of Svelte, ensuring SvelTUI is aligned with Svelte's roadmap
-
-### Why Blessed?
-
-Blessed was chosen as the terminal rendering library for several reasons:
-
-1. **Maturity**: Blessed is a mature and battle-tested library
-2. **Features**: Blessed provides a rich set of features for building terminal UIs
-3. **API**: Blessed's API is relatively easy to wrap with a more modern interface
-
-## Implementation Details
-
-### File Extensions
-
-SvelTUI uses the `.svelte.ts` extension for files that use Svelte 5 runes. This is necessary because:
-
-1. TypeScript doesn't natively understand runes syntax
-2. The `.svelte.ts` extension signals to the build system that these files should be processed by the Svelte compiler before TypeScript
-
-### Build Process
-
-SvelTUI uses Vite for building, with plugins for processing Svelte files:
-
-1. The Svelte plugin processes `.svelte` and `.svelte.ts` files
-2. Runes are enabled via the `svelte.config.ts` file
-3. TypeScript processes all `.ts` files
-
-### Component Structure
-
-SvelTUI components use a simplified structure compared to browser-based Svelte:
-
-```svelte
-<script lang="ts">
-  // Component props with defaults and bindable properties
-  let {
-    prop1 = $bindable(defaultValue),
-    prop2 = defaultValue,
-    // ...
-  } = $props();
-</script>
-
-<!-- No template needed - rendering is handled by SvelTUI core -->
-```
-
-## Extension Points
-
-SvelTUI is designed to be extensible in several ways:
-
-1. **Custom Components**: Developers can create custom components by creating new Svelte components
-2. **Custom Element Types**: The `createBlessedElement()` function can be extended to support new element types
-3. **Custom Event Handlers**: The event system can be extended to support custom events
-
-## Conclusion
-
-SvelTUI's architecture provides a clean bridge between Svelte 5's reactivity and blessed's terminal rendering. By understanding this architecture, developers can effectively use SvelTUI to build reactive terminal user interfaces with a component-based approach.
+- Complete Yoga layout engine integration
+- Enhanced animation and transition system
+- More built-in UI components
+- State persistence
+- Improved testing infrastructure
+- Interactive component inspector
+- Performance optimizations
+- Accessibility enhancements

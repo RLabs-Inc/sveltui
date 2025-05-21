@@ -1,47 +1,137 @@
-<script lang="ts">
-  /**
-   * Input component for text input
-   * 
-   * This component provides a text input field that users can type in.
-   */
+/**
+ * Input Component
+ * 
+ * A text input component for user input
+ */
 
+<script lang="ts">
+  const dispatch = createEventDispatcher();
+  
+  // Define component props with defaults
   let {
-    // Input state
+    // Position properties
+    left = 0,
+    top = 0,
+    right,
+    bottom,
+    
+    // Dimension properties
+    width = '50%',
+    height = 1,
+    
+    // Input value
     value = $bindable(''),
+    
+    // Placeholder text
     placeholder = '',
     
-    // Layout properties
-    width = '50%',
-    height = 3,
-    top = undefined as (number | string | undefined),
-    left = undefined as (number | string | undefined),
-    right = undefined as (number | string | undefined),
-    bottom = undefined as (number | string | undefined),
+    // Password mode
+    secret = false,
+    
+    // Input is disabled/readonly
+    disabled = false,
+    
+    // Maximum input length
+    maxLength,
+    
+    // Appearance properties
+    border = false,
     
     // Style properties
-    border = true,
     style = {},
     
-    // Events
-    onChange = undefined as ((value: string) => void) | undefined,
-    onSubmit = undefined as ((value: string) => void) | undefined,
-    onFocus = undefined as (() => void) | undefined,
-    onBlur = undefined as (() => void) | undefined
+    // Focus behavior
+    focusable = true,
+    inputOnFocus = true,
+    
+    // Keyboard support
+    keys = true,
+    
+    // Mouse support
+    mouse = true,
+    
+    // Z-index for layering
+    zIndex,
+    
+    // Whether the element is visible
+    hidden = false,
+    
+    // Additional props will be passed to the input element
+    ...restProps
   } = $props();
   
-  // Internal state
-  let isFocused = $state(false);
+  // Track input value internally
+  let inputValue = $state(value);
   
-  // Focus/blur handlers
-  function handleFocus() {
-    isFocused = true;
-    if (onFocus) onFocus();
+  // Update internal state when prop changes
+  $effect(() => {
+    inputValue = value;
+  });
+  
+  // Convert border prop to blessed-compatible value
+  let borderValue = $derived(borderValue = typeof border === 'boolean' ? (border ? 'line' : false) : border);
+  
+  // Handle value change
+  function handleChange(event: any) {
+    if (disabled) return;
+    
+    const newValue = event.value;
+    
+    // Apply maxLength restriction if specified
+    if (maxLength !== undefined && newValue.length > maxLength) {
+      return;
+    }
+    
+    inputValue = newValue;
+    dispatch('change', { value: newValue });
   }
   
-  function handleBlur() {
-    isFocused = false;
-    if (onBlur) onBlur();
+  // Handle submit event (Enter key)
+  function handleSubmit() {
+    if (disabled) return;
+    
+    dispatch('submit', { value: inputValue });
+  }
+  
+  // Focus the input element
+  export function focus() {
+    // This will be handled by the runtime DOM connector
+    dispatch('focus');
+  }
+  
+  // Select all text in the input
+  export function selectAll() {
+    // This will be handled by the runtime DOM connector
+    dispatch('selectAll');
+  }
+  
+  // Clear the input
+  export function clear() {
+    inputValue = '';
+    dispatch('change', { value: '' });
   }
 </script>
 
-<!-- No template needed - our renderer handles this -->
+<input
+  left={left}
+  top={top}
+  right={right}
+  bottom={bottom}
+  width={width}
+  height={height}
+  value={inputValue}
+  placeholder={placeholder}
+  secret={secret}
+  disabled={disabled}
+  border={borderValue}
+  style={style}
+  keys={keys}
+  mouse={mouse}
+  inputOnFocus={inputOnFocus}
+  focusable={focusable}
+  zIndex={zIndex}
+  hidden={hidden}
+  onchange={handleChange}
+  onsubmit={handleSubmit}
+  {...restProps}
+/>

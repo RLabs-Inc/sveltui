@@ -1,30 +1,26 @@
-// Initialize component registry
-import { initializeRegistry } from "./src/core/registry.svelte";
-initializeRegistry();
+/**
+ * SvelTUI - A Svelte Terminal UI Framework
+ * 
+ * This is the main entry point for the SvelTUI framework.
+ * It exports all public APIs for application development.
+ */
 
-// Export core renderer
-export * from "./src/core/renderer.svelte";
-export * from "./src/core/reconciler.svelte";
-export * from "./src/core/registry.svelte";
+// Export all public APIs
+export * from './src/api';
 
-// Export type definitions
-export * from "./src/types";
+// Export compiler plugin
+export { default as sveltuiPlugin } from './src/compiler';
 
-// Export theme-related modules
-export * from "./src/theme/theme.svelte";
-export * from "./src/theme/theme-manager.svelte";
+/**
+ * Framework info
+ */
+export const VERSION = '0.1.0';
+export const FRAMEWORK_NAME = 'SvelTUI';
 
-// Export utilities for CLI apps
-export * from "./src/utils/color-utils.svelte";
-export * from "./src/utils/blessed-utils.svelte";
-export * from "./src/utils/component-utils.svelte";
-
-// Export components
-export { default as Box } from "./src/components/ui/Box.svelte";
-export { default as Text } from "./src/components/ui/Text.svelte";
-export { default as Input } from "./src/components/ui/Input.svelte";
-export { default as List } from "./src/components/ui/List.svelte";
-export { default as Checkbox } from "./src/components/ui/Checkbox.svelte";
-
-// Version export
-export const VERSION = "0.0.1";
+/**
+ * Output a welcome message to the console when imported directly
+ */
+if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+  console.log(`${FRAMEWORK_NAME} ${VERSION} initialized`);
+  console.log('A Svelte-powered terminal UI framework');
+}

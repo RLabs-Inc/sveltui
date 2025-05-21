@@ -2,33 +2,54 @@
   "name": "sveltui",
   "module": "index.ts",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "author": "RLabs Inc.",
   "license": "MIT",
-  "description": "SvelTUI is a Svelte library for building TUIs.",
+  "description": "A true Svelte 5 renderer for terminal user interfaces",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rlabs/sveltui.git"
+  },
+  "keywords": [
+    "svelte",
+    "svelte5",
+    "terminal",
+    "tui",
+    "renderer",
+    "cli",
+    "blessed",
+    "ink"
+  ],
   "scripts": {
     "build": "vite build",
     "dev": "vite",
     "preview": "vite preview",
-    "example": "vite-node examples/demo.svelte.ts",
-    "theme-showcase": "vite-node examples/theme-showcase.svelte.ts"
+    "example": "bun run examples/index.ts",
+    "example:basic": "bun run examples/basic/index.ts",
+    "example:minimal": "bun run examples/minimal.ts",
+    "example:direct": "bun run examples/direct-api.js",
+    "example:vdom": "bun run examples/virtual-dom.js",
+    "example:runtime": "bun run examples/runtime-api.js",
+    "test": "bun test",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "debug": "NODE_ENV=development DEBUG=true bun --inspect examples/index.ts"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@types/blessed": "0.1.25",
     "@types/bun": "latest",
-    "@types/js-yaml": "4.0.9",
     "@types/node": "^22.15.19",
-    "esbuild": "^0.25.4",
+    "estree-walker": "^3.0.3",
+    "magic-string": "^0.30.8",
+    "ts-node": "10.9.2",
+    "typescript": "^5.8.3",
     "vite": "^6.3.5",
     "vite-node": "3.1.3"
   },
-  "peerDependencies": {
-    "typescript": "^5.8.3"
-  },
   "dependencies": {
     "blessed": "0.1.81",
-    "js-yaml": "4.1.0",
-    "svelte": "^5.30.2"
+    "svelte": "^5.30.2",
+    "yoga-layout-prebuilt": "^1.10.0"
   }
 }

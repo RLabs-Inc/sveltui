@@ -1,522 +1,389 @@
-# SvelTUI API Documentation
+# SvelTUI API Reference
 
-This document provides detailed information about the SvelTUI API, including core functions, components, and usage patterns.
+This document provides a comprehensive reference for the SvelTUI API.
 
-## Table of Contents
+## Renderer
 
-- [Core API](#core-api)
-  - [initializeScreen](#initializescreen)
-  - [render](#render)
-- [Component API](#component-api)
-  - [Box](#box)
-  - [Text](#text)
-  - [Input](#input)
-  - [List](#list)
-- [Events and Interactivity](#events-and-interactivity)
-  - [Key Handling](#key-handling)
-  - [Focus Management](#focus-management)
-  - [Event Handlers](#event-handlers)
-- [Advanced Usage](#advanced-usage)
-  - [Styling](#styling)
-  - [Layout Techniques](#layout-techniques)
-  - [Component Lifecycle](#component-lifecycle)
-
-## Core API
-
-### initializeScreen
-
-Initializes a new blessed screen instance for rendering terminal UI elements.
-
-```typescript
-function initializeScreen(
-  options?: blessed.Widgets.IScreenOptions
-): blessed.Widgets.Screen;
-```
-
-**Parameters:**
-
-- `options` (optional): Configuration options for the blessed screen.
-
-**Returns:**
-
-- A blessed screen instance that serves as the root for all UI elements.
-
-**Example:**
-
-```typescript
-const screen = initializeScreen({
-  title: "My Terminal UI App",
-  smartCSR: true,
-  fullUnicode: true,
-});
-```
-
-**Options:**
-
-- `title`: The terminal window title
-- `smartCSR`: Enable efficient redrawing (recommended: `true`)
-- `fullUnicode`: Support for unicode characters
-- For more options, see the [blessed documentation](https://github.com/chjj/blessed#screen-options)
+The renderer is responsible for rendering Svelte components to the terminal.
 
 ### render
 
-Creates and renders a UI element to the terminal screen.
+Renders a Svelte component to the terminal.
 
 ```typescript
 function render(
-  elementType: string,
-  props: Record<string, any> = {},
-  target: blessed.Widgets.Screen | blessed.Widgets.BlessedElement = screen!
-): RenderResult;
+  component: Component, 
+  options?: RendererOptions
+): () => void
 ```
 
 **Parameters:**
-
-- `elementType`: The type of element to create (e.g., "box", "text", "list", "input")
-- `props`: Properties to apply to the element
-- `target`: The parent element (defaults to the screen)
+- `component`: The Svelte component to render
+- `options`: (Optional) Renderer configuration options
 
 **Returns:**
-A `RenderResult` object with:
-
-- `element`: The blessed element instance
-- `update(newProps)`: Method to update the element with new properties
-- `unmount()`: Method to remove the element from the screen
+- A cleanup function to destroy the component
 
 **Example:**
-
 ```typescript
-const box = render("box", {
-  width: "50%",
-  height: "50%",
-  border: true,
-  style: {
-    border: {
-      fg: "blue",
-    },
-  },
+import { render } from 'sveltui';
+import App from './App.svelte';
+
+const cleanup = render(App, {
+  title: 'My Terminal App',
+  fullscreen: true,
 });
 
-// Later update the box
-box.update({
-  style: {
-    border: {
-      fg: "red",
-    },
-  },
-});
-
-// Remove the box
-box.unmount();
+// Later, to clean up
+cleanup();
 ```
 
-## Component API
+### RendererOptions
 
-SvelTUI provides several built-in components that wrap blessed elements.
+Options for configuring the renderer.
+
+```typescript
+interface RendererOptions {
+  title?: string;
+  fullscreen?: boolean;
+  autofocus?: boolean;
+  debug?: boolean;
+  blessed?: Record<string, any>;
+}
+```
+
+**Properties:**
+- `title`: (Optional) Title for the terminal window
+- `fullscreen`: (Optional) Whether to use fullscreen mode
+- `autofocus`: (Optional) Whether to automatically focus the first focusable element
+- `debug`: (Optional) Whether to enable debug mode with additional logging
+- `blessed`: (Optional) Custom blessed configuration options
+
+### refresh
+
+Manually refreshes the terminal display.
+
+```typescript
+function refresh(): void
+```
+
+### exit
+
+Exits the application gracefully.
+
+```typescript
+function exit(code?: number): never
+```
+
+**Parameters:**
+- `code`: (Optional) Exit code (defaults to 0)
+
+## Layout
+
+The layout system provides utilities for positioning elements in the terminal.
+
+### applyLayout
+
+Applies layout to a container and its children.
+
+```typescript
+function applyLayout(
+  container: TerminalElement,
+  options?: LayoutOptions
+): void
+```
+
+**Parameters:**
+- `container`: The container element
+- `options`: (Optional) Layout options
+
+### LayoutOptions
+
+Options for configuring the layout.
+
+```typescript
+interface LayoutOptions {
+  direction?: LayoutDirection;
+  justifyContent?: LayoutJustify;
+  alignItems?: LayoutAlign;
+  wrap?: boolean;
+  padding?: number | { top?: number; right?: number; bottom?: number; left?: number };
+  gap?: number;
+}
+```
+
+### LayoutDirection
+
+Direction of the layout (row or column).
+
+```typescript
+enum LayoutDirection {
+  ROW = 'row',
+  COLUMN = 'column',
+}
+```
+
+### LayoutJustify
+
+How to justify content along the main axis.
+
+```typescript
+enum LayoutJustify {
+  START = 'start',
+  CENTER = 'center',
+  END = 'end',
+  SPACE_BETWEEN = 'space-between',
+  SPACE_AROUND = 'space-around',
+}
+```
+
+### LayoutAlign
+
+How to align items along the cross axis.
+
+```typescript
+enum LayoutAlign {
+  START = 'start',
+  CENTER = 'center',
+  END = 'end',
+  STRETCH = 'stretch',
+}
+```
+
+### applyYogaLayout
+
+Applies Yoga layout to a container and its children.
+
+```typescript
+function applyYogaLayout(
+  container: TerminalElement,
+  containerWidth: number,
+  containerHeight: number,
+  options?: YogaLayoutOptions
+): void
+```
+
+**Parameters:**
+- `container`: The container element
+- `containerWidth`: The container width
+- `containerHeight`: The container height
+- `options`: (Optional) Yoga layout options
+
+## Components
+
+SvelTUI provides pre-bound component creators for common terminal elements.
 
 ### Box
 
-A basic container element.
-
-**Properties:**
-
-- `width`: Width of the box (number, string, or percentage)
-- `height`: Height of the box (number, string, or percentage)
-- `top`: Top position (number, string, or percentage)
-- `left`: Left position (number, string, or percentage)
-- `border`: Whether to show a border (boolean)
-- `style`: Styling options
-  - `border`: Border style (`{ fg: string, bg: string }`)
-  - `bg`: Background color
-  - `fg`: Foreground color
-
-**Example:**
+Creates a box component.
 
 ```typescript
-const main = render("box", {
-  width: "100%",
-  height: "100%",
+const Box = createComponent('box');
+```
+
+**Example:**
+```typescript
+import { Box } from 'sveltui';
+
+const MyBox = Box({
+  width: '50%',
+  height: 10,
   border: true,
-  style: {
-    border: {
-      fg: "blue",
-    },
-  },
 });
 ```
 
 ### Text
 
-Displays text content.
-
-**Properties:**
-
-- `content`: The text content to display
-- `width`: Width of the text element
-- `height`: Height of the text element
-- `top`: Top position
-- `left`: Left position
-- `style`: Text styling
-  - `fg`: Foreground color
-  - `bg`: Background color
-  - `bold`: Bold text (boolean)
-  - `underline`: Underlined text (boolean)
-- `tags`: Whether to process color tags in the content (boolean)
-
-**Example:**
+Creates a text component.
 
 ```typescript
-const text = render("text", {
-  parent: main.element,
-  top: 1,
-  left: "center",
-  content: "Hello SvelTUI!",
-  style: {
-    fg: "white",
-    bold: true,
-  },
-});
-```
-
-**Color Tags (when `tags: true`):**
-
-```typescript
-render("text", {
-  tags: true,
-  content: "{red-fg}Red Text{/red-fg} and {blue-bg}Blue Background{/blue-bg}",
-});
-```
-
-### Input
-
-A text input field.
-
-**Properties:**
-
-- `value`: Current input value
-- `placeholder`: Placeholder text when empty
-- `width`: Width of the input
-- `height`: Height of the input
-- `top`: Top position
-- `left`: Left position
-- `border`: Whether to show a border
-- `style`: Input styling
-- `inputOnFocus`: Whether to start input mode when focused
-- `onChange`: Handler for value changes
-- `onSubmit`: Handler for submit events (Enter key)
-
-**Example:**
-
-```typescript
-const input = render("input", {
-  parent: main.element,
-  top: 10,
-  left: "center",
-  width: "60%",
-  height: 3,
-  border: true,
-  value: inputValue,
-  onChange: (value) => {
-    console.log("Input changed:", value);
-  },
-  onSubmit: (value) => {
-    console.log("Input submitted:", value);
-    input.update({ value: "" }); // Clear input
-  },
-});
+const Text = createComponent('text');
 ```
 
 ### List
 
-A selectable list of items.
-
-**Properties:**
-
-- `items`: Array of items to display
-- `selected`: Index of selected item
-- `width`: Width of the list
-- `height`: Height of the list
-- `top`: Top position
-- `left`: Left position
-- `border`: Whether to show a border
-- `style`: List styling
-  - `selected`: Styling for selected item
-  - `item`: Styling for items
-- `keys`: Whether to enable keyboard navigation
-- `mouse`: Whether to enable mouse interaction
-- `onSelect`: Handler for item selection
-
-**Example:**
+Creates a list component.
 
 ```typescript
-const list = render("list", {
-  parent: main.element,
-  top: 4,
-  left: "center",
-  width: "50%",
-  height: 8,
-  items: ["Option 1", "Option 2", "Option 3"],
-  border: true,
-  style: {
-    selected: {
-      bg: "blue",
-      fg: "white",
-    },
-  },
-  onSelect: (item, index) => {
-    console.log(`Selected item ${item} at index ${index}`);
-  },
-});
+const List = createComponent('list');
 ```
 
-## Events and Interactivity
+### Input
 
-### Key Handling
-
-SvelTUI provides multiple ways to handle keyboard input.
-
-**Global Key Event:**
+Creates an input component.
 
 ```typescript
-// Recommended: Use keypress for most reliable key handling
-screen.on("keypress", function (ch, key) {
-  // ch: Character (string or undefined)
-  // key: Key information object with properties like name, ctrl, shift, etc.
-
-  if (key.name === "q" || (key.ctrl && key.name === "c")) {
-    process.exit(0);
-  } else if (ch === "+") {
-    count++;
-    updateUI();
-  }
-});
+const Input = createComponent('input');
 ```
 
-**Specific Key Handlers:**
+### Button
+
+Creates a button component.
 
 ```typescript
-// Alternative: Specific key handlers
-screen.key("q", () => process.exit(0));
-screen.key("+", () => {
-  count++;
-  updateUI();
-});
+const Button = createComponent('button');
 ```
 
-**Component-specific Keys:**
+### Progress
+
+Creates a progress bar component.
 
 ```typescript
-// Add key handlers to specific components
-listElement.element.key("enter", () => {
-  // Handle enter on the list
-});
+const Progress = createComponent('progress');
 ```
 
-### Focus Management
+## Element Properties
 
-Managing focus is crucial for keyboard navigation.
+### BaseElementProps
 
-**Setting Focus:**
-
-```typescript
-// Focus a specific element
-listElement.element.focus();
-screen.render();
-```
-
-**Checking Focus:**
+Base properties common to all terminal elements.
 
 ```typescript
-if (screen.focused === inputElement.element) {
-  // Input has focus
+interface BaseElementProps {
+  left?: number | string | 'center';
+  top?: number | string | 'center';
+  right?: number | string;
+  bottom?: number | string;
+  width?: number | string | 'half' | 'shrink';
+  height?: number | string | 'half' | 'shrink';
+  border?: boolean | 'line' | 'bg';
+  borderColor?: string;
+  label?: string;
+  zIndex?: number;
+  focusable?: boolean;
+  hidden?: boolean;
+  style?: {
+    fg?: string;
+    bg?: string;
+    border?: {
+      fg?: string;
+      bg?: string;
+    };
+    label?: {
+      fg?: string;
+      bg?: string;
+    };
+    bold?: boolean;
+    underline?: boolean;
+    blink?: boolean;
+    italic?: boolean;
+  };
+  tags?: boolean;
+  content?: string;
+  autofocus?: boolean;
+  scrollable?: boolean;
+  mouse?: boolean;
+  [key: string]: any;
 }
 ```
 
-**Tab Navigation:**
+### BoxElementProps
+
+Box element properties.
 
 ```typescript
-// Handle tab key for focus cycling
-screen.key("tab", () => {
-  if (screen.focused === listElement.element) {
-    inputElement.element.focus();
-  } else {
-    listElement.element.focus();
-  }
-  screen.render();
-});
+interface BoxElementProps extends BaseElementProps {
+  title?: string;
+  children?: TerminalElement[];
+}
 ```
 
-### Event Handlers
+### TextElementProps
 
-Components can respond to various events.
-
-**Click Events:**
+Text element properties.
 
 ```typescript
-const button = render("box", {
-  content: "Click Me",
-  width: 10,
-  height: 3,
-  border: true,
-  onClick: () => {
-    console.log("Button clicked!");
-  },
-});
+interface TextElementProps extends BaseElementProps {
+  content: string;
+  align?: 'left' | 'center' | 'right';
+  wrap?: boolean;
+  truncate?: boolean | number;
+}
 ```
 
-**Input Events:**
+### ListElementProps
+
+List element properties.
 
 ```typescript
-render("input", {
-  // onChange fires on every keystroke
-  onChange: (value) => {
-    console.log("Input changed:", value);
-  },
-  // onSubmit fires when Enter is pressed
-  onSubmit: (value) => {
-    console.log("Input submitted:", value);
-  },
-});
+interface ListElementProps extends BaseElementProps {
+  items?: string[];
+  selected?: number;
+  interactive?: boolean;
+  keys?: boolean;
+  vi?: boolean;
+  mouse?: boolean;
+  itemTag?: string;
+  autoSelectOnFocus?: boolean;
+}
 ```
 
-**List Selection:**
+### InputElementProps
+
+Input element properties.
 
 ```typescript
-render("list", {
-  items: ["One", "Two", "Three"],
-  onSelect: (item, index) => {
-    console.log(`Selected ${item} at index ${index}`);
-  },
-});
+interface InputElementProps extends BaseElementProps {
+  value?: string;
+  placeholder?: string;
+  secret?: boolean;
+  disabled?: boolean;
+  maxLength?: number;
+}
 ```
 
-## Advanced Usage
+### ButtonElementProps
 
-### Styling
-
-SvelTUI supports rich styling options for all components.
-
-**Text Styling:**
+Button element properties.
 
 ```typescript
-render("text", {
-  content: "Styled Text",
-  style: {
-    fg: "white", // Foreground color
-    bg: "blue", // Background color
-    bold: true, // Bold text
-    underline: true, // Underlined text
-    blink: true, // Blinking text
-    inverse: true, // Inverse colors
-  },
-});
+interface ButtonElementProps extends BaseElementProps {
+  content: string;
+  disabled?: boolean;
+  pressed?: boolean;
+}
 ```
 
-**Border Styling:**
+### ProgressBarElementProps
+
+Progress bar element properties.
 
 ```typescript
-render("box", {
-  border: true,
-  style: {
-    border: {
-      fg: "red", // Border color
-      bg: "black", // Border background
-      type: "line", // Border type
-    },
-  },
-});
+interface ProgressBarElementProps extends BaseElementProps {
+  value?: number;
+  orientation?: 'horizontal' | 'vertical';
+  filled?: boolean;
+  filledStyle?: {
+    fg?: string;
+    bg?: string;
+  };
+}
 ```
 
-**Available Colors:**
+## Advanced APIs
 
-- Basic: `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`
-- Bright: `brightblack`, `brightred`, `brightgreen`, `brightyellow`, `brightblue`, `brightmagenta`, `brightcyan`, `brightwhite`
-- Hex: `#ff0000`, `#00ff00`, `#0000ff`, etc.
+These APIs are primarily for internal use but can be useful for advanced usage.
 
-### Layout Techniques
-
-SvelTUI supports flexible layout options.
-
-**Absolute Positioning:**
+### DOM Operations
 
 ```typescript
-render("text", {
-  top: 10, // 10 lines from top
-  left: 20, // 20 columns from left
-  content: "Positioned text",
-});
+function createElement(name: string): TerminalElementNode;
+function createText(text: string): TerminalTextNode;
+function createComment(text: string): TerminalNode;
+function createFragment(): TerminalNode;
+function insertNode(parent: TerminalNode, node: TerminalNode, anchor: TerminalNode | null): void;
+function appendChild(parent: TerminalNode, child: TerminalNode): void;
+function removeChild(parent: TerminalNode, child: TerminalNode): void;
+function setAttribute(node: TerminalElementNode, name: string, value: any): void;
+function removeAttribute(node: TerminalElementNode, name: string): void;
+function setText(node: TerminalTextNode, text: string): void;
+function setElementProps(node: TerminalElementNode, props: Record<string, any>): void;
+function addEventListener(node: TerminalElementNode, event: string, handler: (event: any) => void): void;
+function removeEventListener(node: TerminalElementNode, event: string): void;
 ```
 
-**Percentage-based Sizing:**
+## Version Information
 
 ```typescript
-render("box", {
-  width: "50%", // 50% of parent width
-  height: "30%", // 30% of parent height
-  content: "Percentage-based box",
-});
+const VERSION: string; // Current SvelTUI version
 ```
-
-**Centered Content:**
-
-```typescript
-render("text", {
-  top: "center", // Vertically centered
-  left: "center", // Horizontally centered
-  content: "Centered text",
-});
-```
-
-**Relative Positioning:**
-
-```typescript
-render("text", {
-  top: "50%+1", // 1 line below center
-  left: "25%+5", // 5 columns right of 25% mark
-  content: "Relative positioned text",
-});
-```
-
-### Component Lifecycle
-
-Understanding the component lifecycle helps manage resources effectively.
-
-**Creation:**
-
-```typescript
-// Create and render a component
-const element = render("box", {
-  /* props */
-});
-```
-
-**Updates:**
-
-```typescript
-// Update an existing component
-element.update({
-  content: "New content",
-  style: { fg: "green" },
-});
-screen.render(); // Ensure changes are rendered
-```
-
-**Cleanup:**
-
-```typescript
-// Remove a component
-element.unmount();
-
-// Clean exit when application ends
-process.on("SIGINT", () => {
-  screen.destroy();
-  process.exit(0);
-});
-```
-
----
-
-## Further Resources
-
-- [Blessed Documentation](https://github.com/chjj/blessed)
-- [Svelte 5 Runes Documentation](https://svelte.dev/blog/runes)

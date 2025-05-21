@@ -1,45 +1,78 @@
+/**
+ * Text Component
+ * 
+ * A component for displaying text in the terminal
+ */
+
 <script lang="ts">
-  /**
-   * Text component for displaying text in the terminal
-   * 
-   * This component displays text content with styling options.
-   */
-  
-  
+  // Define component props with defaults
   let {
-    // Content
-    content = '',
+    // Position properties
+    left = 0,
+    top = 0,
+    right,
+    bottom,
     
-    // Styling options
-    color = 'white',
-    bold = false,
-    italic = false,
-    underline = false,
-    align = 'left',
-    
-    // Layout properties
+    // Dimension properties
     width = 'shrink',
     height = 'shrink',
-    top = undefined as (number | string | undefined),
-    left = undefined as (number | string | undefined),
-    right = undefined as (number | string | undefined),
-    bottom = undefined as (number | string | undefined),
     
-    // Advanced styling
+    // Text content
+    content = $bindable(''),
+    
+    // Text alignment
+    align = 'left',
+    
+    // Text wrapping
+    wrap = true,
+    
+    // Whether to allow HTML tags in content
+    tags = false,
+    
+    // Whether to truncate if too long
+    truncate = false,
+    
+    // Appearance properties
+    border = false,
+    
+    // Style properties
     style = {},
     
-    // Special text types
-    muted = false
+    // Z-index for layering
+    zIndex,
+    
+    // Whether the element is visible
+    hidden = false,
+    
+    // Additional props will be passed to the text element
+    ...restProps
   } = $props();
   
-  // Create derived style object for the renderer
-  let derivedStyle = $derived({
-    ...style,
-    fg: color,
-    bold,
-    italic,
-    underline
-  });
+  // Convert border prop to blessed-compatible value
+  let borderValue = $derived(borderValue = typeof border === 'boolean' ? (border ? 'line' : false) : border);
 </script>
 
-<!-- No template needed - our renderer will handle this -->
+{#snippet content(value)}
+	value
+{/snippet}
+
+<text
+  left={left}
+  top={top}
+  right={right}
+  bottom={bottom}
+  width={width}
+  height={height}
+  content={content}
+  align={align}
+  wrap={wrap}
+  tags={tags}
+  border={borderValue}
+  style={style}
+  zIndex={zIndex}
+  hidden={hidden}
+  truncate={truncate}
+  {...restProps}
+>
+  {@render content(props.content)}
+</text>

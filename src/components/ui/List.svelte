@@ -1,46 +1,126 @@
+/**
+ * List Component
+ * 
+ * An interactive list component for selection from a list of items
+ */
+
 <script lang="ts">
-  /**
-   * List component for displaying selectable items
-   * 
-   * This component displays a list of items that can be navigated and selected.
-   */
+  const dispatch = createEventDispatcher();
   
+  // Define component props with defaults
   let {
-    // List data
-    items = [] as string[],
-    selectedIndex = $bindable(0),
+    // Position properties
+    left = 0,
+    top = 0,
+    right,
+    bottom,
     
-    // Layout properties
-    width = '50%',
-    height = '50%',
-    top = undefined as (number | string | undefined),
-    left = undefined as (number | string | undefined),
-    right = undefined as (number | string | undefined),
-    bottom = undefined as (number | string | undefined),
+    // Dimension properties
+    width = '100%',
+    height = 'shrink',
+    
+    // List items
+    items = [] as string[],
+    
+    // Initial selected index
+    selected = $bindable(0),
+    
+    // Interactive mode
+    interactive = true,
+    
+    // Keyboard navigation
+    keys = true,
+    
+    // Vi-style navigation
+    vi = false,
+    
+    // Mouse support
+    mouse = true,
+    
+    // Appearance properties
+    border = false,
     
     // Style properties
-    border = true,
     style = {},
     
-    // Events
-    onSelect = undefined as ((index: number, item: string) => void) | undefined,
-    onFocus = undefined as (() => void) | undefined,
-    onBlur = undefined as (() => void) | undefined
+    // Specific style for selected item
+    selectedStyle = {},
+    
+    // Z-index for layering
+    zIndex,
+    
+    // Whether the element is visible
+    hidden = false,
+    
+    // Additional props will be passed to the list element
+    ...restProps
   } = $props();
   
-  // Internal state
-  let isFocused = $state(false);
+  // Track selected item internally when it changes from outside
+  let selectedIndex = $state(selected);
   
-  // Focus/blur handlers
-  function handleFocus() {
-    isFocused = true;
-    if (onFocus) onFocus();
+  // Update internal state when prop changes
+  $effect(() => {
+    selectedIndex = selected;
+  });
+  
+  // Convert border prop to blessed-compatible value
+  let borderValue = $derived(borderValue = typeof border === 'boolean' ? (border ? 'line' : false) : border);
+  
+  // Merge styles for selected item
+  let mergedStyle = $derived(mergedStyle = {
+    ...style,
+    selected: {
+      ...selectedStyle,
+      ...(style.selected || {})
+    }
+  });
+  // Handle selection
+  function handleSelect(index: number) {
+    if (index >= 0 && index < items.length) {
+      selectedIndex = index;
+      dispatch('select', { index, item: items[index] });
+    }
   }
   
-  function handleBlur() {
-    isFocused = false;
-    if (onBlur) onBlur();
+  // Handle keypress events
+  function handleKeypress(event: any) {
+    if (!interactive) return;
+    
+    if (event.key === 'up' || (vi && event.key === 'k')) {
+      handleSelect(Math.max(0, selectedIndex - 1));
+    } else if (event.key === 'down' || (vi && event.key === 'j')) {
+      handleSelect(Math.min(items.length - 1, selectedIndex + 1));
+    } else if (event.key === 'enter') {
+      dispatch('action', { index: selectedIndex, item: items[selectedIndex] });
+    }
+  }
+  
+  // Focus the list element
+  export function focus() {
+    // This will be handled by the runtime DOM connector
+    dispatch('focus');
   }
 </script>
 
-<!-- No template needed - our renderer handles this -->
+<list
+  left={left}
+  top={top}
+  right={right}
+  bottom={bottom}
+  width={width}
+  height={height}
+  items={items}
+  selected={selectedIndex}
+  border={borderValue}
+  style={mergedStyle}
+  keys={keys}
+  vi={vi}
+  mouse={mouse}
+  interactive={interactive}
+  zIndex={zIndex}
+  hidden={hidden}
+  onkeypress={handleKeypress}
+  onselect={(e) => handleSelect(e.detail.index)}
+  {...restProps}
+></list>

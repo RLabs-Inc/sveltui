@@ -1,33 +1,80 @@
+/**
+ * Box Component
+ * 
+ * A basic container element that serves as a building block for layouts
+ */
+
 <script lang="ts">
-  /**
-   * Box component for creating general containers
-   * 
-   * This is a basic container component that can hold other components
-   * or display text content.
-   */
-  
+  // Define component props with defaults
   let {
-    // Layout properties
-    width = '100%',
-    height = '100%',
-    top = 0,
+    // Position properties
     left = 0,
-    right = undefined as (number | string | undefined),
-    bottom = undefined as (number | string | undefined),
+    top = 0,
+    right,
+    bottom,
     
-    // Content
-    content = '',
+    // Dimension properties
+    width = '100%',
+    height = 'shrink',
+    
+    // Appearance properties
+    border = false,
+    borderColor,
+    label,
+    
+    // Behavior properties
+    focusable = false,
+    scrollable = false,
+    
+    // Mouse properties
+    mouse = true,
     
     // Style properties
-    border = false,
     style = {},
     
-    // Events
-    onClick = undefined as ((event: any) => void) | undefined,
+    // Z-index for layering
+    zIndex,
     
-    // Children
-    children = undefined
+    // Whether the element is visible
+    hidden = false,
+    
+    // Additional props will be passed to the box element
+    ...restProps
   } = $props();
+  
+  // Convert border prop to blessed-compatible value
+  let borderValue = $derived(borderValue = typeof border === 'boolean' ? (border ? 'line' : false) : border);
+  
+  // Merge styles
+  let mergedStyle = $derived(mergedStyle = {
+    ...style,
+    border: {
+      fg: borderColor,
+      ...(style.border || {})
+    }
+  });
 </script>
 
-<!-- No template needed - our renderer handles this -->
+{#snippet content(value)}
+  value
+{/snippet}
+
+<box
+  left={left}
+  top={top}
+  right={right}
+  bottom={bottom}
+  width={width}
+  height={height}
+  border={borderValue}
+  label={label}
+  style={mergedStyle}
+  focusable={focusable}
+  scrollable={scrollable}
+  mouse={mouse}
+  hidden={hidden}
+  zIndex={zIndex}
+  {...restProps}
+>
+  {@render content(props.content)}
+</box>
