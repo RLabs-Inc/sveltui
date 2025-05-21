@@ -25,8 +25,8 @@ export function createScreen(options: RendererOptions = {}): Widgets.Screen {
     return globalScreen;
   }
   
-  // Create a blessed screen
-  globalScreen = blessed.screen({
+  // Create a blessed screen with merged options
+  const screenOptions = {
     smartCSR: true,
     title: options.title || 'SvelTUI Terminal App',
     // Disable Unicode to avoid character processing issues
@@ -34,8 +34,25 @@ export function createScreen(options: RendererOptions = {}): Widgets.Screen {
     dockBorders: true,
     autoPadding: true,
     fastCSR: true,
+    // Fullscreen mode if specified
+    fullscreen: options.fullscreen === true,
+    // Input handling
+    input: process.stdin,
+    // Essential for key handling
+    keys: true,
+    // Mouse support
+    mouse: true,
+    // Use BCE (Background Color Erase) for better rendering
+    useBCE: true,
+    // Merge in blessed options from renderer options
     ...options.blessed,
-  });
+  };
+
+  if (options.debug) {
+    console.log('[Screen] Creating screen with options:', screenOptions);
+  }
+
+  globalScreen = blessed.screen(screenOptions);
   
   // Set up key bindings for quit - only specific keys should exit
   globalScreen.key(['q', 'C-c'], () => {

@@ -3,7 +3,7 @@
  *
  * This module implements the document object that serves as the root
  * of the virtual DOM tree for terminal rendering.
- * 
+ *
  * This provides a clean, DOM-like API for Svelte 5's mount function.
  */
 
@@ -74,9 +74,9 @@ export class TerminalDocument implements TerminalDocumentNode {
   appendChild(child: TerminalNode): TerminalNode {
     // If child already has a parent, remove it first
     if (child.parentNode) {
-      child.parentNode.removeChild(child);
+      child.parentNode.removeChild(child)
     }
-    
+
     this.childNodes.push(child)
 
     // Update child node
@@ -110,7 +110,7 @@ export class TerminalDocument implements TerminalDocumentNode {
 
     // If node already has a parent, remove it first
     if (node.parentNode) {
-      node.parentNode.removeChild(node);
+      node.parentNode.removeChild(node)
     }
 
     const index = this.childNodes.indexOf(refNode)
@@ -181,9 +181,9 @@ export class TerminalDocument implements TerminalDocumentNode {
   replaceChild(newChild: TerminalNode, oldChild: TerminalNode): TerminalNode {
     // If newChild already has a parent, remove it first
     if (newChild.parentNode) {
-      newChild.parentNode.removeChild(newChild);
+      newChild.parentNode.removeChild(newChild)
     }
-    
+
     const index = this.childNodes.indexOf(oldChild)
     if (index === -1) {
       throw new Error('Old child not found')
@@ -250,7 +250,7 @@ export class TerminalElement implements TerminalElementNode {
   childNodes: TerminalNode[] = []
   attributes: Record<string, any> = {}
   _instanceId = generateNodeId()
-  _terminalElement: TerminalElement;
+  _terminalElement: TerminalElement
 
   /**
    * Creates a new terminal element node
@@ -260,10 +260,10 @@ export class TerminalElement implements TerminalElementNode {
   constructor(tagName: string, document: TerminalDocumentNode) {
     this.tagName = tagName.toLowerCase()
     this.nodeName = this.tagName
-    
+
     // Initialize with null - the terminal element will be created later
     // by the reconciler through the factory system
-    this._terminalElement = null as any;
+    this._terminalElement = null as any
   }
 
   /**
@@ -272,17 +272,19 @@ export class TerminalElement implements TerminalElementNode {
    * @param value - Attribute value
    */
   setAttribute(name: string, value: any): void {
-    this.attributes[name] = value;
-    
+    this.attributes[name] = value
+
     // If we have a terminal element already, update it
     if (this._terminalElement && this._terminalElement !== this) {
       // Convert attribute names (e.g., class-name to className)
-      const propName = name.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+      const propName = name.replace(/-([a-z])/g, (_, letter) =>
+        letter.toUpperCase()
+      )
       if (typeof this._terminalElement.setProps === 'function') {
-        const props = { ...this._terminalElement.props };
-        props[propName] = value;
-        this._terminalElement.setProps(props);
-        this._terminalElement.update();
+        const props = { ...this._terminalElement.props }
+        props[propName] = value
+        this._terminalElement.setProps(props)
+        this._terminalElement.update()
       }
     }
   }
@@ -302,14 +304,14 @@ export class TerminalElement implements TerminalElementNode {
    */
   removeAttribute(name: string): void {
     delete this.attributes[name]
-    
+
     // If we have a terminal element already, update it
     if (this._terminalElement && this._terminalElement !== this) {
       if (typeof this._terminalElement.setProps === 'function') {
-        const props = { ...this._terminalElement.props };
-        delete props[name];
-        this._terminalElement.setProps(props);
-        this._terminalElement.update();
+        const props = { ...this._terminalElement.props }
+        delete props[name]
+        this._terminalElement.setProps(props)
+        this._terminalElement.update()
       }
     }
   }
@@ -331,9 +333,9 @@ export class TerminalElement implements TerminalElementNode {
   appendChild(child: TerminalNode): TerminalNode {
     // If child already has a parent, remove it first
     if (child.parentNode) {
-      child.parentNode.removeChild(child);
+      child.parentNode.removeChild(child)
     }
-    
+
     this.childNodes.push(child)
 
     // Update child node
@@ -350,15 +352,21 @@ export class TerminalElement implements TerminalElementNode {
     }
 
     this.lastChild = child
-    
+
     // If this element has a terminal element and the child is an element node,
     // we need to connect it to the terminal
-    if (this._terminalElement && this._terminalElement !== this && 
-        child.nodeType === NodeType.ELEMENT) {
-      const childElement = child as TerminalElementNode;
-      if (childElement._terminalElement && childElement._terminalElement !== childElement) {
+    if (
+      this._terminalElement &&
+      this._terminalElement !== this &&
+      child.nodeType === NodeType.ELEMENT
+    ) {
+      const childElement = child as TerminalElementNode
+      if (
+        childElement._terminalElement &&
+        childElement._terminalElement !== childElement
+      ) {
         if (typeof this._terminalElement.appendChild === 'function') {
-          this._terminalElement.appendChild(childElement._terminalElement);
+          this._terminalElement.appendChild(childElement._terminalElement)
         }
       }
     }
@@ -379,7 +387,7 @@ export class TerminalElement implements TerminalElementNode {
 
     // If node already has a parent, remove it first
     if (node.parentNode) {
-      node.parentNode.removeChild(node);
+      node.parentNode.removeChild(node)
     }
 
     const index = this.childNodes.indexOf(refNode)
@@ -402,21 +410,28 @@ export class TerminalElement implements TerminalElementNode {
     }
 
     refNode.previousSibling = node
-    
+
     // If this element has a terminal element and the node is an element node,
     // we need to connect it to the terminal
-    if (this._terminalElement && this._terminalElement !== this && 
-        node.nodeType === NodeType.ELEMENT && 
-        refNode.nodeType === NodeType.ELEMENT) {
-      const nodeElement = node as TerminalElementNode;
-      const refElement = refNode as TerminalElementNode;
-      if (nodeElement._terminalElement && nodeElement._terminalElement !== nodeElement &&
-          refElement._terminalElement && refElement._terminalElement !== refElement) {
+    if (
+      this._terminalElement &&
+      this._terminalElement !== this &&
+      node.nodeType === NodeType.ELEMENT &&
+      refNode.nodeType === NodeType.ELEMENT
+    ) {
+      const nodeElement = node as TerminalElementNode
+      const refElement = refNode as TerminalElementNode
+      if (
+        nodeElement._terminalElement &&
+        nodeElement._terminalElement !== nodeElement &&
+        refElement._terminalElement &&
+        refElement._terminalElement !== refElement
+      ) {
         if (typeof this._terminalElement.insertBefore === 'function') {
           this._terminalElement.insertBefore(
-            nodeElement._terminalElement, 
+            nodeElement._terminalElement,
             refElement._terminalElement
-          );
+          )
         }
       }
     }
@@ -450,15 +465,21 @@ export class TerminalElement implements TerminalElementNode {
     } else {
       this.lastChild = child.previousSibling
     }
-    
+
     // If this element has a terminal element and the child is an element node,
     // we need to disconnect it from the terminal
-    if (this._terminalElement && this._terminalElement !== this && 
-        child.nodeType === NodeType.ELEMENT) {
-      const childElement = child as TerminalElementNode;
-      if (childElement._terminalElement && childElement._terminalElement !== childElement) {
+    if (
+      this._terminalElement &&
+      this._terminalElement !== this &&
+      child.nodeType === NodeType.ELEMENT
+    ) {
+      const childElement = child as TerminalElementNode
+      if (
+        childElement._terminalElement &&
+        childElement._terminalElement !== childElement
+      ) {
         if (typeof this._terminalElement.removeChild === 'function') {
-          this._terminalElement.removeChild(childElement._terminalElement);
+          this._terminalElement.removeChild(childElement._terminalElement)
         }
       }
     }
@@ -480,9 +501,9 @@ export class TerminalElement implements TerminalElementNode {
   replaceChild(newChild: TerminalNode, oldChild: TerminalNode): TerminalNode {
     // If newChild already has a parent, remove it first
     if (newChild.parentNode) {
-      newChild.parentNode.removeChild(newChild);
+      newChild.parentNode.removeChild(newChild)
     }
-    
+
     const index = this.childNodes.indexOf(oldChild)
     if (index === -1) {
       throw new Error('Old child not found')
@@ -507,23 +528,30 @@ export class TerminalElement implements TerminalElementNode {
     } else {
       this.lastChild = newChild
     }
-    
+
     // If this element has a terminal element and both children are element nodes,
     // we need to replace them in the terminal
-    if (this._terminalElement && this._terminalElement !== this && 
-        newChild.nodeType === NodeType.ELEMENT && 
-        oldChild.nodeType === NodeType.ELEMENT) {
-      const newElement = newChild as TerminalElementNode;
-      const oldElement = oldChild as TerminalElementNode;
-      if (newElement._terminalElement && newElement._terminalElement !== newElement &&
-          oldElement._terminalElement && oldElement._terminalElement !== oldElement) {
+    if (
+      this._terminalElement &&
+      this._terminalElement !== this &&
+      newChild.nodeType === NodeType.ELEMENT &&
+      oldChild.nodeType === NodeType.ELEMENT
+    ) {
+      const newElement = newChild as TerminalElementNode
+      const oldElement = oldChild as TerminalElementNode
+      if (
+        newElement._terminalElement &&
+        newElement._terminalElement !== newElement &&
+        oldElement._terminalElement &&
+        oldElement._terminalElement !== oldElement
+      ) {
         // First remove old child
         if (typeof this._terminalElement.removeChild === 'function') {
-          this._terminalElement.removeChild(oldElement._terminalElement);
+          this._terminalElement.removeChild(oldElement._terminalElement)
         }
         // Then append new child
         if (typeof this._terminalElement.appendChild === 'function') {
-          this._terminalElement.appendChild(newElement._terminalElement);
+          this._terminalElement.appendChild(newElement._terminalElement)
         }
       }
     }
@@ -729,9 +757,9 @@ export class TerminalDocumentFragment implements TerminalNode {
   appendChild(child: TerminalNode): TerminalNode {
     // If child already has a parent, remove it first
     if (child.parentNode) {
-      child.parentNode.removeChild(child);
+      child.parentNode.removeChild(child)
     }
-    
+
     this.childNodes.push(child)
 
     // Update child node
@@ -765,7 +793,7 @@ export class TerminalDocumentFragment implements TerminalNode {
 
     // If node already has a parent, remove it first
     if (node.parentNode) {
-      node.parentNode.removeChild(node);
+      node.parentNode.removeChild(node)
     }
 
     const index = this.childNodes.indexOf(refNode)
@@ -836,9 +864,9 @@ export class TerminalDocumentFragment implements TerminalNode {
   replaceChild(newChild: TerminalNode, oldChild: TerminalNode): TerminalNode {
     // If newChild already has a parent, remove it first
     if (newChild.parentNode) {
-      newChild.parentNode.removeChild(newChild);
+      newChild.parentNode.removeChild(newChild)
     }
-    
+
     const index = this.childNodes.indexOf(oldChild)
     if (index === -1) {
       throw new Error('Old child not found')
@@ -902,22 +930,22 @@ export function createDocument(): TerminalDocumentNode {
  * Helper functions to create DOM nodes
  */
 export function createElement(tagName: string): TerminalElementNode {
-  return document.createElement(tagName);
+  return document.createElement(tagName)
 }
 
 export function createTextNode(text: string): TerminalTextNode {
-  return document.createTextNode(text);
+  return document.createTextNode(text)
 }
 
 export function createComment(text: string): TerminalNode {
-  return document.createComment(text);
+  return document.createComment(text)
 }
 
 export function createDocumentFragment(): TerminalNode {
-  return document.createDocumentFragment();
+  return document.createDocumentFragment()
 }
 
 /**
  * The global document instance
  */
-export const document = createDocument();
+export const document = createDocument()

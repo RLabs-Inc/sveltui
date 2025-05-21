@@ -1,0 +1,8 @@
+{
+  "name": "sveltui-counter-example",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A simple counter example for SvelTUI",
+  "private": true,
+  "main": "index.js"
+}

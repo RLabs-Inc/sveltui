@@ -30,3 +30,7 @@ verbatimModuleSyntax = true      # Preserve import/export syntax
 # Runtime behaviors
 [runtime]
 env = { NODE_ENV = "development" }  # Default environment variables
+
+# Module resolution to force browser/client conditions
+[install]
+conditions = ["browser", "import", "module", "default"]

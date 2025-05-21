@@ -5,102 +5,120 @@
  * between the virtual DOM and blessed terminal elements.
  */
 
-import type { Widgets } from 'blessed';
-import type { NodeType } from './nodes';
+import type { Widgets } from 'blessed'
+import type { NodeType } from './nodes'
 
 /**
  * Base properties common to all terminal elements
  */
 export interface BaseElementProps {
   /** Element position, left coordinate */
-  left?: number | string | 'center';
-  
+  left: number | string
+
   /** Element position, top coordinate */
-  top?: number | string | 'center';
-  
+  top: number | string
+
   /** Element position, right coordinate */
-  right?: number | string;
-  
+  right: number | string
+
   /** Element position, bottom coordinate */
-  bottom?: number | string;
-  
+  bottom: number | string
+
   /** Element width */
-  width?: number | string | 'half' | 'shrink';
-  
+  width: number | string
+
   /** Element height */
-  height?: number | string | 'half' | 'shrink';
-  
+  height: string | number
+
   /** Whether the element has a border */
-  border?: boolean | 'line' | 'bg';
-  
+  border?: Widgets.Border
+
   /** Border color */
-  borderColor?: string;
-  
+  borderColor?: string
+
   /** Label for the element */
-  label?: string;
-  
+  label?: string
+
   /** Z-index for layering */
-  zIndex?: number;
-  
+  zIndex?: number
+
   /** Whether the element is focusable */
-  focusable?: boolean;
-  
+  focusable?: boolean
+
   /** Whether the element is visible */
-  hidden?: boolean;
-  
+  hidden?: boolean
+
   /** Style properties for the element */
-  style?: {
-    /** Foreground color */
-    fg?: string;
-    
-    /** Background color */
-    bg?: string;
-    
-    /** Border foreground color */
-    border?: {
-      fg?: string;
-      bg?: string;
-    };
-    
-    /** Label style */
-    label?: {
-      fg?: string;
-      bg?: string;
-    };
-    
-    /** Whether the text is bold */
-    bold?: boolean;
-    
-    /** Whether the text is underlined */
-    underline?: boolean;
-    
-    /** Whether the text is blinking */
-    blink?: boolean;
-    
-    /** Whether the text is italic */
-    italic?: boolean;
-  };
-  
+  style: {
+    fg: string
+    bg: string
+    border: {
+      fg: string
+    }
+    scrollbar: {
+      bg: string
+    }
+    focus: {
+      bg: string
+    }
+    hover: {
+      bg: string
+    }
+  }
+
+  // {
+  //   /** Foreground color */
+
+  //   fg: string
+
+  //   /** Background color */
+  //   bg: string
+
+  //   /** Border foreground color */
+  //   border: {
+  //     fg: string
+  //     bg: string
+  //   }
+
+  //   /** Label style */
+  //   label: {
+  //     fg: string
+  //     bg: string
+  //   }
+
+  //   /** Whether the text is bold */
+  //   bold?: boolean
+
+  //   /** Whether the text is underlined */
+  //   underline?: boolean
+
+  //   /** Whether the text is blinking */
+  //   blink?: boolean
+
+  //   /** Whether the text is italic */
+  //   italic?: boolean
+  // }
+
   /** HTML tag name for the element */
-  tags?: boolean;
-  
+  tags?: boolean
+
   /** Element content */
-  content?: string;
-  
+  content: string
+
   /** DOM node ID */
-  _nodeId?: number;
-  
+  _nodeId?: number
+
   /** Whether the element autofocuses */
-  autofocus?: boolean;
-  
+  autofocus?: boolean
+
   /** Whether the element is scrollable */
-  scrollable?: boolean;
-  
+  scrollable?: boolean
+
   /** Mouse events to capture */
-  mouse?: boolean;
-  
+  mouse?: boolean
+
   /** Additional blessed options */
-  [key: string]: any;
+  [key: string]: any
 }
 
 /**
@@ -108,16 +126,16 @@ export interface BaseElementProps {
  */
 export interface TextElementProps extends BaseElementProps {
   /** Text content */
-  content: string;
-  
+  content: string
+
   /** Whether the text is aligned */
-  align?: 'left' | 'center' | 'right';
-  
+  align?: 'left' | 'center' | 'right'
+
   /** Whether to enable text wrapping */
-  wrap?: boolean;
-  
+  wrap?: boolean
+
   /** Whether text is truncated if too long */
-  truncate?: boolean | number;
+  truncate?: boolean | number
 }
 
 /**
@@ -125,10 +143,10 @@ export interface TextElementProps extends BaseElementProps {
  */
 export interface BoxElementProps extends BaseElementProps {
   /** Box title */
-  title?: string;
-  
+  title?: string
+
   /** Children elements */
-  children?: TerminalElement[];
+  children?: TerminalElement[]
 }
 
 /**
@@ -136,28 +154,28 @@ export interface BoxElementProps extends BaseElementProps {
  */
 export interface ListElementProps extends BaseElementProps {
   /** List items */
-  items?: string[];
-  
+  items?: string[]
+
   /** Index of the selected item */
-  selected?: number;
-  
+  selected?: number
+
   /** Whether the list is interactive */
-  interactive?: boolean;
-  
+  interactive?: boolean
+
   /** Whether keys wrap around at the beginning/end */
-  keys?: boolean;
-  
+  keys?: boolean
+
   /** Whether vi keys are enabled */
-  vi?: boolean;
-  
+  vi?: boolean
+
   /** Mouse support */
-  mouse?: boolean;
-  
+  mouse?: boolean
+
   /** Tag name for items */
-  itemTag?: string;
-  
+  itemTag?: string
+
   /** Whether to select on focus */
-  autoSelectOnFocus?: boolean;
+  autoSelectOnFocus?: boolean
 }
 
 /**
@@ -165,19 +183,19 @@ export interface ListElementProps extends BaseElementProps {
  */
 export interface InputElementProps extends BaseElementProps {
   /** Current input value */
-  value?: string;
-  
+  value?: string
+
   /** Placeholder text */
-  placeholder?: string;
-  
+  placeholder?: string
+
   /** Whether input is hidden (password) */
-  secret?: boolean;
-  
+  secret?: boolean
+
   /** Whether input is editable */
-  disabled?: boolean;
-  
+  disabled?: boolean
+
   /** Maximum input length */
-  maxLength?: number;
+  maxLength?: number
 }
 
 /**
@@ -185,13 +203,13 @@ export interface InputElementProps extends BaseElementProps {
  */
 export interface ButtonElementProps extends BaseElementProps {
   /** Button text/label */
-  content: string;
-  
+  content: string
+
   /** Whether button is disabled */
-  disabled?: boolean;
-  
+  disabled?: boolean
+
   /** Whether button is pressed */
-  pressed?: boolean;
+  pressed?: boolean
 }
 
 /**
@@ -199,19 +217,19 @@ export interface ButtonElementProps extends BaseElementProps {
  */
 export interface ProgressBarElementProps extends BaseElementProps {
   /** Progress value (0-100) */
-  value?: number;
-  
+  value?: number
+
   /** Progress bar orientation */
-  orientation?: 'horizontal' | 'vertical';
-  
+  orientation?: 'horizontal' | 'vertical'
+
   /** Whether to fill the bar */
-  filled?: boolean;
-  
+  filled?: boolean
+
   /** Style for filled portion */
   filledStyle?: {
-    fg?: string;
-    bg?: string;
-  };
+    fg?: string
+    bg?: string
+  }
 }
 
 /**
@@ -219,72 +237,72 @@ export interface ProgressBarElementProps extends BaseElementProps {
  */
 export interface TerminalElement {
   /** Element type */
-  type: string;
-  
+  type: string
+
   /** Associated blessed element */
-  blessed: Widgets.BlessedElement | null;
-  
+  blessed: Widgets.BlessedElement | null
+
   /** Element properties */
-  props: BaseElementProps;
-  
+  props: BaseElementProps
+
   /** Parent element */
-  parent: TerminalElement | null;
-  
+  parent: TerminalElement | null
+
   /** Child elements */
-  children: TerminalElement[];
-  
+  children: TerminalElement[]
+
   /** Node type from virtual DOM */
-  nodeType: NodeType;
-  
+  nodeType: NodeType
+
   /**
    * Sets element properties
    * @param props - New properties
    */
-  setProps(props: BaseElementProps): void;
-  
+  setProps(props: BaseElementProps): void
+
   /**
    * Appends a child element
    * @param child - Child element to append
    */
-  appendChild(child: TerminalElement): void;
-  
+  appendChild(child: TerminalElement): void
+
   /**
    * Removes a child element
    * @param child - Child element to remove
    */
-  removeChild(child: TerminalElement): void;
-  
+  removeChild(child: TerminalElement): void
+
   /**
    * Inserts a child element before another
    * @param child - Child to insert
    * @param beforeChild - Reference child
    */
-  insertBefore(child: TerminalElement, beforeChild: TerminalElement): void;
-  
+  insertBefore(child: TerminalElement, beforeChild: TerminalElement): void
+
   /**
    * Creates the blessed element
    * @param parent - Parent blessed node
    */
-  create(parent?: Widgets.Node): void;
-  
+  create(parent?: Widgets.Node): void
+
   /**
    * Updates the blessed element
    */
-  update(): void;
-  
+  update(): void
+
   /**
    * Destroys the element
    */
-  destroy(): void;
+  destroy(): void
 }
 
 /**
  * Registry of element factories
  */
 export const elementRegistry: Record<
-  string, 
+  string,
   (props: BaseElementProps) => TerminalElement
-> = {};
+> = {}
 
 /**
  * Registers a new element type
@@ -295,7 +313,7 @@ export function registerElement(
   type: string,
   factory: (props: BaseElementProps) => TerminalElement
 ): void {
-  elementRegistry[type] = factory;
+  elementRegistry[type] = factory
 }
 
 /**
@@ -308,10 +326,10 @@ export function createElement(
   type: string,
   props: BaseElementProps
 ): TerminalElement {
-  const factory = elementRegistry[type];
+  const factory = elementRegistry[type]
   if (!factory) {
-    throw new Error(`Unknown element type: ${type}`);
+    throw new Error(`Unknown element type: ${type}`)
   }
-  
-  return factory(props);
+
+  return factory(props)
 }

@@ -3,6 +3,8 @@
  */
 
 <script>
+  import { onMount } from 'svelte';
+
   // Count state using Svelte 5 runes
   let count = $state(0);
   
@@ -17,6 +19,14 @@
       count--;
     }
   }
+
+  // Add lifecycle method to ensure client-side rendering
+  onMount(() => {
+    console.log('Component mounted');
+    return () => {
+      console.log('Component unmounted');
+    };
+  });
 </script>
 
 <box border label="SvelTUI Simple Demo">

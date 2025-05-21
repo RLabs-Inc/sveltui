@@ -73,6 +73,8 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@': path.resolve(__dirname, './src'),
       },
+      // Force browser conditions to get client-side Svelte (like SvelteKit does)
+      conditions: ['browser', 'import', 'module', 'default'],
     },
     define: {
       'process.env.DEBUG': JSON.stringify(isDevelopment),

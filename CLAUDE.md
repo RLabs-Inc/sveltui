@@ -18,11 +18,42 @@ bun run dev
 # Build the library
 bun run build
 
-# Run the example application
+# Run the example application (uses Svelte 5 client-side)
 bun run example
 
 # Run tests
 bun test
+```
+
+## Svelte 5 Configuration
+
+SvelTUI requires Svelte 5's client-side rendering APIs to work in the Node.js terminal environment. This has been configured using:
+
+1. **Bun Export Conditions**: All example scripts use `bun --conditions browser` to force Svelte 5 to resolve to its client-side exports rather than server-side exports.
+
+2. **Browser Globals Mock**: The renderer sets up mock browser globals (`window`, `document`, `Element`, `Node`, etc.) that Svelte's client-side code expects.
+
+3. **Terminal DOM Integration**: Our virtual terminal DOM nodes are compatible with Svelte's mounting requirements.
+
+### Browser Globals Utility
+
+SvelTUI includes a standalone utility for setting up browser globals in Node.js:
+
+```ts
+import { setupBrowserGlobals, isBrowserGlobalsSetup } from 'sveltui'
+
+// Setup browser globals for Svelte 5 client-side
+setupBrowserGlobals()
+
+// Now you can use Svelte client-side APIs
+import { mount } from 'svelte'
+```
+
+The utility is automatically imported when using SvelTUI's renderer, but can be used independently in other Node.js projects that need Svelte 5 client-side compatibility.
+
+**Example usage:**
+```bash
+bun run example:globals  # See the utility in action
 ```
 
 ## Architecture Overview

@@ -46,6 +46,14 @@ export {
   type YogaLayoutOptions,
 } from '../layout/yoga';
 
+// Export browser globals utility for Svelte 5 compatibility
+export {
+  setupBrowserGlobals,
+  isBrowserGlobalsSetup,
+  clearBrowserGlobals,
+  type BrowserGlobalsOptions,
+} from '../utils/browser-globals';
+
 // Export component prop types for TypeScript users
 export type {
   BaseElementProps,

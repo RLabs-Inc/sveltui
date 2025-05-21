@@ -24,12 +24,17 @@
     "build": "vite build",
     "dev": "vite",
     "preview": "vite preview",
-    "example": "bun run examples/index.ts",
-    "example:basic": "bun run examples/basic/index.ts",
-    "example:minimal": "bun run examples/minimal.ts",
-    "example:direct": "bun run examples/direct-api.js",
-    "example:vdom": "bun run examples/virtual-dom.js",
-    "example:runtime": "bun run examples/runtime-api.js",
+    "example": "bun --conditions browser examples/index.ts",
+    "example:basic": "bun --conditions browser examples/basic/index.ts",
+    "example:minimal": "bun --conditions browser examples/minimal.ts",
+    "example:direct": "bun --conditions browser examples/direct-api.js",
+    "example:vdom": "bun --conditions browser examples/virtual-dom.js",
+    "example:counter": "bun --conditions browser examples/simple-counter/index.mjs",
+    "example:runtime": "bun --conditions browser examples/runtime-api.js",
+    "example:globals": "bun --conditions browser examples/browser-globals-example.ts",
+    "compile": "node scripts/compile-svelte.mjs",
+    "compile:counter": "node scripts/compile-svelte.mjs examples/simple-counter/App.svelte",
+    "compile:all": "node scripts/compile-svelte.mjs examples/simple-counter/App.svelte",
     "test": "bun test",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -39,6 +44,7 @@
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@types/blessed": "0.1.25",
     "@types/bun": "latest",
+    "@types/js-yaml": "4.0.9",
     "@types/node": "^22.15.19",
     "estree-walker": "^3.0.3",
     "magic-string": "^0.30.8",
@@ -49,7 +55,14 @@
   },
   "dependencies": {
     "blessed": "0.1.81",
+    "js-yaml": "4.1.0",
     "svelte": "^5.30.2",
     "yoga-layout-prebuilt": "^1.10.0"
+  },
+  "browser": {
+    "svelte": "svelte/src/index-client.js"
+  },
+  "imports": {
+    "svelte": "svelte/src/index-client.js"
   }
 }

@@ -6,8 +6,8 @@
  */
 
 import { render } from '../../src/renderer/index.js'
-// Use absolute path to avoid resolution issues
-const App = '/Users/rusty/Documents/Projects/TUI/sveltui/examples/basic/SimpleApp.svelte'
+// Use the compiled component to avoid server-side rendering issues
+const App = '/Users/rusty/Documents/Projects/TUI/sveltui/examples/basic/SimpleApp.svelte.mjs'
 
 // Enable debug mode
 const DEBUG = true

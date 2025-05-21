@@ -2,9 +2,9 @@
  * SvelTUI Demo Application Entry Point
  */
 
-import { render } from '../src/renderer/index.js'
-// For our dynamic import to work, we need to use the full path
-const App = './demo-app.svelte'
+import { render } from '../src/renderer'
+// Use the compiled version with proper path
+const App = 'examples/demo-app.svelte.mjs'
 
 // Initial props for the demo
 const initialProps = {

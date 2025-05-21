@@ -106,9 +106,21 @@ export function renderComponent(
       // Load Svelte module synchronously
       let svelte;
       try {
-        // This is a direct require instead of dynamic import
-        // to ensure it's loaded synchronously
-        svelte = require('svelte');
+        // Try to load the client-side version of Svelte explicitly first
+        try {
+          svelte = require('svelte/src/index-client.js');
+          
+          if (options.debug) {
+            console.log('[Renderer] Using Svelte client-side API');
+          }
+        } catch (clientErr) {
+          // Fall back to regular Svelte import
+          svelte = require('svelte');
+          
+          if (options.debug) {
+            console.log('[Renderer] Using Svelte default import');
+          }
+        }
       } catch (e) {
         throw new Error('Could not load Svelte module. Make sure svelte is installed: ' + e.message);
       }
