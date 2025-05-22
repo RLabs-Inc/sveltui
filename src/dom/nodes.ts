@@ -83,6 +83,11 @@ export interface TerminalNode {
   replaceChild(newChild: TerminalNode, oldChild: TerminalNode): TerminalNode;
   
   /**
+   * Removes this node from its parent (DOM Level 4)
+   */
+  remove(): void;
+
+  /**
    * Clones the node
    * @param deep - Whether to clone all descendant nodes
    * @returns A clone of the node

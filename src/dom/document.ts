@@ -565,6 +565,15 @@ export class TerminalElement implements TerminalElementNode {
   }
 
   /**
+   * Removes this element from its parent (DOM Level 4)
+   */
+  remove(): void {
+    if (this.parentNode) {
+      this.parentNode.removeChild(this)
+    }
+  }
+
+  /**
    * Clones the node
    * @param deep - Whether to clone all descendant nodes
    * @returns A clone of the node
@@ -609,6 +618,15 @@ export class TerminalText implements TerminalTextNode {
    */
   constructor(text: string, document: TerminalDocumentNode) {
     this.nodeValue = text
+  }
+
+  /**
+   * Removes this text node from its parent (DOM Level 4)
+   */
+  remove(): void {
+    if (this.parentNode) {
+      this.parentNode.removeChild(this)
+    }
   }
 
   /**
@@ -682,6 +700,15 @@ export class TerminalComment implements TerminalNode {
   }
 
   /**
+   * Removes this comment node from its parent (DOM Level 4)
+   */
+  remove(): void {
+    if (this.parentNode) {
+      this.parentNode.removeChild(this)
+    }
+  }
+
+  /**
    * Appends a child node
    * Comment nodes cannot have children, so this always throws an error
    */
@@ -747,6 +774,20 @@ export class TerminalDocumentFragment implements TerminalNode {
    */
   constructor(document: TerminalDocumentNode) {
     // No initialization needed
+  }
+
+  /**
+   * Appends multiple nodes (DOM Level 4 method)
+   * @param nodes - Nodes to append
+   */
+  append(...nodes: (TerminalNode | string)[]): void {
+    for (const node of nodes) {
+      if (typeof node === 'string') {
+        this.appendChild(document.createTextNode(node))
+      } else {
+        this.appendChild(node)
+      }
+    }
   }
 
   /**

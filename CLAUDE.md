@@ -56,6 +56,27 @@ The utility is automatically imported when using SvelTUI's renderer, but can be 
 bun run example:globals  # See the utility in action
 ```
 
+### 🎉 Impressive Demos - Breakthrough Showcase!
+
+SvelTUI now includes stunning interactive demos that showcase the **breakthrough achievement** of Svelte 5 client-side mounting working in Node.js terminal environment:
+
+```bash
+# Launch the interactive demo launcher
+bun run demo
+
+# Or run individual demos directly:
+bun run demo:counter    # Interactive counter with auto-increment
+bun run demo:dashboard  # Real-time system dashboard
+bun run demo:themes     # Dynamic theme switching showcase
+```
+
+**✨ What the demos showcase:**
+- **Svelte 5 Runes**: Full `$state`, `$derived`, and `$effect` reactivity
+- **Live Theme Switching**: Dynamic theme changes with reactive updates  
+- **Component Interactions**: Complex parent-child component communication
+- **Real-time Updates**: Live data updates and animations
+- **Terminal Optimized**: Beautiful layouts designed for terminal interfaces
+
 ## Architecture Overview
 
 SvelTUI implements a custom renderer for Svelte 5 that targets terminal interfaces instead of the DOM.

@@ -72,6 +72,12 @@ export function setupBrowserGlobals(options: BrowserGlobalsOptions = {}) {
     querySelector() { return null }
     querySelectorAll() { return [] }
     cloneNode() { return new MockElement() }
+    remove() { 
+      // DOM Level 4 remove method
+      if (this.parentNode) {
+        this.parentNode.removeChild(this)
+      }
+    }
     style = {}
     classList = {
       add: () => {},
@@ -97,13 +103,39 @@ export function setupBrowserGlobals(options: BrowserGlobalsOptions = {}) {
         selectNodeContents: () => {},
         extractContents: () => customDocument.createDocumentFragment(),
         createContextualFragment: (html: string) => {
-          // For simple HTML parsing, return a text node or element
+          // For HTML template parsing, create a proper document fragment
+          const fragment = customDocument.createDocumentFragment()
           const trimmed = html.trim()
+          
           if (trimmed.startsWith('<!>')) {
+            // Svelte comment marker - return the comment directly
             return customDocument.createComment('')
+          } else if (trimmed) {
+            // For non-empty content, create appropriate node
+            if (trimmed.startsWith('<')) {
+              // Simple HTML parsing - create an element
+              const tagMatch = trimmed.match(/<(\w+)/)
+              const tagName = tagMatch ? tagMatch[1] : 'div'
+              return customDocument.createElement(tagName)
+            } else {
+              // Plain text
+              return customDocument.createTextNode(trimmed)
+            }
           }
-          return customDocument.createTextNode(trimmed)
+          
+          // Return a comment node as fallback (never null)
+          return customDocument.createComment('')
         }
+      }
+    }
+  }
+
+  // Add missing DOM methods that Svelte's template engine expects
+  if (!customDocument.createTreeWalker) {
+    customDocument.createTreeWalker = function(root: any) {
+      return {
+        nextNode: () => null,
+        currentNode: root
       }
     }
   }
@@ -152,9 +184,64 @@ export function setupBrowserGlobals(options: BrowserGlobalsOptions = {}) {
   globalThis.Element = MockElement as any
   globalThis.HTMLElement = MockElement as any
   globalThis.Node = MockElement as any
-  globalThis.DocumentFragment = class MockDocumentFragment extends MockElement {}
+  // Enhanced DocumentFragment with append method
+  class MockDocumentFragment extends MockElement {
+    append(...nodes: any[]) {
+      for (const node of nodes) {
+        if (typeof node === 'string') {
+          this.appendChild(customDocument.createTextNode(node))
+        } else if (node) {
+          this.appendChild(node)
+        }
+      }
+    }
+    
+    appendChild(child: any) {
+      // DocumentFragment should accept children
+      return child
+    }
+  }
+  
+  // Ensure append is on the prototype
+  Object.defineProperty(MockDocumentFragment.prototype, 'append', {
+    value: function(...nodes: any[]) {
+      for (const node of nodes) {
+        if (typeof node === 'string') {
+          this.appendChild(customDocument.createTextNode(node))
+        } else if (node) {
+          this.appendChild(node)
+        }
+      }
+    },
+    writable: true,
+    configurable: true
+  })
+  
+  globalThis.DocumentFragment = MockDocumentFragment
+  
   globalThis.Text = class MockText extends MockElement {}
   globalThis.Comment = class MockComment extends MockElement {}
+  
+  // Add Svelte 5 runes for .svelte.ts files
+  if (!globalThis.$state) {
+    globalThis.$state = function(initial: any) {
+      return { current: initial }
+    }
+  }
+  
+  if (!globalThis.$derived) {
+    globalThis.$derived = {
+      by: function(fn: Function) {
+        return fn()
+      }
+    }
+  }
+  
+  if (!globalThis.$effect) {
+    globalThis.$effect = function(fn: Function) {
+      return fn()
+    }
+  }
 }
 
 /**
