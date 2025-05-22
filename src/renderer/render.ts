@@ -299,6 +299,15 @@ export function renderComponent(
                     console.log('[Renderer] Mock target removeChild called with:', child)  
                   }
                 },
+                addEventListener: (event: string, handler: Function, options?: any) => {
+                  // Handle events from Svelte
+                  if (options?.debug) {
+                    console.log('[Renderer] Mock target addEventListener:', event)
+                  }
+                },
+                removeEventListener: (event: string, handler: Function) => {
+                  // Handle event removal
+                },
                 style: {},
                 classList: { add: () => {}, remove: () => {}, contains: () => false }
               }

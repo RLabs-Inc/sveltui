@@ -37,6 +37,7 @@
     "demo:dashboard": "bun --conditions browser examples/impressive-demos/dashboard-demo.svelte", 
     "demo:themes": "bun --conditions browser examples/impressive-demos/theme-showcase.svelte",
     "demo:simple": "bun --conditions browser examples/impressive-demos/simple-index.ts",
+    "demo:working": "bun --conditions browser examples/working-demo-launcher.ts",
     "compile": "node scripts/compile-svelte.mjs",
     "compile:counter": "node scripts/compile-svelte.mjs examples/simple-counter/App.svelte",
     "compile:all": "node scripts/compile-svelte.mjs examples/simple-counter/App.svelte",

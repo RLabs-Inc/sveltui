@@ -32,6 +32,20 @@ export class TerminalDocument implements TerminalDocumentNode {
   _instanceId = generateNodeId()
 
   /**
+   * Adds an event listener (DOM Level 2)
+   */
+  addEventListener(event: string, handler: Function, options?: any): void {
+    // Handle document-level events for Svelte
+  }
+
+  /**
+   * Removes an event listener (DOM Level 2)
+   */
+  removeEventListener(event: string, handler: Function): void {
+    // Handle event removal
+  }
+
+  /**
    * Creates a new element node
    * @param tagName - Element tag name
    * @returns The created element node
