@@ -4,26 +4,17 @@ Box[$.FILENAME] = 'src/components/ui/Box.svelte';
 
 import * as $ from 'svelte/internal/client';
 
-const content = $.wrap_snippet(Box, function ($$anchor, value = $.noop) {
-	$.validate_snippet_args(...arguments);
-	$.next();
-
-	var text = $.text('value');
-
-	$.append($$anchor, text);
-});
-
 var root = $.add_locations(
 	$.template(
 		`/**
  * Box Component
  * 
  * A basic container element that serves as a building block for layouts
- */  <box><!></box>`,
+ */ <box><!></box>`,
 		1
 	),
 	Box[$.FILENAME],
-	[[62, 0]]
+	[[81, 0]]
 );
 
 export default function Box($$anchor, $$props) {
@@ -61,26 +52,23 @@ export default function Box($$anchor, $$props) {
 				'mouse',
 				'style',
 				'zIndex',
-				'hidden'
+				'hidden',
+				'children'
 			],
 			'restProps'
 		);
 
 	// Convert border prop to blessed-compatible value
-	let borderValue = $.derived(() => $.set(borderValue, $.strict_equals(typeof border(), 'boolean') ? border() ? 'line' : false : border(), true));
+	let borderValue = $.derived(() => $.strict_equals(typeof border(), 'boolean') ? border() ? 'line' : false : border());
 
 	// Merge styles
-	let mergedStyle = $.derived(() => $.set(
-		mergedStyle,
-		{
-			...style(),
-			border: {
-				fg: $$props.borderColor,
-				...style().border || {}
-			}
-		},
-		true
-	));
+	let mergedStyle = $.derived(() => ({
+		...style(),
+		border: {
+			fg: $$props.borderColor,
+			...style().border || {}
+		}
+	}));
 
 	$.next();
 
@@ -89,7 +77,20 @@ export default function Box($$anchor, $$props) {
 	let attributes;
 	var node = $.child(box);
 
-	content(node, () => props.content);
+	{
+		var consequent = ($$anchor) => {
+			var fragment_1 = $.comment();
+			var node_1 = $.first_child(fragment_1);
+
+			$.snippet(node_1, () => $$props.children);
+			$.append($$anchor, fragment_1);
+		};
+
+		$.if(node, ($$render) => {
+			if ($$props.children) $$render(consequent);
+		});
+	}
+
 	$.reset(box);
 
 	$.template_effect(() => attributes = $.set_attributes(box, attributes, {

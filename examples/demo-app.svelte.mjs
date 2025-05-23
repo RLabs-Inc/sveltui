@@ -3,11 +3,11 @@ import 'svelte/internal/disclose-version';
 Demo_app[$.FILENAME] = 'examples/demo-app.svelte';
 
 import * as $ from 'svelte/internal/client';
-import Box from '../src/components/ui/Box.svelte';
-import Text from '../src/components/ui/Text.svelte';
-import List from '../src/components/ui/List.svelte';
-import Input from '../src/components/ui/Input.svelte';
-import Checkbox from '../src/components/ui/Checkbox.svelte';
+import Box from '../src/components/ui/Box.svelte.mjs';
+import Text from '../src/components/ui/Text.svelte.mjs';
+import List from '../src/components/ui/List.svelte.mjs';
+import Input from '../src/components/ui/Input.svelte.mjs';
+import Checkbox from '../src/components/ui/Checkbox.svelte.mjs';
 
 var root_5 = $.add_locations($.template(`<!> <!> <!> <!>`, 1), Demo_app[$.FILENAME], []);
 var root_10 = $.add_locations($.template(`<!> <!> <!> <!> <!> <!>`, 1), Demo_app[$.FILENAME], []);

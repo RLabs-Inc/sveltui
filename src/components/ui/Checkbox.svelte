@@ -5,6 +5,8 @@
  */
 
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
+  
   const dispatch = createEventDispatcher();
   
   // Define component props with defaults
@@ -63,13 +65,13 @@
   });
   
   // Convert border prop to blessed-compatible value
-  let borderValue = $derived(borderValue = typeof border === 'boolean' ? (border ? 'line' : false) : border);
+  let borderValue = $derived(typeof border === 'boolean' ? (border ? 'line' : false) : border);
 
   // Current checkbox character
-  let currentChar = $derived(currentChar = isChecked ? checkedChar : uncheckedChar);
+  let currentChar = $derived(isChecked ? checkedChar : uncheckedChar);
 
   // Full content with label
-  let content = $derived(content = `${currentChar} ${label}`);
+  let content = $derived(`${currentChar} ${label}`);
 
   // Handle toggle
   function handleToggle() {

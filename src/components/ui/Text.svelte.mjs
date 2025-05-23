@@ -4,27 +4,7 @@ Text[$.FILENAME] = 'src/components/ui/Text.svelte';
 
 import * as $ from 'svelte/internal/client';
 
-const content = $.wrap_snippet(Text, function ($$anchor, value = $.noop) {
-	$.validate_snippet_args(...arguments);
-	$.next();
-
-	var text = $.text('value');
-
-	$.append($$anchor, text);
-});
-
-var root = $.add_locations(
-	$.ns_template(
-		`/**
- * Text Component
- * 
- * A component for displaying text in the terminal
- */ <text><!></text>`,
-		1
-	),
-	Text[$.FILENAME],
-	[[59, 0]]
-);
+var root = $.add_locations($.template(`<ttext></ttext>`), Text[$.FILENAME], [[49, 0]]);
 
 export default function Text($$anchor, $$props) {
 	$.check_target(new.target);
@@ -35,7 +15,7 @@ export default function Text($$anchor, $$props) {
 		top = $.prop($$props, 'top', 3, 0),
 		width = $.prop($$props, 'width', 3, 'shrink'),
 		height = $.prop($$props, 'height', 3, 'shrink'),
-		content = $.prop($$props, 'content', 11, ''),
+		content = $.prop($$props, 'content', 3, ''),
 		align = $.prop($$props, 'align', 3, 'left'),
 		wrap = $.prop($$props, 'wrap', 3, true),
 		tags = $.prop($$props, 'tags', 3, false),
@@ -69,26 +49,18 @@ export default function Text($$anchor, $$props) {
 		);
 
 	// Convert border prop to blessed-compatible value
-	let borderValue = $.derived(() => $.set(borderValue, $.strict_equals(typeof border(), 'boolean') ? border() ? 'line' : false : border(), true));
-
-	$.next();
-
-	var fragment = root();
-	var text_1 = $.sibling($.first_child(fragment));
+	let borderValue = $.derived(() => $.strict_equals(typeof border(), 'boolean') ? border() ? 'line' : false : border());
+	var ttext = root();
 	let attributes;
-	var node = $.child(text_1);
 
-	content(node, () => props.content);
-	$.reset(text_1);
-
-	$.template_effect(() => attributes = $.set_attributes(text_1, attributes, {
+	$.template_effect(() => attributes = $.set_attributes(ttext, attributes, {
 		left: left(),
 		top: top(),
 		right: $$props.right,
 		bottom: $$props.bottom,
 		width: width(),
 		height: height(),
-		content,
+		content: content(),
 		align: align(),
 		wrap: wrap(),
 		tags: tags(),
@@ -100,6 +72,6 @@ export default function Text($$anchor, $$props) {
 		...restProps
 	}));
 
-	$.append($$anchor, fragment);
+	$.append($$anchor, ttext);
 	return $.pop({ ...$.legacy_api() });
 }

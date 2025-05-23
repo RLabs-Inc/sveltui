@@ -3,6 +3,7 @@ import 'svelte/internal/disclose-version';
 List[$.FILENAME] = 'src/components/ui/List.svelte';
 
 import * as $ from 'svelte/internal/client';
+import { createEventDispatcher } from 'svelte';
 
 var root = $.add_locations(
 	$.template(
@@ -14,7 +15,7 @@ var root = $.add_locations(
 		1
 	),
 	List[$.FILENAME],
-	[[106, 0]]
+	[[108, 0]]
 );
 
 export default function List($$anchor, $$props) {
@@ -73,20 +74,16 @@ export default function List($$anchor, $$props) {
 	});
 
 	// Convert border prop to blessed-compatible value
-	let borderValue = $.derived(() => $.set(borderValue, $.strict_equals(typeof border(), 'boolean') ? border() ? 'line' : false : border(), true));
+	let borderValue = $.derived(() => $.strict_equals(typeof border(), 'boolean') ? border() ? 'line' : false : border());
 
 	// Merge styles for selected item
-	let mergedStyle = $.derived(() => $.set(
-		mergedStyle,
-		{
-			...style(),
-			selected: {
-				...selectedStyle(),
-				...style().selected || {}
-			}
-		},
-		true
-	));
+	let mergedStyle = $.derived(() => ({
+		...style(),
+		selected: {
+			...selectedStyle(),
+			...style().selected || {}
+		}
+	}));
 
 	// Handle selection
 	function handleSelect(index) {

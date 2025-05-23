@@ -281,42 +281,56 @@ export function renderComponent(
               }
 
               // Create a mock DOM element for Svelte to mount into
-              // Svelte's client-side code expects a real DOM element, not our virtual DOM
-              const mockTargetElement = {
-                appendChild: (child: any) => {
-                  // Instead of appending to a real DOM, we'll process through our reconciler
-                  if (options.debug) {
-                    console.log('[Renderer] Mock target appendChild called with:', child)
-                  }
-                },
-                insertBefore: (child: any, ref: any) => {
-                  if (options.debug) {
-                    console.log('[Renderer] Mock target insertBefore called with:', child, ref)
-                  }
-                },
-                removeChild: (child: any) => {
-                  if (options.debug) {
-                    console.log('[Renderer] Mock target removeChild called with:', child)  
-                  }
-                },
-                addEventListener: (event: string, handler: Function, options?: any) => {
-                  // Handle events from Svelte
-                  if (options?.debug) {
-                    console.log('[Renderer] Mock target addEventListener:', event)
-                  }
-                },
-                removeEventListener: (event: string, handler: Function) => {
-                  // Handle event removal
-                },
-                style: {},
-                classList: { add: () => {}, remove: () => {}, contains: () => false }
+              // We need to use our actual DOM element here so Svelte's operations work correctly
+              const mockTargetElement = rootNode as any
+              
+              // Store our appendChild function to ensure it works correctly
+              const terminalAppendChild = rootNode.appendChild.bind(rootNode)
+              
+              // Override appendChild to handle the anchor text node case
+              ;(rootNode as any).appendChild = function(child: any) {
+                if (options.debug) {
+                  console.log('[Renderer] Mock target appendChild called with:', child)
+                  console.log('[Renderer] Child nodeType:', child?.nodeType)
+                }
+                
+                // Use our terminal appendChild, not the one from Node.prototype
+                const result = terminalAppendChild(child)
+                
+                // After Svelte sets up its anchor, we need to process the DOM tree
+                setTimeout(() => {
+                  processComponentWithReconciler(rootNode, rootElement)
+                  reconciler.forceFlush()
+                  screen.render()
+                }, 0)
+                
+                return result
               }
 
               // Mount the component using Svelte 5's client-side mount function
-              return mount(componentToMount, {
-                target: mockTargetElement,
-                props: options.props || {},
-              })
+              try {
+                if (options.debug) {
+                  console.log('[Renderer] About to call mount with:')
+                  console.log('  Component:', componentToMount)
+                  console.log('  Target:', mockTargetElement)
+                  console.log('  Props:', options.props || {})
+                }
+                
+                const mountResult = mount(componentToMount, {
+                  target: mockTargetElement,
+                  props: options.props || {},
+                })
+                
+                if (options.debug) {
+                  console.log('[Renderer] Mount returned:', mountResult)
+                }
+                
+                return mountResult
+              } catch (mountError) {
+                console.error('[Renderer] Mount error:', mountError)
+                console.error('[Renderer] Mount error stack:', mountError.stack)
+                throw mountError
+              }
             }
 
             // Execute the mount function

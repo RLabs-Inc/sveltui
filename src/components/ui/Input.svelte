@@ -5,6 +5,8 @@
  */
 
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
+  
   const dispatch = createEventDispatcher();
   
   // Define component props with defaults
@@ -69,7 +71,7 @@
   });
   
   // Convert border prop to blessed-compatible value
-  let borderValue = $derived(borderValue = typeof border === 'boolean' ? (border ? 'line' : false) : border);
+  let borderValue = $derived(typeof border === 'boolean' ? (border ? 'line' : false) : border);
   
   // Handle value change
   function handleChange(event: any) {

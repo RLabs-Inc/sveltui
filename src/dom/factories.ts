@@ -651,6 +651,7 @@ export class ProgressBarElement extends BaseTerminalElement {
 export const factories = {
   box: (props: BoxElementProps) => new BoxElement(props),
   text: (props: TextElementProps) => new TextElement(props),
+  ttext: (props: TextElementProps) => new TextElement(props), // Alias for text to avoid SVG issues
   list: (props: ListElementProps) => new ListElement(props),
   input: (props: InputElementProps) => new InputElement(props),
   button: (props: ButtonElementProps) => new ButtonElement(props),

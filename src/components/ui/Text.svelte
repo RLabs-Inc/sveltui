@@ -1,9 +1,3 @@
-/**
- * Text Component
- * 
- * A component for displaying text in the terminal
- */
-
 <script lang="ts">
   // Define component props with defaults
   let {
@@ -18,7 +12,7 @@
     height = 'shrink',
     
     // Text content
-    content = $bindable(''),
+    content = '',
     
     // Text alignment
     align = 'left',
@@ -49,14 +43,10 @@
   } = $props();
   
   // Convert border prop to blessed-compatible value
-  let borderValue = $derived(borderValue = typeof border === 'boolean' ? (border ? 'line' : false) : border);
+  let borderValue = $derived(typeof border === 'boolean' ? (border ? 'line' : false) : border);
 </script>
 
-{#snippet content(value)}
-	value
-{/snippet}
-
-<text
+<ttext
   left={left}
   top={top}
   right={right}
@@ -73,6 +63,4 @@
   hidden={hidden}
   truncate={truncate}
   {...restProps}
->
-  {@render content(props.content)}
-</text>
+/>

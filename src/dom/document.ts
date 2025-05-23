@@ -51,6 +51,10 @@ export class TerminalDocument implements TerminalDocumentNode {
    * @returns The created element node
    */
   createElement(tagName: string): TerminalElementNode {
+    // Special handling for template elements
+    if (tagName.toLowerCase() === 'template') {
+      return new TerminalTemplateElement(tagName, this)
+    }
     return new TerminalElement(tagName, this)
   }
 
@@ -78,6 +82,106 @@ export class TerminalDocument implements TerminalDocumentNode {
    */
   createDocumentFragment(): TerminalNode {
     return new TerminalDocumentFragment(this)
+  }
+
+  /**
+   * Creates a Range object (for HTML parsing compatibility)
+   * @returns A mock range object
+   */
+  createRange(): any {
+    const self = this
+    return {
+      selectNodeContents: () => {},
+      extractContents: () => this.createDocumentFragment(),
+      createContextualFragment: (html: string) => {
+        const fragment = this.createDocumentFragment()
+        
+        if (!html) {
+          return fragment
+        }
+        
+        // Debug log for HTML parsing
+        if ((globalThis as any).SVELTUI_DEBUG) {
+          console.log('[TerminalDocument] Parsing HTML:', html.substring(0, 100) + '...')
+        }
+        
+        // Simple HTML parser for Svelte's needs
+        // This handles the most common patterns Svelte generates
+        let remaining = html
+        let currentParent: TerminalNode = fragment
+        const elementStack: TerminalNode[] = []
+        
+        while (remaining) {
+          // Check for comment
+          if (remaining.startsWith('<!>')) {
+            const comment = this.createComment('')
+            currentParent.appendChild(comment)
+            remaining = remaining.substring(3)
+            continue
+          }
+          
+          // Check for closing tag
+          const closeMatch = remaining.match(/^<\/(\w+)>/)
+          if (closeMatch) {
+            elementStack.pop()
+            currentParent = elementStack[elementStack.length - 1] || fragment
+            remaining = remaining.substring(closeMatch[0].length)
+            continue
+          }
+          
+          // Check for opening tag - also handle <br> and <br/>
+          const openMatch = remaining.match(/^<(\w+)([^>]*)>/)
+          if (openMatch) {
+            const tagName = openMatch[1]
+            const element = this.createElement(tagName)
+            
+            // Parse attributes (simplified)
+            const attrString = openMatch[2]
+            if (attrString) {
+              const attrRegex = /(\w+)(?:="([^"]*)")?/g
+              let attrMatch
+              while ((attrMatch = attrRegex.exec(attrString))) {
+                element.setAttribute(attrMatch[1], attrMatch[2] || '')
+              }
+            }
+            
+            currentParent.appendChild(element)
+            
+            // Check if self-closing or void element (br, img, input, etc.)
+            const voidElements = ['br', 'hr', 'img', 'input', 'meta', 'link']
+            if (!attrString.endsWith('/') && !voidElements.includes(tagName.toLowerCase())) {
+              elementStack.push(currentParent)
+              currentParent = element
+            }
+            
+            remaining = remaining.substring(openMatch[0].length)
+            continue
+          }
+          
+          // Text content
+          const textMatch = remaining.match(/^([^<]+)/)
+          if (textMatch) {
+            const text = textMatch[1]
+            // Always create text nodes, even for whitespace-only content
+            // Svelte needs these for proper template handling
+            const textNode = this.createTextNode(text)
+            currentParent.appendChild(textNode)
+            remaining = remaining.substring(text.length)
+            continue
+          }
+          
+          // If we can't parse anything, break to avoid infinite loop
+          break
+        }
+        
+        // Debug log the created structure
+        if ((globalThis as any).SVELTUI_DEBUG) {
+          console.log('[TerminalDocument] Fragment children:', fragment.childNodes.length)
+        }
+        
+        return fragment
+      }
+    }
   }
 
   /**
@@ -250,6 +354,190 @@ export class TerminalDocument implements TerminalDocumentNode {
 }
 
 /**
+ * Implementation of a terminal template element node
+ */
+export class TerminalTemplateElement implements TerminalElementNode {
+  nodeType = NodeType.ELEMENT
+  nodeName: string
+  tagName: string
+  parentNode: TerminalNode | null = null
+  firstChild: TerminalNode | null = null
+  lastChild: TerminalNode | null = null
+  nextSibling: TerminalNode | null = null
+  previousSibling: TerminalNode | null = null
+  childNodes: TerminalNode[] = []
+  attributes: Record<string, any> = {}
+  _instanceId = generateNodeId()
+  _terminalElement: TerminalElement
+  content: TerminalDocumentFragment
+  _document: TerminalDocumentNode
+  
+  // Style property for Svelte compatibility
+  style: {
+    cssText: string
+    [key: string]: any
+  }
+
+  /**
+   * Creates a new terminal template element node
+   * @param tagName - Element tag name
+   * @param document - The owner document
+   */
+  constructor(tagName: string, document: TerminalDocumentNode) {
+    this.tagName = tagName.toLowerCase()
+    this.nodeName = this.tagName
+    this.content = new TerminalDocumentFragment(document)
+    this._terminalElement = null as any
+    this._document = document
+    
+    // Initialize style object for Svelte compatibility
+    this.style = {
+      cssText: '',
+      display: '',
+      visibility: '',
+      opacity: ''
+    }
+    
+    // Make cssText a getter/setter
+    Object.defineProperty(this.style, 'cssText', {
+      get: () => {
+        const styles: string[] = []
+        for (const [key, value] of Object.entries(this.style)) {
+          if (key !== 'cssText' && value) {
+            const cssKey = key.replace(/[A-Z]/g, m => `-${m.toLowerCase()}`)
+            styles.push(`${cssKey}: ${value}`)
+          }
+        }
+        return styles.join('; ')
+      },
+      set: (value: string) => {
+        if (!value) {
+          for (const key in this.style) {
+            if (key !== 'cssText') {
+              this.style[key] = ''
+            }
+          }
+          return
+        }
+        
+        const declarations = value.split(';').map(s => s.trim()).filter(Boolean)
+        for (const declaration of declarations) {
+          const [prop, val] = declaration.split(':').map(s => s.trim())
+          if (prop && val) {
+            const camelProp = prop.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())
+            this.style[camelProp] = val
+          }
+        }
+      },
+      enumerable: true,
+      configurable: true
+    })
+  }
+
+  /**
+   * innerHTML setter for template elements
+   * Parses the HTML and populates the content fragment
+   */
+  set innerHTML(html: string) {
+    // Clear existing content
+    this.content = new TerminalDocumentFragment(this._document)
+    
+    if (!html) {
+      return
+    }
+
+    // Use the createRange approach for better HTML parsing
+    if (this._document.createRange) {
+      const range = this._document.createRange()
+      const fragment = range.createContextualFragment(html)
+      
+      // Move all nodes from the fragment to the template content
+      while (fragment.firstChild) {
+        this.content.appendChild(fragment.firstChild)
+      }
+    } else {
+      // Fallback to simple parsing
+      const trimmed = html.trim()
+      if (trimmed.startsWith('<!>')) {
+        const comment = this._document.createComment('')
+        this.content.appendChild(comment)
+      } else if (trimmed.startsWith('<')) {
+        const tagMatch = trimmed.match(/<(\w+)/)
+        if (tagMatch) {
+          const element = this._document.createElement(tagMatch[1])
+          this.content.appendChild(element)
+        }
+      } else {
+        const textNode = this._document.createTextNode(trimmed)
+        this.content.appendChild(textNode)
+      }
+    }
+  }
+
+  /**
+   * innerHTML getter
+   */
+  get innerHTML(): string {
+    // Return empty string for now - not critical for Svelte operation
+    return ''
+  }
+
+  // Standard DOM methods
+  setAttribute(name: string, value: any): void {
+    this.attributes[name] = value
+  }
+
+  getAttribute(name: string): any {
+    return this.attributes[name] ?? null
+  }
+
+  removeAttribute(name: string): void {
+    delete this.attributes[name]
+  }
+
+  hasAttribute(name: string): boolean {
+    return name in this.attributes
+  }
+
+  appendChild(child: TerminalNode): TerminalNode {
+    return this.content.appendChild(child)
+  }
+
+  insertBefore(node: TerminalNode, refNode: TerminalNode | null): TerminalNode {
+    return this.content.insertBefore(node, refNode)
+  }
+
+  removeChild(child: TerminalNode): TerminalNode {
+    return this.content.removeChild(child)
+  }
+
+  replaceChild(newChild: TerminalNode, oldChild: TerminalNode): TerminalNode {
+    return this.content.replaceChild(newChild, oldChild)
+  }
+
+  remove(): void {
+    if (this.parentNode) {
+      this.parentNode.removeChild(this)
+    }
+  }
+
+  cloneNode(deep = false): TerminalNode {
+    const clone = new TerminalTemplateElement(this.tagName, {} as TerminalDocumentNode)
+    
+    // Copy attributes
+    for (const [name, value] of Object.entries(this.attributes)) {
+      clone.setAttribute(name, value)
+    }
+
+    if (deep) {
+      clone.content = this.content.cloneNode(true) as TerminalDocumentFragment
+    }
+
+    return clone
+  }
+}
+
+/**
  * Implementation of a terminal element node
  */
 export class TerminalElement implements TerminalElementNode {
@@ -265,6 +553,14 @@ export class TerminalElement implements TerminalElementNode {
   attributes: Record<string, any> = {}
   _instanceId = generateNodeId()
   _terminalElement: TerminalElement
+  _eventListeners?: Record<string, Array<{ handler: Function; options?: any }>>
+  _document: TerminalDocumentNode
+  
+  // Style property for Svelte compatibility
+  style: {
+    cssText: string
+    [key: string]: any
+  }
 
   /**
    * Creates a new terminal element node
@@ -274,10 +570,76 @@ export class TerminalElement implements TerminalElementNode {
   constructor(tagName: string, document: TerminalDocumentNode) {
     this.tagName = tagName.toLowerCase()
     this.nodeName = this.tagName
+    this._document = document
 
     // Initialize with null - the terminal element will be created later
     // by the reconciler through the factory system
     this._terminalElement = null as any
+    
+    // Initialize style object for Svelte compatibility
+    this.style = {
+      cssText: '',
+      // Common style properties that might be accessed
+      display: '',
+      visibility: '',
+      opacity: '',
+      color: '',
+      backgroundColor: '',
+      width: '',
+      height: '',
+      position: '',
+      top: '',
+      left: '',
+      right: '',
+      bottom: '',
+      margin: '',
+      padding: '',
+      border: '',
+      fontSize: '',
+      fontFamily: '',
+      fontWeight: '',
+      textAlign: '',
+      lineHeight: '',
+      zIndex: ''
+    }
+    
+    // Make cssText a getter/setter that updates individual properties
+    Object.defineProperty(this.style, 'cssText', {
+      get: () => {
+        // Convert style properties back to CSS text
+        const styles: string[] = []
+        for (const [key, value] of Object.entries(this.style)) {
+          if (key !== 'cssText' && value) {
+            const cssKey = key.replace(/[A-Z]/g, m => `-${m.toLowerCase()}`)
+            styles.push(`${cssKey}: ${value}`)
+          }
+        }
+        return styles.join('; ')
+      },
+      set: (value: string) => {
+        // Parse CSS text and update individual properties
+        if (!value) {
+          // Clear all properties
+          for (const key in this.style) {
+            if (key !== 'cssText') {
+              this.style[key] = ''
+            }
+          }
+          return
+        }
+        
+        const declarations = value.split(';').map(s => s.trim()).filter(Boolean)
+        for (const declaration of declarations) {
+          const [prop, val] = declaration.split(':').map(s => s.trim())
+          if (prop && val) {
+            const camelProp = prop.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())
+            this.style[camelProp] = val
+          }
+        }
+      },
+      enumerable: true,
+      configurable: true
+    })
   }
 
   /**
@@ -586,6 +948,62 @@ export class TerminalElement implements TerminalElementNode {
       this.parentNode.removeChild(this)
     }
   }
+  
+  /**
+   * Inserts nodes before this element (DOM Level 4)
+   */
+  before(...nodes: (TerminalNode | string)[]): void {
+    if (!this.parentNode) return
+    
+    for (const node of nodes) {
+      const nodeToInsert = typeof node === 'string' 
+        ? new TerminalText(node, this._document)
+        : node
+      this.parentNode.insertBefore(nodeToInsert, this)
+    }
+  }
+  
+  /**
+   * Inserts nodes after this element (DOM Level 4)
+   */
+  after(...nodes: (TerminalNode | string)[]): void {
+    if (!this.parentNode) return
+    
+    let ref = this.nextSibling
+    for (const node of nodes) {
+      const nodeToInsert = typeof node === 'string'
+        ? new TerminalText(node, this._document)
+        : node
+      this.parentNode.insertBefore(nodeToInsert, ref)
+    }
+  }
+
+  /**
+   * Adds an event listener (DOM Level 2)
+   */
+  addEventListener(event: string, handler: Function, options?: any): void {
+    // For now, we'll store event handlers but not execute them
+    // In a full implementation, we'd connect these to blessed events
+    if (!this._eventListeners) {
+      this._eventListeners = {}
+    }
+    if (!this._eventListeners[event]) {
+      this._eventListeners[event] = []
+    }
+    this._eventListeners[event].push({ handler, options })
+  }
+
+  /**
+   * Removes an event listener (DOM Level 2)
+   */
+  removeEventListener(event: string, handler: Function): void {
+    if (!this._eventListeners || !this._eventListeners[event]) {
+      return
+    }
+    this._eventListeners[event] = this._eventListeners[event].filter(
+      (listener) => listener.handler !== handler
+    )
+  }
 
   /**
    * Clones the node
@@ -624,6 +1042,7 @@ export class TerminalText implements TerminalTextNode {
   previousSibling: TerminalNode | null = null
   childNodes: TerminalNode[] = []
   _instanceId = generateNodeId()
+  _document: TerminalDocumentNode
 
   /**
    * Creates a new terminal text node
@@ -632,6 +1051,7 @@ export class TerminalText implements TerminalTextNode {
    */
   constructor(text: string, document: TerminalDocumentNode) {
     this.nodeValue = text
+    this._document = document
   }
 
   /**
@@ -640,6 +1060,35 @@ export class TerminalText implements TerminalTextNode {
   remove(): void {
     if (this.parentNode) {
       this.parentNode.removeChild(this)
+    }
+  }
+  
+  /**
+   * Inserts nodes before this text node (DOM Level 4)
+   */
+  before(...nodes: (TerminalNode | string)[]): void {
+    if (!this.parentNode) return
+    
+    for (const node of nodes) {
+      const nodeToInsert = typeof node === 'string' 
+        ? new TerminalText(node, {} as TerminalDocumentNode)
+        : node
+      this.parentNode.insertBefore(nodeToInsert, this)
+    }
+  }
+  
+  /**
+   * Inserts nodes after this text node (DOM Level 4)
+   */
+  after(...nodes: (TerminalNode | string)[]): void {
+    if (!this.parentNode) return
+    
+    let ref = this.nextSibling
+    for (const node of nodes) {
+      const nodeToInsert = typeof node === 'string'
+        ? new TerminalText(node, {} as TerminalDocumentNode)
+        : node
+      this.parentNode.insertBefore(nodeToInsert, ref)
     }
   }
 
@@ -721,6 +1170,35 @@ export class TerminalComment implements TerminalNode {
       this.parentNode.removeChild(this)
     }
   }
+  
+  /**
+   * Inserts nodes before this comment node (DOM Level 4)
+   */
+  before(...nodes: (TerminalNode | string)[]): void {
+    if (!this.parentNode) return
+    
+    for (const node of nodes) {
+      const nodeToInsert = typeof node === 'string' 
+        ? new TerminalText(node, {} as TerminalDocumentNode)
+        : node
+      this.parentNode.insertBefore(nodeToInsert, this)
+    }
+  }
+  
+  /**
+   * Inserts nodes after this comment node (DOM Level 4)
+   */
+  after(...nodes: (TerminalNode | string)[]): void {
+    if (!this.parentNode) return
+    
+    let ref = this.nextSibling
+    for (const node of nodes) {
+      const nodeToInsert = typeof node === 'string'
+        ? new TerminalText(node, {} as TerminalDocumentNode)
+        : node
+      this.parentNode.insertBefore(nodeToInsert, ref)
+    }
+  }
 
   /**
    * Appends a child node
@@ -781,14 +1259,11 @@ export class TerminalDocumentFragment implements TerminalNode {
   previousSibling: TerminalNode | null = null
   childNodes: TerminalNode[] = []
   _instanceId = generateNodeId()
-
-  /**
-   * Creates a new terminal document fragment
-   * @param document - The owner document
-   */
+  
   constructor(document: TerminalDocumentNode) {
-    // No initialization needed
+    // No initialization needed - properties are already set as class fields
   }
+
 
   /**
    * Appends multiple nodes (DOM Level 4 method)
