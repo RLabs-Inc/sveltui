@@ -106,7 +106,7 @@ export interface TerminalElementNode extends TerminalNode {
   attributes: Record<string, any>;
   
   /** Associated terminal element */
-  _terminalElement: TerminalElement;
+  _terminalElement?: TerminalElement;
   
   /**
    * Sets an attribute value

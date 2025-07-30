@@ -132,9 +132,10 @@ export function setAttribute(
       propValue = true;
     }
     
-    // For style attribute, parse it into an object
+    // For style attribute, parse it into an object and convert to blessed format
     if (name === 'style' && typeof value === 'string') {
-      propValue = parseStyleAttribute(value);
+      const cssStyles = parseStyleAttribute(value);
+      propValue = convertCssToBlessed(cssStyles);
     }
     
     // For class attribute, use className
@@ -179,6 +180,98 @@ function parseStyleAttribute(styleStr: string): Record<string, string> {
   }
   
   return result;
+}
+
+/**
+ * Convert CSS styles to blessed-compatible styles
+ * @param cssStyles - Object with CSS properties
+ * @returns Blessed-compatible style object
+ */
+function convertCssToBlessed(cssStyles: Record<string, string>): Record<string, any> {
+  const blessedStyle: Record<string, any> = {};
+  
+  for (const [key, value] of Object.entries(cssStyles)) {
+    switch (key) {
+      // Colors
+      case 'color':
+        blessedStyle.fg = value;
+        break;
+      case 'backgroundColor':
+      case 'background':
+        blessedStyle.bg = value;
+        break;
+      
+      // Font styles
+      case 'fontWeight':
+        if (value === 'bold' || value === '700' || value === '800' || value === '900') {
+          blessedStyle.bold = true;
+        }
+        break;
+      case 'textDecoration':
+        if (value.includes('underline')) {
+          blessedStyle.underline = true;
+        }
+        break;
+      case 'fontStyle':
+        if (value === 'italic') {
+          // Blessed doesn't support italic, but we can note it
+          blessedStyle.italic = true;
+        }
+        break;
+      
+      // Border styles
+      case 'border':
+        // Simple border parsing (e.g., "2px solid #00ff00")
+        const borderParts = value.split(' ');
+        if (borderParts.length >= 2) {
+          blessedStyle.border = {
+            type: 'line',
+            fg: borderParts[2] || 'white'
+          };
+        }
+        break;
+      case 'borderColor':
+        if (!blessedStyle.border) {
+          blessedStyle.border = { type: 'line' };
+        }
+        blessedStyle.border.fg = value;
+        break;
+      
+      // Spacing - blessed doesn't support these directly
+      case 'padding':
+      case 'margin':
+      case 'marginTop':
+      case 'marginRight':
+      case 'marginBottom':
+      case 'marginLeft':
+        // These could be parsed but blessed handles them differently
+        break;
+      
+      // Size and positioning are handled separately in blessed
+      case 'width':
+      case 'height':
+      case 'top':
+      case 'left':
+      case 'right':
+      case 'bottom':
+        // These are element properties, not style properties in blessed
+        break;
+      
+      // Text visibility
+      case 'visibility':
+        if (value === 'hidden') {
+          blessedStyle.invisible = true;
+        }
+        break;
+      
+      // Other CSS properties that don't map to blessed
+      default:
+        // Ignore or log unhandled properties
+        break;
+    }
+  }
+  
+  return blessedStyle;
 }
 
 /**

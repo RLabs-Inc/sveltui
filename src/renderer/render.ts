@@ -10,13 +10,13 @@ import type { Widgets } from 'blessed'
 // Import Svelte - should now resolve to client-side via config
 import { mount, unmount } from 'svelte'
 import { createScreen, getScreen, createRootBox } from './screen'
-import { document, createElement as createDOMElement } from '../dom'
 import { createElement } from '../dom/factories.js'
+import { happyDomToTerminal, observeHappyDom, setupKeyboardEvents, setupGlobalKeyboardHandler } from './bridge.js'
+import { setupReactiveSync } from './dom-sync.js'
 import type { RendererOptions } from './index.js'
 import type { TerminalNode, TerminalElementNode } from '../dom/nodes.js'
 import type { TerminalElement } from '../dom/elements.js'
 import { getReconciler } from '../reconciler/index.js'
-import { ensureTerminalElement } from '../reconciler/operations.js'
 import path from 'path'
 // Setup browser globals for Svelte 5 client-side compatibility
 import '../utils/browser-globals'
@@ -61,45 +61,41 @@ export function renderComponent(
   // Create the root box
   const rootBox = createRootBox(screen, options)
 
-  // Create a root DOM element for the component
-  const rootNode = document.createElement('div')
-
-  // Create a terminal element for the root node
+  // Create a terminal element for the root - but make it transparent
   const rootElement = createElement('box', {
     width: '100%',
     height: '100%',
     left: 0,
     top: 0,
     content: '',
-    border: 'line' as unknown as Widgets.Border,
-    label: options.title || 'SvelTUI Component',
+    // Make it transparent - no background
     style: {
-      fg: 'blue',
-      bg: 'black',
-      border: {
-        fg: 'blue',
-      },
-      scrollbar: {
-        bg: 'blue',
-      },
-      focus: {
-        bg: 'blue',
-      },
-      hover: {
-        bg: 'blue',
-      },
+      fg: 'white',
+      bg: undefined,  // No background - transparent
+      transparent: true
     },
   })
 
-  // Connect the DOM node to the terminal element
-  ;(rootNode as TerminalElementNode)._terminalElement = rootElement
-  rootElement.attachToNode(rootNode as TerminalElementNode)
-
   // Create the blessed element for the root
   rootElement.create(rootBox)
+  
+  // Set up global keyboard handler
+  setupGlobalKeyboardHandler(screen)
+  
+  // Create a Happy DOM element as the mount target
+  const happyDomTarget = document.createElement('div')
+  document.body.appendChild(happyDomTarget)
 
   let instance: any = null
   let componentMounted = false
+  
+  // Create a mock root node for DOM components only
+  const rootNode = { 
+    appendChild: () => {}, 
+    removeChild: () => {},
+    childNodes: [],
+    nodeName: 'div'
+  }
 
   try {
     // Use dynamic import for Svelte (ESM module)
@@ -113,10 +109,9 @@ export function renderComponent(
           }
 
           // Check if this is a DOM component function (non-Svelte)
-          if (
-            typeof component === 'function' &&
-            !component.__svelte_component__
-          ) {
+          // In Svelte 5, all components are functions, so we can't use this check
+          // Skip the DOM component path entirely
+          if (false) {
             // This might be a direct DOM component (not a Svelte component)
             try {
               if (options.debug) {
@@ -152,12 +147,8 @@ export function renderComponent(
                   },
                 }
 
-                // Process the resulting DOM using the reconciler
-                if (options.debug) {
-                  console.log('[Renderer] Processing DOM tree using reconciler')
-                }
-
-                processComponentWithReconciler(rootNode, rootElement)
+                // For DOM components, we don't have Happy DOM involved
+                // Just render the screen as-is
                 screen.render()
 
                 // Update component mounted status
@@ -280,53 +271,26 @@ export function renderComponent(
                 )
               }
 
-              // Create a mock DOM element for Svelte to mount into
-              // We need to use our actual DOM element here so Svelte's operations work correctly
-              const mockTargetElement = rootNode as any
-              
-              // Store our appendChild function to ensure it works correctly
-              const terminalAppendChild = rootNode.appendChild.bind(rootNode)
-              
-              // Override appendChild to handle the anchor text node case
-              ;(rootNode as any).appendChild = function(child: any) {
-                if (options.debug) {
-                  console.log('[Renderer] Mock target appendChild called with:', child)
-                  console.log('[Renderer] Child nodeType:', child?.nodeType)
-                }
-                
-                // Use our terminal appendChild, not the one from Node.prototype
-                const result = terminalAppendChild(child)
-                
-                // After Svelte sets up its anchor, we need to process the DOM tree
-                setTimeout(() => {
-                  processComponentWithReconciler(rootNode, rootElement)
-                  reconciler.forceFlush()
-                  screen.render()
-                }, 0)
-                
-                return result
-              }
-
-              // Mount the component using Svelte 5's client-side mount function
+              // Mount the component using Svelte 5's client-side mount function to Happy DOM
               try {
                 if (options.debug) {
                   console.log('[Renderer] About to call mount with:')
-                  console.log('  Component:', componentToMount)
-                  console.log('  Target:', mockTargetElement)
+                  console.log('  Component:', typeof componentToMount)
+                  console.log('  Target:', happyDomTarget.tagName)
                   console.log('  Props:', options.props || {})
                 }
-                
+
                 const mountResult = mount(componentToMount, {
-                  target: mockTargetElement,
+                  target: happyDomTarget,
                   props: options.props || {},
                 })
-                
+
                 if (options.debug) {
-                  console.log('[Renderer] Mount returned:', mountResult)
+                  console.log('[Renderer] Mount returned successfully')
                 }
-                
+
                 return mountResult
-              } catch (mountError) {
+              } catch (mountError: any) {
                 console.error('[Renderer] Mount error:', mountError)
                 console.error('[Renderer] Mount error stack:', mountError.stack)
                 throw mountError
@@ -338,14 +302,75 @@ export function renderComponent(
               .then((mountedInstance) => {
                 instance = mountedInstance
 
-                // Process the resulting DOM using the reconciler
+                // Bridge Happy DOM to Terminal DOM
                 if (options.debug) {
                   console.log(
-                    '[Renderer] Component mounted, processing DOM tree with reconciler'
+                    '[Renderer] Component mounted, bridging Happy DOM to Terminal'
                   )
+                  console.log('[Renderer] Happy DOM content:', happyDomTarget.innerHTML)
                 }
 
-                processComponentWithReconciler(rootNode, rootElement)
+                // Clear any existing children
+                while (rootElement.children.length > 0) {
+                  const child = rootElement.children[0]
+                  rootElement.removeChild(child)
+                  child.destroy()
+                }
+
+                // Convert Happy DOM to Terminal elements
+                for (const child of happyDomTarget.childNodes) {
+                  const terminalChild = happyDomToTerminal(child, rootElement)
+                  // Set up keyboard events for interactive elements
+                  if (terminalChild && child instanceof Element) {
+                    setupKeyboardForElement(child, terminalChild, screen)
+                  }
+                }
+                
+                // Set up observer for reactive updates
+                const observer = observeHappyDom(happyDomTarget, rootElement, screen)
+                
+                // Helper to recursively set up keyboard events
+                function setupKeyboardForElement(domEl: Element, termEl: TerminalElement, screen: any) {
+                  // Check if this is an interactive element
+                  const tagName = domEl.tagName.toLowerCase()
+                  if (tagName === 'box' || tagName === 'text' || tagName === 'button' || tagName === 'input') {
+                    // Check if it has focus-related props or keyboard events
+                    if (domEl.hasAttribute('focused') || domEl.hasAttribute('onfocus') || domEl.hasAttribute('onblur') || domEl.hasAttribute('onkeydown')) {
+                      setupKeyboardEvents(domEl, termEl, screen)
+                      // If it has focused=true, focus it
+                      if (domEl.getAttribute('focused') === 'true' || domEl.getAttribute('focused') === '') {
+                        termEl.blessed?.focus()
+                      }
+                    }
+                  }
+                  
+                  // Process children
+                  const domChildren = Array.from(domEl.children)
+                  termEl.children.forEach((termChild, index) => {
+                    if (domChildren[index]) {
+                      setupKeyboardForElement(domChildren[index], termChild, screen)
+                    }
+                  })
+                }
+                
+                // Set up reactive synchronization for Svelte updates
+                const cleanupSync = setupReactiveSync(happyDomTarget, rootElement, screen)
+                
+                // Store cleanup function for later
+                ;(globalThis as any).__sveltui_cleanup_sync = cleanupSync
+
+                // Ensure all terminal elements have blessed elements created
+                function ensureBlessedElements(element: any) {
+                  if (element.children) {
+                    for (const child of element.children) {
+                      if (!child.blessed && element.blessed) {
+                        child.create(element.blessed);
+                      }
+                      ensureBlessedElements(child);
+                    }
+                  }
+                }
+                ensureBlessedElements(rootElement);
 
                 // Force flush any pending operations and render the screen
                 reconciler.forceFlush()
@@ -354,8 +379,8 @@ export function renderComponent(
                 // Update component mounted status
                 componentMounted = true
 
-                // Clear placeholder UI if it was created
-                clearPlaceholderUI(rootElement)
+                // Don't clear placeholder if we already have content
+                // clearPlaceholderUI(rootElement)
 
                 if (options.debug) {
                   console.log('[Renderer] Component mounted successfully')
@@ -527,6 +552,8 @@ function showErrorUI(rootElement: TerminalElement, error: any): void {
   const errorBox = createElement('box', {
     top: 'center',
     left: 'center',
+    right: 'center',
+    bottom: 'center',
     width: '80%',
     height: '50%',
     label: ' SvelTUI Error ',
@@ -570,54 +597,6 @@ function clearPlaceholderUI(rootElement: TerminalElement): void {
   }
 }
 
-/**
- * Process a component's DOM tree using the reconciler
- * This ensures efficient updates when the component state changes
- *
- * @param node - The root of the DOM tree
- * @param parent - The parent terminal element
- */
-function processComponentWithReconciler(
-  node: TerminalNode,
-  parent: TerminalElement
-): void {
-  // Get reconciler instance
-  const reconciler = getReconciler()
-
-  // For the root node, ensure the terminal element is attached
-  if (node.nodeType === 1) {
-    const elementNode = node as TerminalElementNode
-
-    // If node already has a terminal element, use it
-    // Otherwise, use the parent passed in
-    if (!elementNode._terminalElement) {
-      elementNode._terminalElement = parent
-      parent.appendChild(elementNode._terminalElement)
-    }
-  }
-
-  // Process all child nodes using the reconciler
-  for (const child of node.childNodes) {
-    // If it's an element node, ensure it has a terminal element
-    if (child.nodeType === 1) {
-      const elementNode = child as TerminalElementNode
-
-      // If the element doesn't have a terminal element yet, create one
-      if (!elementNode._terminalElement) {
-        // This will create the terminal element and attach it to the DOM node
-        ensureTerminalElement(elementNode, parent)
-      }
-
-      // Recursively process children
-      processComponentWithReconciler(child, elementNode._terminalElement)
-    }
-    // If it's a text node, it will be handled by the parent element
-    else if (child.nodeType === 3) {
-      // Text nodes are handled by the reconciler operations
-      // No need to do anything here
-    }
-  }
-}
 
 /**
  * Refreshes all mounted components
@@ -659,6 +638,8 @@ function createPlaceholderUI(
   const mainBox = createElement('box', {
     top: 0,
     left: 0,
+    right: 0,
+    bottom: 0,
     width: '100%',
     height: '100%',
     border: 'line' as unknown as Widgets.Border,
@@ -689,6 +670,8 @@ function createPlaceholderUI(
   const titleBox = createElement('box', {
     top: 1,
     left: 2,
+    right: 2,
+    bottom: 0,
     width: '50%',
     height: 3,
     content: 'Welcome to SvelTUI!',
@@ -717,6 +700,8 @@ function createPlaceholderUI(
   const instructionsBox = createElement('box', {
     top: 5,
     left: 'center',
+    right: 'center',
+    bottom: 0,
     width: '80%',
     height: 6,
     content:
@@ -748,6 +733,8 @@ function createPlaceholderUI(
   const counterBox = createElement('box', {
     top: 12,
     left: 'center',
+    right: 'center',
+    bottom: 0,
     width: 20,
     height: 3,
     content: `Counter: ${count}`,
@@ -795,6 +782,8 @@ function createPlaceholderUI(
   const footerBox = createElement('box', {
     bottom: 1,
     left: 'center',
+    right: 'center',
+    top: 0,
     width: '90%',
     height: 1,
     content: 'Press +/- to change counter | Press q or Ctrl+C to exit',

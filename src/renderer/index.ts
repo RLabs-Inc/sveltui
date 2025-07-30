@@ -50,11 +50,6 @@ export function render(
   component: Component | string,
   options: RendererOptions = {}
 ): () => void {
-  console.log('Rendering component with options:', options)
-  
-  // Log component type for debugging
-  console.log('Component type:', typeof component)
-
   // Render the component
   return renderComponent(component as any, options)
 }

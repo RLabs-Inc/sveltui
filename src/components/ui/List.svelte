@@ -5,10 +5,6 @@
  */
 
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-  
-  const dispatch = createEventDispatcher();
-  
   // Define component props with defaults
   let {
     // Position properties
@@ -26,6 +22,11 @@
     
     // Initial selected index
     selected = $bindable(0),
+    
+    // Event handlers
+    onSelect,
+    onAction,
+    onFocus,
     
     // Interactive mode
     interactive = true,
@@ -58,13 +59,8 @@
     ...restProps
   } = $props();
   
-  // Track selected item internally when it changes from outside
-  let selectedIndex = $state(selected);
-  
-  // Update internal state when prop changes
-  $effect(() => {
-    selectedIndex = selected;
-  });
+  // Use selected directly from props since it's bindable
+  // No need for internal state tracking
   
   // Convert border prop to blessed-compatible value
   let borderValue = $derived(typeof border === 'boolean' ? (border ? 'line' : false) : border);
@@ -80,8 +76,8 @@
   // Handle selection
   function handleSelect(index: number) {
     if (index >= 0 && index < items.length) {
-      selectedIndex = index;
-      dispatch('select', { index, item: items[index] });
+      selected = index;
+      onSelect?.({ index, item: items[index] });
     }
   }
   
@@ -90,18 +86,18 @@
     if (!interactive) return;
     
     if (event.key === 'up' || (vi && event.key === 'k')) {
-      handleSelect(Math.max(0, selectedIndex - 1));
+      handleSelect(Math.max(0, selected - 1));
     } else if (event.key === 'down' || (vi && event.key === 'j')) {
-      handleSelect(Math.min(items.length - 1, selectedIndex + 1));
+      handleSelect(Math.min(items.length - 1, selected + 1));
     } else if (event.key === 'enter') {
-      dispatch('action', { index: selectedIndex, item: items[selectedIndex] });
+      onAction?.({ index: selected, item: items[selected] });
     }
   }
   
   // Focus the list element
   export function focus() {
     // This will be handled by the runtime DOM connector
-    dispatch('focus');
+    onFocus?.();
   }
 </script>
 
@@ -113,7 +109,7 @@
   width={width}
   height={height}
   items={items}
-  selected={selectedIndex}
+  selected={selected}
   border={borderValue}
   style={mergedStyle}
   keys={keys}

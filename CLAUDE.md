@@ -61,14 +61,12 @@ bun run example:globals  # See the utility in action
 **MAJOR MILESTONE**: SvelTUI has successfully achieved **Svelte 5 client-side mounting in Node.js terminal environment** with full reactivity system operational!
 
 ```bash
-# Launch the working breakthrough demo
-bun run demo:working    # 🎉 LIVE Svelte 5 + Terminal UI!
+# Launch the WORKING demo with reactive counter
+bun --conditions browser examples/final-launcher.ts    # 🎉 LIVE Svelte 5 + Terminal UI!
 
-# Other demo options:
-bun run demo           # Interactive demo launcher (in progress)
-bun run demo:counter   # Interactive counter with auto-increment  
-bun run demo:dashboard # Real-time system dashboard
-bun run demo:themes    # Dynamic theme switching showcase
+# Compile and run your own Svelte components
+node scripts/compile-svelte.mjs examples/your-component.svelte
+bun --conditions browser examples/your-launcher.ts
 ```
 
 **🚀 BREAKTHROUGH ACHIEVEMENTS:**
@@ -76,18 +74,19 @@ bun run demo:themes    # Dynamic theme switching showcase
 - **✅ Full Reactivity System**: `$state`, `$derived`, and `$effect` runes operational
 - **✅ Virtual Terminal DOM**: Creating and managing terminal DOM nodes
 - **✅ Browser Globals Utility**: Complete DOM compatibility layer
-- **✅ Component System**: Svelte components loading and executing
-- **✅ Event System**: DOM events properly handled
+- **✅ Component System**: Svelte components loading and executing with reactive updates
+- **✅ Real-time Updates**: Counter demos show live reactive text updates in terminal
 - **✅ Terminal Integration**: Blessed terminal interface working
 
-**🎯 CURRENT STATUS:**
+**🎯 CURRENT STATUS - JANUARY 2025:**
 - **Core System**: ✅ WORKING - Svelte 5 successfully mounting and creating terminal DOM nodes
 - **Virtual DOM**: ✅ WORKING - `TerminalText` and other nodes being created
-- **Reactivity**: ✅ WORKING - Svelte 5 runes functional in terminal environment
-- **Rendering**: 🔧 IN PROGRESS - Final DOM template compatibility being resolved
+- **Reactivity**: ✅ WORKING - Svelte 5 runes functional with real-time updates
+- **Text Updates**: ✅ WORKING - Reactive text content updating in terminal
+- **Component Loading**: ✅ WORKING - Pre-compiled Svelte components load and run
 
 **🌟 SIGNIFICANCE:**
-This represents the **world's first successful Svelte 5 terminal UI renderer** - enabling modern web development patterns for terminal applications!
+This represents the **world's first successful Svelte 5 terminal UI renderer** - enabling modern web development patterns for terminal applications! The reactive counter demo proves the core concept works.
 
 #### 🔧 Technical Implementation Details
 

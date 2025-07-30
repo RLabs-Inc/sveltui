@@ -88,10 +88,24 @@ export type {
  */
 export function createComponent(type: string) {
   return function(props: Record<string, any> = {}) {
-    return {
-      type,
-      props,
-    };
+    // Import document from our DOM implementation
+    const doc = globalThis.document || require('../dom/document').document;
+    
+    // Create actual DOM element
+    const element = doc.createElement(type);
+    
+    // Set properties
+    Object.entries(props).forEach(([key, value]) => {
+      if (key === 'style' && typeof value === 'object') {
+        // Handle style object
+        Object.assign(element.style, value);
+      } else {
+        // Set as attribute
+        element.setAttribute(key, value);
+      }
+    });
+    
+    return element;
   };
 }
 

@@ -1,18 +1,18 @@
 /**
  * Terminal Screen
- * 
+ *
  * This module manages the blessed screen instance and provides
  * utilities for screen creation and management.
  */
 
-import blessed from 'blessed';
-import type { Widgets } from 'blessed';
-import type { RendererOptions } from './index';
+import blessed from 'blessed'
+import type { Widgets } from 'blessed'
+import type { RendererOptions } from './index'
 
 /**
  * The global screen instance
  */
-let globalScreen: Widgets.Screen | null = null;
+let globalScreen: Widgets.Screen | null = null
 
 /**
  * Creates a blessed screen instance
@@ -22,9 +22,9 @@ let globalScreen: Widgets.Screen | null = null;
 export function createScreen(options: RendererOptions = {}): Widgets.Screen {
   // If a screen already exists, return it
   if (globalScreen) {
-    return globalScreen;
+    return globalScreen
   }
-  
+
   // Create a blessed screen with merged options
   const screenOptions = {
     smartCSR: true,
@@ -46,36 +46,50 @@ export function createScreen(options: RendererOptions = {}): Widgets.Screen {
     useBCE: true,
     // Merge in blessed options from renderer options
     ...options.blessed,
-  };
-
-  if (options.debug) {
-    console.log('[Screen] Creating screen with options:', screenOptions);
   }
 
-  globalScreen = blessed.screen(screenOptions);
-  
+  if (options.debug) {
+    // console.log('[Screen] Creating screen with options: [object]');
+  }
+
+  globalScreen = blessed.screen(screenOptions)
+
   // Set up key bindings for quit - only specific keys should exit
   globalScreen.key(['q', 'C-c'], () => {
-    process.exit(0);
-  });
-  
+    process.exit(0)
+  })
+
   // Remove the escape key handler to prevent accidental exits
   // Also, handle other key events but don't exit
   globalScreen.on('keypress', (ch, key) => {
     // Only log in debug mode
     if (options.debug) {
-      console.log('[Screen] Key pressed:', key?.name || ch);
+      // console.log('[Screen] Key pressed:', key?.name || ch);
     }
-  });
-  
+  })
+
   // Enable mouse
-  globalScreen.enableMouse();
-  
-  if (options.debug) {
-    console.log('[Terminal] Screen created');
+  globalScreen.enableMouse()
+
+  // Keep the process alive by resuming stdin
+  // This prevents Node.js from exiting when the main script finishes
+  process.stdin.resume()
+
+  // Set raw mode if we're in a TTY
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true)
   }
-  
-  return globalScreen;
+
+  // Focus the screen to ensure it receives input
+  if (typeof globalScreen.focus === 'function') {
+    globalScreen.focus()
+  }
+
+  if (options.debug) {
+    // console.log('[Terminal] Screen created, stdin resumed');
+  }
+
+  return globalScreen
 }
 
 /**
@@ -84,7 +98,7 @@ export function createScreen(options: RendererOptions = {}): Widgets.Screen {
  * @returns The blessed screen instance
  */
 export function getScreen(options: RendererOptions = {}): Widgets.Screen {
-  return globalScreen || createScreen(options);
+  return globalScreen || createScreen(options)
 }
 
 /**
@@ -92,7 +106,7 @@ export function getScreen(options: RendererOptions = {}): Widgets.Screen {
  */
 export function renderScreen(): void {
   if (globalScreen) {
-    globalScreen.render();
+    globalScreen.render()
   }
 }
 
@@ -101,8 +115,8 @@ export function renderScreen(): void {
  */
 export function destroyScreen(): void {
   if (globalScreen) {
-    globalScreen.destroy();
-    globalScreen = null;
+    globalScreen.destroy()
+    globalScreen = null
   }
 }
 
@@ -123,11 +137,13 @@ export function createRootBox(
     left: 0,
     width: '100%',
     height: '100%',
+    // Don't shrink - keep full screen
+    shrink: false,
     style: {
       fg: 'white',
       bg: 'black',
     },
-  });
-  
-  return root;
+  })
+
+  return root
 }

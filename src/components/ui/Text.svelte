@@ -38,6 +38,9 @@
     // Whether the element is visible
     hidden = false,
     
+    // Children snippet
+    children,
+    
     // Additional props will be passed to the text element
     ...restProps
   } = $props();
@@ -46,7 +49,7 @@
   let borderValue = $derived(typeof border === 'boolean' ? (border ? 'line' : false) : border);
 </script>
 
-<ttext
+<text
   left={left}
   top={top}
   right={right}
@@ -63,4 +66,8 @@
   hidden={hidden}
   truncate={truncate}
   {...restProps}
-/>
+>
+  {#if children}
+    {@render children()}
+  {/if}
+</text>

@@ -19,7 +19,7 @@ import type {
   ProgressBarElementProps,
 } from './elements'
 import { registerElement } from './elements'
-import type { TerminalElementNode } from './nodes'
+import type { TerminalElementNode, TerminalTextNode } from './nodes'
 
 /**
  * Base terminal element implementation
@@ -208,8 +208,17 @@ export class BoxElement extends BaseTerminalElement {
       label: this.props.label,
       scrollable: this.props.scrollable,
       mouse: this.props.mouse,
-      focusable: this.props.focusable !== false,
+      focusable: this.props.focusable !== false || this.props.focused !== undefined || this.props.onkeydown !== undefined,
+      keys: true,
+      input: true
     })
+    
+    // Auto-focus if focused prop is true
+    if (this.props.focused && this.blessed) {
+      setImmediate(() => {
+        this.blessed?.focus()
+      })
+    }
 
     // Create children
     for (const child of this.children) {
@@ -272,27 +281,50 @@ export class TextElement extends BaseTerminalElement {
       throw new Error('Parent is required for text element')
     }
 
+    // Get content from props or from child text nodes
+    let content = this.props.content || '';
+    if (!content && this.domNode) {
+      // Check for text content in child nodes
+      const textContent = Array.from(this.domNode.childNodes)
+        .filter(node => node.nodeType === 3) // Text nodes
+        .map(node => (node as TerminalTextNode).nodeValue || '')
+        .join('');
+      if (textContent) {
+        content = textContent;
+      }
+    }
+    
+
     // Create blessed text
     this.blessed = blessed.text({
       parent,
-      top: this.props.top,
-      left: this.props.left,
+      top: this.props.top || 0,
+      left: this.props.left || 0,
       right: this.props.right,
       bottom: this.props.bottom,
-      width: this.props.width,
-      height: this.props.height,
-      content: this.props.content || '',
-      tags: this.props.tags,
-      style: this.props.style,
+      width: this.props.width || 'shrink',
+      height: this.props.height || 'shrink',
+      content: content,
+      tags: this.props.tags !== false,
+      style: this.props.style || { 
+        fg: 'white', 
+        bg: undefined,
+        hover: {
+          bg: undefined  // Disable hover background
+        }
+      },
       align: (this.props as TextElementProps).align,
       wrap: (this.props as TextElementProps).wrap,
       border: this.props.border,
+      // Disable mouse interaction for text
+      mouse: false,
     })
+    
+    // Make sure the text element is visible
+    this.blessed.show();
 
-    // Create children
-    for (const child of this.children) {
-      child.create(this.blessed)
-    }
+    // Don't create child elements for text elements
+    // Text elements should only contain text content
   }
 
   update(): void {
@@ -308,8 +340,29 @@ export class TextElement extends BaseTerminalElement {
     text.width = this.props.width
     text.height = this.props.height
 
-    if (this.props.content !== undefined) {
-      text.setContent(this.props.content)
+    // Get content from props or from child text nodes
+    let content = this.props.content;
+    if (content === undefined && this.domNode) {
+      // Check for text content in child nodes
+      const textNodes = Array.from(this.domNode.childNodes)
+        .filter(node => node.nodeType === 3); // Text nodes
+      
+      if (textNodes.length > 0) {
+        const textContent = textNodes
+          .map(node => (node as TerminalTextNode).nodeValue || '')
+          .join('');
+        content = textContent;
+      }
+    }
+
+    if (content !== undefined) {
+      text.setContent(content)
+      // Force screen render to show updated content
+      const screen = text.screen || (this.blessed.parent && this.blessed.parent.screen);
+      if (screen) {
+        screen.render()
+      } else {
+      }
     }
 
     if (this.props.style) {

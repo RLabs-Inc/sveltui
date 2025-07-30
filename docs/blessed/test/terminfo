@@ -1,0 +1,885 @@
+{ header: 
+   { dataSize: 3337,
+     headerSize: 12,
+     magicNumber: 282,
+     namesSize: 28,
+     boolCount: 38,
+     numCount: 15,
+     strCount: 413,
+     strTableSize: 1388,
+     total: 2322,
+     extended: 
+      { dataSize: 1015,
+        headerSize: 10,
+        boolCount: 2,
+        numCount: 0,
+        strCount: 62,
+        strTableSize: 126,
+        lastStrTableOffset: 751,
+        total: 262 } },
+  name: 'xterm',
+  names: [ 'xterm' ],
+  desc: 'X11 terminal emulator',
+  bools: 
+   { auto_left_margin: false,
+     auto_right_margin: true,
+     no_esc_ctlc: false,
+     ceol_standout_glitch: false,
+     eat_newline_glitch: true,
+     erase_overstrike: false,
+     generic_type: false,
+     hard_copy: false,
+     has_meta_key: true,
+     has_status_line: false,
+     insert_null_glitch: false,
+     memory_above: false,
+     memory_below: false,
+     move_insert_mode: true,
+     move_standout_mode: true,
+     over_strike: false,
+     status_line_esc_ok: false,
+     dest_tabs_magic_smso: false,
+     tilde_glitch: false,
+     transparent_underline: false,
+     xon_xoff: false,
+     needs_xon_xoff: false,
+     prtr_silent: true,
+     hard_cursor: false,
+     non_rev_rmcup: false,
+     no_pad_char: true,
+     non_dest_scroll_region: false,
+     can_change: false,
+     back_color_erase: true,
+     hue_lightness_saturation: false,
+     col_addr_glitch: false,
+     cr_cancels_micro_mode: false,
+     has_print_wheel: false,
+     row_addr_glitch: false,
+     semi_auto_right_margin: false,
+     cpi_changes_res: false,
+     lpi_changes_res: false,
+     backspaces_with_bs: true,
+     AX: true,
+     XT: true },
+  numbers: 
+   { columns: 80,
+     init_tabs: 8,
+     lines: 24,
+     lines_of_memory: -1,
+     magic_cookie_glitch: -1,
+     padding_baud_rate: -1,
+     virtual_terminal: -1,
+     width_status_line: -1,
+     num_labels: -1,
+     label_height: -1,
+     label_width: -1,
+     max_attributes: -1,
+     maximum_windows: -1,
+     max_colors: 8,
+     max_pairs: 64 },
+  strings: 
+   { back_tab: '\u001b[Z',
+     bell: '\u0007',
+     carriage_return: '\r',
+     change_scroll_region: '\u001b[%i%p1%d;%p2%dr',
+     clear_all_tabs: '\u001b[3g',
+     clear_screen: '\u001b[H\u001b[2J',
+     clr_eol: '\u001b[K',
+     clr_eos: '\u001b[J',
+     column_address: '\u001b[%i%p1%dG',
+     cursor_address: '\u001b[%i%p1%d;%p2%dH',
+     cursor_down: '\n',
+     cursor_home: '\u001b[H',
+     cursor_invisible: '\u001b[?25l',
+     cursor_left: '\b',
+     cursor_normal: '\u001b[?12l\u001b[?25h',
+     cursor_right: '\u001b[C',
+     cursor_up: '\u001b[A',
+     cursor_visible: '\u001b[?12;25h',
+     delete_character: '\u001b[P',
+     delete_line: '\u001b[M',
+     enter_alt_charset_mode: '\u001b(0',
+     enter_blink_mode: '\u001b[5m',
+     enter_bold_mode: '\u001b[1m',
+     enter_ca_mode: '\u001b[?1049h',
+     enter_insert_mode: '\u001b[4h',
+     enter_secure_mode: '\u001b[8m',
+     enter_reverse_mode: '\u001b[7m',
+     enter_standout_mode: '\u001b[7m',
+     enter_underline_mode: '\u001b[4m',
+     erase_chars: '\u001b[%p1%dX',
+     exit_alt_charset_mode: '\u001b(B',
+     exit_attribute_mode: '\u001b(B\u001b[m',
+     exit_ca_mode: '\u001b[?1049l',
+     exit_insert_mode: '\u001b[4l',
+     exit_standout_mode: '\u001b[27m',
+     exit_underline_mode: '\u001b[24m',
+     flash_screen: '\u001b[?5h$<100/>\u001b[?5l',
+     init_2string: '\u001b[!p\u001b[?3;4l\u001b[4l\u001b>',
+     insert_line: '\u001b[L',
+     key_backspace: '\b',
+     key_dc: '\u001b[3~',
+     key_down: '\u001bOB',
+     key_f1: '\u001bOP',
+     key_f10: '\u001b[21~',
+     key_f2: '\u001bOQ',
+     key_f3: '\u001bOR',
+     key_f4: '\u001bOS',
+     key_f5: '\u001b[15~',
+     key_f6: '\u001b[17~',
+     key_f7: '\u001b[18~',
+     key_f8: '\u001b[19~',
+     key_f9: '\u001b[20~',
+     key_home: '\u001bOH',
+     key_ic: '\u001b[2~',
+     key_left: '\u001bOD',
+     key_npage: '\u001b[6~',
+     key_ppage: '\u001b[5~',
+     key_right: '\u001bOC',
+     key_sf: '\u001b[1;2B',
+     key_sr: '\u001b[1;2A',
+     key_up: '\u001bOA',
+     keypad_local: '\u001b[?1l\u001b>',
+     keypad_xmit: '\u001b[?1h\u001b=',
+     meta_off: '\u001b[?1034l',
+     meta_on: '\u001b[?1034h',
+     parm_dch: '\u001b[%p1%dP',
+     parm_delete_line: '\u001b[%p1%dM',
+     parm_down_cursor: '\u001b[%p1%dB',
+     parm_ich: '\u001b[%p1%d@',
+     parm_index: '\u001b[%p1%dS',
+     parm_insert_line: '\u001b[%p1%dL',
+     parm_left_cursor: '\u001b[%p1%dD',
+     parm_right_cursor: '\u001b[%p1%dC',
+     parm_rindex: '\u001b[%p1%dT',
+     parm_up_cursor: '\u001b[%p1%dA',
+     print_screen: '\u001b[i',
+     prtr_off: '\u001b[4i',
+     prtr_on: '\u001b[5i',
+     reset_1string: '\u001bc',
+     reset_2string: '\u001b[!p\u001b[?3;4l\u001b[4l\u001b>',
+     restore_cursor: '\u001b8',
+     row_address: '\u001b[%i%p1%dd',
+     save_cursor: '\u001b7',
+     scroll_forward: '\n',
+     scroll_reverse: '\u001bM',
+     set_attributes: '%?%p9%t\u001b(0%e\u001b(B%;\u001b[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m',
+     set_tab: '\u001bH',
+     tab: '\t',
+     key_b2: '\u001bOE',
+     acs_chars: '``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~',
+     key_btab: '\u001b[Z',
+     enter_am_mode: '\u001b[?7h',
+     exit_am_mode: '\u001b[?7l',
+     key_end: '\u001bOF',
+     key_enter: '\u001bOM',
+     key_sdc: '\u001b[3;2~',
+     key_send: '\u001b[1;2F',
+     key_shome: '\u001b[1;2H',
+     key_sic: '\u001b[2;2~',
+     key_sleft: '\u001b[1;2D',
+     key_snext: '\u001b[6;2~',
+     key_sprevious: '\u001b[5;2~',
+     key_sright: '\u001b[1;2C',
+     key_f11: '\u001b[23~',
+     key_f12: '\u001b[24~',
+     key_f13: '\u001b[1;2P',
+     key_f14: '\u001b[1;2Q',
+     key_f15: '\u001b[1;2R',
+     key_f16: '\u001b[1;2S',
+     key_f17: '\u001b[15;2~',
+     key_f18: '\u001b[17;2~',
+     key_f19: '\u001b[18;2~',
+     key_f20: '\u001b[19;2~',
+     key_f21: '\u001b[20;2~',
+     key_f22: '\u001b[21;2~',
+     key_f23: '\u001b[23;2~',
+     key_f24: '\u001b[24;2~',
+     key_f25: '\u001b[1;5P',
+     key_f26: '\u001b[1;5Q',
+     key_f27: '\u001b[1;5R',
+     key_f28: '\u001b[1;5S',
+     key_f29: '\u001b[15;5~',
+     key_f30: '\u001b[17;5~',
+     key_f31: '\u001b[18;5~',
+     key_f32: '\u001b[19;5~',
+     key_f33: '\u001b[20;5~',
+     key_f34: '\u001b[21;5~',
+     key_f35: '\u001b[23;5~',
+     key_f36: '\u001b[24;5~',
+     key_f37: '\u001b[1;6P',
+     key_f38: '\u001b[1;6Q',
+     key_f39: '\u001b[1;6R',
+     key_f40: '\u001b[1;6S',
+     key_f41: '\u001b[15;6~',
+     key_f42: '\u001b[17;6~',
+     key_f43: '\u001b[18;6~',
+     key_f44: '\u001b[19;6~',
+     key_f45: '\u001b[20;6~',
+     key_f46: '\u001b[21;6~',
+     key_f47: '\u001b[23;6~',
+     key_f48: '\u001b[24;6~',
+     key_f49: '\u001b[1;3P',
+     key_f50: '\u001b[1;3Q',
+     key_f51: '\u001b[1;3R',
+     key_f52: '\u001b[1;3S',
+     key_f53: '\u001b[15;3~',
+     key_f54: '\u001b[17;3~',
+     key_f55: '\u001b[18;3~',
+     key_f56: '\u001b[19;3~',
+     key_f57: '\u001b[20;3~',
+     key_f58: '\u001b[21;3~',
+     key_f59: '\u001b[23;3~',
+     key_f60: '\u001b[24;3~',
+     key_f61: '\u001b[1;4P',
+     key_f62: '\u001b[1;4Q',
+     key_f63: '\u001b[1;4R',
+     clr_bol: '\u001b[1K',
+     user6: '\u001b[%i%d;%dR',
+     user7: '\u001b[6n',
+     user8: '\u001b[?1;2c',
+     user9: '\u001b[c',
+     orig_pair: '\u001b[39;49m',
+     set_foreground: '\u001b[3%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m',
+     set_background: '\u001b[4%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m',
+     key_mouse: '\u001b[M',
+     set_a_foreground: '\u001b[3%p1%dm',
+     set_a_background: '\u001b[4%p1%dm',
+     memory_lock: '\u001bl',
+     memory_unlock: '\u001bm',
+     Cr: '\u001b]112\u0007',
+     Cs: '\u001b]12;%p1%s\u0007',
+     E3: '\u001b[3;J',
+     Ms: '\u001b]52;%p1%s;%p2%s\u0007',
+     Se: '\u001b[2 q',
+     Ss: '\u001b[%p1%d q',
+     kDC3: '\u001b[3;3~',
+     kDC4: '\u001b[3;4~',
+     kDC5: '\u001b[3;5~',
+     kDC6: '\u001b[3;6~',
+     kDC7: '\u001b[3;7~',
+     kDN: '\u001b[1;2B',
+     kDN3: '\u001b[1;3B',
+     kDN4: '\u001b[1;4B',
+     kDN5: '\u001b[1;5B',
+     kDN6: '\u001b[1;6B',
+     kDN7: '\u001b[1;7B',
+     kEND3: '\u001b[1;3F',
+     kEND4: '\u001b[1;4F',
+     kEND5: '\u001b[1;5F',
+     kEND6: '\u001b[1;6F',
+     kEND7: '\u001b[1;7F',
+     kHOM3: '\u001b[1;3H',
+     kHOM4: '\u001b[1;4H',
+     kHOM5: '\u001b[1;5H',
+     kHOM6: '\u001b[1;6H',
+     kHOM7: '\u001b[1;7H',
+     kIC3: '\u001b[2;3~',
+     kIC4: '\u001b[2;4~',
+     kIC5: '\u001b[2;5~',
+     kIC6: '\u001b[2;6~',
+     kIC7: '\u001b[2;7~',
+     kLFT3: '\u001b[1;3D',
+     kLFT4: '\u001b[1;4D',
+     kLFT5: '\u001b[1;5D',
+     kLFT6: '\u001b[1;6D',
+     kLFT7: '\u001b[1;7D',
+     kNXT3: '\u001b[6;3~',
+     kNXT4: '\u001b[6;4~',
+     kNXT5: '\u001b[6;5~',
+     kNXT6: '\u001b[6;6~',
+     kNXT7: '\u001b[6;7~',
+     kPRV3: '\u001b[5;3~',
+     kPRV4: '\u001b[5;4~',
+     kPRV5: '\u001b[5;5~',
+     kPRV6: '\u001b[5;6~',
+     kPRV7: '\u001b[5;7~',
+     kRIT3: '\u001b[1;3C',
+     kRIT4: '\u001b[1;4C',
+     kRIT5: '\u001b[1;5C',
+     kRIT6: '\u001b[1;6C',
+     kRIT7: '\u001b[1;7C',
+     kUP: '\u001b[1;2A',
+     kUP3: '\u001b[1;3A',
+     kUP4: '\u001b[1;4A',
+     kUP5: '\u001b[1;5A',
+     kUP6: '\u001b[1;6A',
+     kUP7: '\u001b[1;7A',
+     ka2: '',
+     kb1: '',
+     kb3: '',
+     kc2: '' },
+  features: 
+   { unicode: true,
+     brokenACS: false,
+     PCRomSet: false,
+     magicCookie: true,
+     padding: true,
+     setbuf: true,
+     acsc: 
+      { '`': '◆',
+        a: '▒',
+        f: '°',
+        g: '±',
+        i: '\u000b',
+        j: '┘',
+        k: '┐',
+        l: '┌',
+        m: '└',
+        n: '┼',
+        o: '⎺',
+        p: '⎻',
+        q: '─',
+        r: '⎼',
+        s: '⎽',
+        t: '├',
+        u: '┤',
+        v: '┴',
+        w: '┬',
+        x: '│',
+        y: '≤',
+        z: '≥',
+        '{': 'π',
+        '|': '≠',
+        '}': '£',
+        '~': '·' },
+     acscr: 
+      { '◆': '`',
+        '▒': 'a',
+        '°': 'f',
+        '±': 'g',
+        '\u000b': 'i',
+        '┘': 'j',
+        '┐': 'k',
+        '┌': 'l',
+        '└': 'm',
+        '┼': 'n',
+        '⎺': 'o',
+        '⎻': 'p',
+        '─': 'q',
+        '⎼': 'r',
+        '⎽': 's',
+        '├': 't',
+        '┤': 'u',
+        '┴': 'v',
+        '┬': 'w',
+        '│': 'x',
+        '≤': 'y',
+        '≥': 'z',
+        'π': '{',
+        '≠': '|',
+        '£': '}',
+        '·': '~' } } }
+Compiling auto_left_margin: false
+Compiling auto_right_margin: true
+Compiling no_esc_ctlc: false
+Compiling ceol_standout_glitch: false
+Compiling eat_newline_glitch: true
+Compiling erase_overstrike: false
+Compiling generic_type: false
+Compiling hard_copy: false
+Compiling has_meta_key: true
+Compiling has_status_line: false
+Compiling insert_null_glitch: false
+Compiling memory_above: false
+Compiling memory_below: false
+Compiling move_insert_mode: true
+Compiling move_standout_mode: true
+Compiling over_strike: false
+Compiling status_line_esc_ok: false
+Compiling dest_tabs_magic_smso: false
+Compiling tilde_glitch: false
+Compiling transparent_underline: false
+Compiling xon_xoff: false
+Compiling needs_xon_xoff: false
+Compiling prtr_silent: true
+Compiling hard_cursor: false
+Compiling non_rev_rmcup: false
+Compiling no_pad_char: true
+Compiling non_dest_scroll_region: false
+Compiling can_change: false
+Compiling back_color_erase: true
+Compiling hue_lightness_saturation: false
+Compiling col_addr_glitch: false
+Compiling cr_cancels_micro_mode: false
+Compiling has_print_wheel: false
+Compiling row_addr_glitch: false
+Compiling semi_auto_right_margin: false
+Compiling cpi_changes_res: false
+Compiling lpi_changes_res: false
+Compiling backspaces_with_bs: true
+Compiling AX: true
+Compiling XT: true
+Compiling columns: 80
+Compiling init_tabs: 8
+Compiling lines: 24
+Compiling lines_of_memory: -1
+Compiling magic_cookie_glitch: -1
+Compiling padding_baud_rate: -1
+Compiling virtual_terminal: -1
+Compiling width_status_line: -1
+Compiling num_labels: -1
+Compiling label_height: -1
+Compiling label_width: -1
+Compiling max_attributes: -1
+Compiling maximum_windows: -1
+Compiling max_colors: 8
+Compiling max_pairs: 64
+Compiling back_tab: "\u001b[Z"
+return "\x1b[Z";
+Compiling bell: "\u0007"
+return "\x07";
+Compiling carriage_return: "\r"
+return "\r";
+Compiling change_scroll_region: "\u001b[%i%p1%d;%p2%dr"
+var out = ["\x1b["];(params[0]++, params[1]++),out.push(params[0]),out.push(";"),out.push(params[1]),out.push("r");return out.join("");
+Compiling clear_all_tabs: "\u001b[3g"
+return "\x1b[3g";
+Compiling clear_screen: "\u001b[H\u001b[2J"
+return "\x1b[H\x1b[2J";
+Compiling clr_eol: "\u001b[K"
+return "\x1b[K";
+Compiling clr_eos: "\u001b[J"
+return "\x1b[J";
+Compiling column_address: "\u001b[%i%p1%dG"
+var out = ["\x1b["];(params[0]++, params[1]++),out.push(params[0]),out.push("G");return out.join("");
+Compiling cursor_address: "\u001b[%i%p1%d;%p2%dH"
+var out = ["\x1b["];(params[0]++, params[1]++),out.push(params[0]),out.push(";"),out.push(params[1]),out.push("H");return out.join("");
+Compiling cursor_down: "\n"
+return "\n";
+Compiling cursor_home: "\u001b[H"
+return "\x1b[H";
+Compiling cursor_invisible: "\u001b[?25l"
+return "\x1b[?25l";
+Compiling cursor_left: "\b"
+return "\b";
+Compiling cursor_normal: "\u001b[?12l\u001b[?25h"
+return "\x1b[?12l\x1b[?25h";
+Compiling cursor_right: "\u001b[C"
+return "\x1b[C";
+Compiling cursor_up: "\u001b[A"
+return "\x1b[A";
+Compiling cursor_visible: "\u001b[?12;25h"
+return "\x1b[?12;25h";
+Compiling delete_character: "\u001b[P"
+return "\x1b[P";
+Compiling delete_line: "\u001b[M"
+return "\x1b[M";
+Compiling enter_alt_charset_mode: "\u001b(0"
+return "\x1b(0";
+Compiling enter_blink_mode: "\u001b[5m"
+return "\x1b[5m";
+Compiling enter_bold_mode: "\u001b[1m"
+return "\x1b[1m";
+Compiling enter_ca_mode: "\u001b[?1049h"
+return "\x1b[?1049h";
+Compiling enter_insert_mode: "\u001b[4h"
+return "\x1b[4h";
+Compiling enter_secure_mode: "\u001b[8m"
+return "\x1b[8m";
+Compiling enter_reverse_mode: "\u001b[7m"
+return "\x1b[7m";
+Compiling enter_standout_mode: "\u001b[7m"
+return "\x1b[7m";
+Compiling enter_underline_mode: "\u001b[4m"
+return "\x1b[4m";
+Compiling erase_chars: "\u001b[%p1%dX"
+var out = ["\x1b["];out.push(params[0]),out.push("X");return out.join("");
+Compiling exit_alt_charset_mode: "\u001b(B"
+return "\x1b(B";
+Compiling exit_attribute_mode: "\u001b(B\u001b[m"
+return "\x1b(B\x1b[m";
+Compiling exit_ca_mode: "\u001b[?1049l"
+return "\x1b[?1049l";
+Compiling exit_insert_mode: "\u001b[4l"
+return "\x1b[4l";
+Compiling exit_standout_mode: "\u001b[27m"
+return "\x1b[27m";
+Compiling exit_underline_mode: "\u001b[24m"
+return "\x1b[24m";
+Compiling flash_screen: "\u001b[?5h$<100/>\u001b[?5l"
+return "\x1b[?5h\x1b[?5l";
+Compiling init_2string: "\u001b[!p\u001b[?3;4l\u001b[4l\u001b>"
+return "\x1b[!p\x1b[?3;4l\x1b[4l\x1b>";
+Compiling insert_line: "\u001b[L"
+return "\x1b[L";
+Compiling key_backspace: "\b"
+return "\b";
+Compiling key_dc: "\u001b[3~"
+return "\x1b[3~";
+Compiling key_down: "\u001bOB"
+return "\x1bOB";
+Compiling key_f1: "\u001bOP"
+return "\x1bOP";
+Compiling key_f10: "\u001b[21~"
+return "\x1b[21~";
+Compiling key_f2: "\u001bOQ"
+return "\x1bOQ";
+Compiling key_f3: "\u001bOR"
+return "\x1bOR";
+Compiling key_f4: "\u001bOS"
+return "\x1bOS";
+Compiling key_f5: "\u001b[15~"
+return "\x1b[15~";
+Compiling key_f6: "\u001b[17~"
+return "\x1b[17~";
+Compiling key_f7: "\u001b[18~"
+return "\x1b[18~";
+Compiling key_f8: "\u001b[19~"
+return "\x1b[19~";
+Compiling key_f9: "\u001b[20~"
+return "\x1b[20~";
+Compiling key_home: "\u001bOH"
+return "\x1bOH";
+Compiling key_ic: "\u001b[2~"
+return "\x1b[2~";
+Compiling key_left: "\u001bOD"
+return "\x1bOD";
+Compiling key_npage: "\u001b[6~"
+return "\x1b[6~";
+Compiling key_ppage: "\u001b[5~"
+return "\x1b[5~";
+Compiling key_right: "\u001bOC"
+return "\x1bOC";
+Compiling key_sf: "\u001b[1;2B"
+return "\x1b[1;2B";
+Compiling key_sr: "\u001b[1;2A"
+return "\x1b[1;2A";
+Compiling key_up: "\u001bOA"
+return "\x1bOA";
+Compiling keypad_local: "\u001b[?1l\u001b>"
+return "\x1b[?1l\x1b>";
+Compiling keypad_xmit: "\u001b[?1h\u001b="
+return "\x1b[?1h\x1b=";
+Compiling meta_off: "\u001b[?1034l"
+return "\x1b[?1034l";
+Compiling meta_on: "\u001b[?1034h"
+return "\x1b[?1034h";
+Compiling parm_dch: "\u001b[%p1%dP"
+var out = ["\x1b["];out.push(params[0]),out.push("P");return out.join("");
+Compiling parm_delete_line: "\u001b[%p1%dM"
+var out = ["\x1b["];out.push(params[0]),out.push("M");return out.join("");
+Compiling parm_down_cursor: "\u001b[%p1%dB"
+var out = ["\x1b["];out.push(params[0]),out.push("B");return out.join("");
+Compiling parm_ich: "\u001b[%p1%d@"
+var out = ["\x1b["];out.push(params[0]),out.push("@");return out.join("");
+Compiling parm_index: "\u001b[%p1%dS"
+var out = ["\x1b["];out.push(params[0]),out.push("S");return out.join("");
+Compiling parm_insert_line: "\u001b[%p1%dL"
+var out = ["\x1b["];out.push(params[0]),out.push("L");return out.join("");
+Compiling parm_left_cursor: "\u001b[%p1%dD"
+var out = ["\x1b["];out.push(params[0]),out.push("D");return out.join("");
+Compiling parm_right_cursor: "\u001b[%p1%dC"
+var out = ["\x1b["];out.push(params[0]),out.push("C");return out.join("");
+Compiling parm_rindex: "\u001b[%p1%dT"
+var out = ["\x1b["];out.push(params[0]),out.push("T");return out.join("");
+Compiling parm_up_cursor: "\u001b[%p1%dA"
+var out = ["\x1b["];out.push(params[0]),out.push("A");return out.join("");
+Compiling print_screen: "\u001b[i"
+return "\x1b[i";
+Compiling prtr_off: "\u001b[4i"
+return "\x1b[4i";
+Compiling prtr_on: "\u001b[5i"
+return "\x1b[5i";
+Compiling reset_1string: "\u001bc"
+return "\x1bc";
+Compiling reset_2string: "\u001b[!p\u001b[?3;4l\u001b[4l\u001b>"
+return "\x1b[!p\x1b[?3;4l\x1b[4l\x1b>";
+Compiling restore_cursor: "\u001b8"
+return "\x1b8";
+Compiling row_address: "\u001b[%i%p1%dd"
+var out = ["\x1b["];(params[0]++, params[1]++),out.push(params[0]),out.push("d");return out.join("");
+Compiling save_cursor: "\u001b7"
+return "\x1b7";
+Compiling scroll_forward: "\n"
+return "\n";
+Compiling scroll_reverse: "\u001bM"
+return "\x1bM";
+Compiling set_attributes: "%?%p9%t\u001b(0%e\u001b(B%;\u001b[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m"
+var v, stack = [], out = [];;if ((stack.push(v = params[8]), v)) {out.push("\x1b(0")} else {out.push("\x1b(B")}out.push("\x1b[0");if ((stack.push(v = params[5]), v)) {out.push(";1")};if ((stack.push(v = params[1]), v)) {out.push(";4")};if ((stack.push(v = params[0]), v),(stack.push(v = params[2]), v),(stack.push(v = (stack.pop() | stack.pop()) || 0), v)) {out.push(";7")};if ((stack.push(v = params[3]), v)) {out.push(";5")};if ((stack.push(v = params[6]), v)) {out.push(";8")}out.push("m");return out.join("");
+Compiling set_tab: "\u001bH"
+return "\x1bH";
+Compiling tab: "\t"
+return "\t";
+Compiling key_b2: "\u001bOE"
+return "\x1bOE";
+Compiling acs_chars: "``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~"
+return "``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~";
+Compiling key_btab: "\u001b[Z"
+return "\x1b[Z";
+Compiling enter_am_mode: "\u001b[?7h"
+return "\x1b[?7h";
+Compiling exit_am_mode: "\u001b[?7l"
+return "\x1b[?7l";
+Compiling key_end: "\u001bOF"
+return "\x1bOF";
+Compiling key_enter: "\u001bOM"
+return "\x1bOM";
+Compiling key_sdc: "\u001b[3;2~"
+return "\x1b[3;2~";
+Compiling key_send: "\u001b[1;2F"
+return "\x1b[1;2F";
+Compiling key_shome: "\u001b[1;2H"
+return "\x1b[1;2H";
+Compiling key_sic: "\u001b[2;2~"
+return "\x1b[2;2~";
+Compiling key_sleft: "\u001b[1;2D"
+return "\x1b[1;2D";
+Compiling key_snext: "\u001b[6;2~"
+return "\x1b[6;2~";
+Compiling key_sprevious: "\u001b[5;2~"
+return "\x1b[5;2~";
+Compiling key_sright: "\u001b[1;2C"
+return "\x1b[1;2C";
+Compiling key_f11: "\u001b[23~"
+return "\x1b[23~";
+Compiling key_f12: "\u001b[24~"
+return "\x1b[24~";
+Compiling key_f13: "\u001b[1;2P"
+return "\x1b[1;2P";
+Compiling key_f14: "\u001b[1;2Q"
+return "\x1b[1;2Q";
+Compiling key_f15: "\u001b[1;2R"
+return "\x1b[1;2R";
+Compiling key_f16: "\u001b[1;2S"
+return "\x1b[1;2S";
+Compiling key_f17: "\u001b[15;2~"
+return "\x1b[15;2~";
+Compiling key_f18: "\u001b[17;2~"
+return "\x1b[17;2~";
+Compiling key_f19: "\u001b[18;2~"
+return "\x1b[18;2~";
+Compiling key_f20: "\u001b[19;2~"
+return "\x1b[19;2~";
+Compiling key_f21: "\u001b[20;2~"
+return "\x1b[20;2~";
+Compiling key_f22: "\u001b[21;2~"
+return "\x1b[21;2~";
+Compiling key_f23: "\u001b[23;2~"
+return "\x1b[23;2~";
+Compiling key_f24: "\u001b[24;2~"
+return "\x1b[24;2~";
+Compiling key_f25: "\u001b[1;5P"
+return "\x1b[1;5P";
+Compiling key_f26: "\u001b[1;5Q"
+return "\x1b[1;5Q";
+Compiling key_f27: "\u001b[1;5R"
+return "\x1b[1;5R";
+Compiling key_f28: "\u001b[1;5S"
+return "\x1b[1;5S";
+Compiling key_f29: "\u001b[15;5~"
+return "\x1b[15;5~";
+Compiling key_f30: "\u001b[17;5~"
+return "\x1b[17;5~";
+Compiling key_f31: "\u001b[18;5~"
+return "\x1b[18;5~";
+Compiling key_f32: "\u001b[19;5~"
+return "\x1b[19;5~";
+Compiling key_f33: "\u001b[20;5~"
+return "\x1b[20;5~";
+Compiling key_f34: "\u001b[21;5~"
+return "\x1b[21;5~";
+Compiling key_f35: "\u001b[23;5~"
+return "\x1b[23;5~";
+Compiling key_f36: "\u001b[24;5~"
+return "\x1b[24;5~";
+Compiling key_f37: "\u001b[1;6P"
+return "\x1b[1;6P";
+Compiling key_f38: "\u001b[1;6Q"
+return "\x1b[1;6Q";
+Compiling key_f39: "\u001b[1;6R"
+return "\x1b[1;6R";
+Compiling key_f40: "\u001b[1;6S"
+return "\x1b[1;6S";
+Compiling key_f41: "\u001b[15;6~"
+return "\x1b[15;6~";
+Compiling key_f42: "\u001b[17;6~"
+return "\x1b[17;6~";
+Compiling key_f43: "\u001b[18;6~"
+return "\x1b[18;6~";
+Compiling key_f44: "\u001b[19;6~"
+return "\x1b[19;6~";
+Compiling key_f45: "\u001b[20;6~"
+return "\x1b[20;6~";
+Compiling key_f46: "\u001b[21;6~"
+return "\x1b[21;6~";
+Compiling key_f47: "\u001b[23;6~"
+return "\x1b[23;6~";
+Compiling key_f48: "\u001b[24;6~"
+return "\x1b[24;6~";
+Compiling key_f49: "\u001b[1;3P"
+return "\x1b[1;3P";
+Compiling key_f50: "\u001b[1;3Q"
+return "\x1b[1;3Q";
+Compiling key_f51: "\u001b[1;3R"
+return "\x1b[1;3R";
+Compiling key_f52: "\u001b[1;3S"
+return "\x1b[1;3S";
+Compiling key_f53: "\u001b[15;3~"
+return "\x1b[15;3~";
+Compiling key_f54: "\u001b[17;3~"
+return "\x1b[17;3~";
+Compiling key_f55: "\u001b[18;3~"
+return "\x1b[18;3~";
+Compiling key_f56: "\u001b[19;3~"
+return "\x1b[19;3~";
+Compiling key_f57: "\u001b[20;3~"
+return "\x1b[20;3~";
+Compiling key_f58: "\u001b[21;3~"
+return "\x1b[21;3~";
+Compiling key_f59: "\u001b[23;3~"
+return "\x1b[23;3~";
+Compiling key_f60: "\u001b[24;3~"
+return "\x1b[24;3~";
+Compiling key_f61: "\u001b[1;4P"
+return "\x1b[1;4P";
+Compiling key_f62: "\u001b[1;4Q"
+return "\x1b[1;4Q";
+Compiling key_f63: "\u001b[1;4R"
+return "\x1b[1;4R";
+Compiling clr_bol: "\u001b[1K"
+return "\x1b[1K";
+Compiling user6: "\u001b[%i%d;%dR"
+var stack = [], out = ["\x1b["];(params[0]++, params[1]++),out.push(stack.pop()),out.push(";"),out.push(stack.pop()),out.push("R");return out.join("");
+Compiling user7: "\u001b[6n"
+return "\x1b[6n";
+Compiling user8: "\u001b[?1;2c"
+return "\x1b[?1;2c";
+Compiling user9: "\u001b[c"
+return "\x1b[c";
+Compiling orig_pair: "\u001b[39;49m"
+return "\x1b[39;49m";
+Compiling set_foreground: "\u001b[3%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m"
+var v, stack = [], out = [];out.push("\x1b[3");if ((stack.push(v = params[0]), v),(stack.push(v = 1), v),(stack.push(v = (stack.pop() === stack.pop()) || 0), v)) {out.push("4")} else if ((stack.push(v = params[0]), v),(stack.push(v = 3), v),(stack.push(v = (stack.pop() === stack.pop()) || 0), v)) {out.push("6")} else if ((stack.push(v = params[0]), v),(stack.push(v = 4), v),(stack.push(v = (stack.pop() === stack.pop()) || 0), v)) {out.push("1")} else if ((stack.push(v = params[0]), v),(stack.push(v = 6), v),(stack.push(v = (stack.pop() === stack.pop()) || 0), v)) {out.push("3")} else {out.push(params[0])}out.push("m");return out.join("");
+Compiling set_background: "\u001b[4%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m"
+var v, stack = [], out = [];out.push("\x1b[4");if ((stack.push(v = params[0]), v),(stack.push(v = 1), v),(stack.push(v = (stack.pop() === stack.pop()) || 0), v)) {out.push("4")} else if ((stack.push(v = params[0]), v),(stack.push(v = 3), v),(stack.push(v = (stack.pop() === stack.pop()) || 0), v)) {out.push("6")} else if ((stack.push(v = params[0]), v),(stack.push(v = 4), v),(stack.push(v = (stack.pop() === stack.pop()) || 0), v)) {out.push("1")} else if ((stack.push(v = params[0]), v),(stack.push(v = 6), v),(stack.push(v = (stack.pop() === stack.pop()) || 0), v)) {out.push("3")} else {out.push(params[0])}out.push("m");return out.join("");
+Compiling key_mouse: "\u001b[M"
+return "\x1b[M";
+Compiling set_a_foreground: "\u001b[3%p1%dm"
+var out = ["\x1b[3"];out.push(params[0]),out.push("m");return out.join("");
+Compiling set_a_background: "\u001b[4%p1%dm"
+var out = ["\x1b[4"];out.push(params[0]),out.push("m");return out.join("");
+Compiling memory_lock: "\u001bl"
+return "\x1bl";
+Compiling memory_unlock: "\u001bm"
+return "\x1bm";
+Compiling Cr: "\u001b]112\u0007"
+return "\x1b]112\x07";
+Compiling Cs: "\u001b]12;%p1%s\u0007"
+var out = ["\x1b]12;"];out.push(params[0]),out.push("\x07");return out.join("");
+Compiling E3: "\u001b[3;J"
+return "\x1b[3;J";
+Compiling Ms: "\u001b]52;%p1%s;%p2%s\u0007"
+var out = ["\x1b]52;"];out.push(params[0]),out.push(";"),out.push(params[1]),out.push("\x07");return out.join("");
+Compiling Se: "\u001b[2 q"
+return "\x1b[2 q";
+Compiling Ss: "\u001b[%p1%d q"
+var out = ["\x1b["];out.push(params[0]),out.push(" q");return out.join("");
+Compiling kDC3: "\u001b[3;3~"
+return "\x1b[3;3~";
+Compiling kDC4: "\u001b[3;4~"
+return "\x1b[3;4~";
+Compiling kDC5: "\u001b[3;5~"
+return "\x1b[3;5~";
+Compiling kDC6: "\u001b[3;6~"
+return "\x1b[3;6~";
+Compiling kDC7: "\u001b[3;7~"
+return "\x1b[3;7~";
+Compiling kDN: "\u001b[1;2B"
+return "\x1b[1;2B";
+Compiling kDN3: "\u001b[1;3B"
+return "\x1b[1;3B";
+Compiling kDN4: "\u001b[1;4B"
+return "\x1b[1;4B";
+Compiling kDN5: "\u001b[1;5B"
+return "\x1b[1;5B";
+Compiling kDN6: "\u001b[1;6B"
+return "\x1b[1;6B";
+Compiling kDN7: "\u001b[1;7B"
+return "\x1b[1;7B";
+Compiling kEND3: "\u001b[1;3F"
+return "\x1b[1;3F";
+Compiling kEND4: "\u001b[1;4F"
+return "\x1b[1;4F";
+Compiling kEND5: "\u001b[1;5F"
+return "\x1b[1;5F";
+Compiling kEND6: "\u001b[1;6F"
+return "\x1b[1;6F";
+Compiling kEND7: "\u001b[1;7F"
+return "\x1b[1;7F";
+Compiling kHOM3: "\u001b[1;3H"
+return "\x1b[1;3H";
+Compiling kHOM4: "\u001b[1;4H"
+return "\x1b[1;4H";
+Compiling kHOM5: "\u001b[1;5H"
+return "\x1b[1;5H";
+Compiling kHOM6: "\u001b[1;6H"
+return "\x1b[1;6H";
+Compiling kHOM7: "\u001b[1;7H"
+return "\x1b[1;7H";
+Compiling kIC3: "\u001b[2;3~"
+return "\x1b[2;3~";
+Compiling kIC4: "\u001b[2;4~"
+return "\x1b[2;4~";
+Compiling kIC5: "\u001b[2;5~"
+return "\x1b[2;5~";
+Compiling kIC6: "\u001b[2;6~"
+return "\x1b[2;6~";
+Compiling kIC7: "\u001b[2;7~"
+return "\x1b[2;7~";
+Compiling kLFT3: "\u001b[1;3D"
+return "\x1b[1;3D";
+Compiling kLFT4: "\u001b[1;4D"
+return "\x1b[1;4D";
+Compiling kLFT5: "\u001b[1;5D"
+return "\x1b[1;5D";
+Compiling kLFT6: "\u001b[1;6D"
+return "\x1b[1;6D";
+Compiling kLFT7: "\u001b[1;7D"
+return "\x1b[1;7D";
+Compiling kNXT3: "\u001b[6;3~"
+return "\x1b[6;3~";
+Compiling kNXT4: "\u001b[6;4~"
+return "\x1b[6;4~";
+Compiling kNXT5: "\u001b[6;5~"
+return "\x1b[6;5~";
+Compiling kNXT6: "\u001b[6;6~"
+return "\x1b[6;6~";
+Compiling kNXT7: "\u001b[6;7~"
+return "\x1b[6;7~";
+Compiling kPRV3: "\u001b[5;3~"
+return "\x1b[5;3~";
+Compiling kPRV4: "\u001b[5;4~"
+return "\x1b[5;4~";
+Compiling kPRV5: "\u001b[5;5~"
+return "\x1b[5;5~";
+Compiling kPRV6: "\u001b[5;6~"
+return "\x1b[5;6~";
+Compiling kPRV7: "\u001b[5;7~"
+return "\x1b[5;7~";
+Compiling kRIT3: "\u001b[1;3C"
+return "\x1b[1;3C";
+Compiling kRIT4: "\u001b[1;4C"
+return "\x1b[1;4C";
+Compiling kRIT5: "\u001b[1;5C"
+return "\x1b[1;5C";
+Compiling kRIT6: "\u001b[1;6C"
+return "\x1b[1;6C";
+Compiling kRIT7: "\u001b[1;7C"
+return "\x1b[1;7C";
+Compiling kUP: "\u001b[1;2A"
+return "\x1b[1;2A";
+Compiling kUP3: "\u001b[1;3A"
+return "\x1b[1;3A";
+Compiling kUP4: "\u001b[1;4A"
+return "\x1b[1;4A";
+Compiling kUP5: "\u001b[1;5A"
+return "\x1b[1;5A";
+Compiling kUP6: "\u001b[1;6A"
+return "\x1b[1;6A";
+Compiling kUP7: "\u001b[1;7A"
+return "\x1b[1;7A";
+Compiling ka2: ""
+Compiling kb1: ""
+Compiling kb3: ""
+Compiling kc2: ""

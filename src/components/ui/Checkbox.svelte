@@ -5,10 +5,6 @@
  */
 
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-  
-  const dispatch = createEventDispatcher();
-  
   // Define component props with defaults
   let {
     // Position properties
@@ -22,6 +18,10 @@
     height = 1,
     // Checkbox state
     checked = $bindable(false),
+    
+    // Event handlers
+    onChange,
+    onFocus,
     
     // Checkbox label
     label = '',
@@ -56,19 +56,11 @@
     ...restProps
   } = $props();
   
-  // Track checkbox state internally
-  let isChecked = $state(checked);
-  
-  // Update internal state when prop changes
-  $effect(() => {
-    isChecked = checked;
-  });
-  
   // Convert border prop to blessed-compatible value
   let borderValue = $derived(typeof border === 'boolean' ? (border ? 'line' : false) : border);
 
   // Current checkbox character
-  let currentChar = $derived(isChecked ? checkedChar : uncheckedChar);
+  let currentChar = $derived(checked ? checkedChar : uncheckedChar);
 
   // Full content with label
   let content = $derived(`${currentChar} ${label}`);
@@ -77,8 +69,8 @@
   function handleToggle() {
     if (disabled) return;
     
-    isChecked = !isChecked;
-    dispatch('change', { checked: isChecked });
+    checked = !checked;
+    onChange?.({ checked });
   }
   
   // Handle keypress events
@@ -98,7 +90,7 @@
   // Focus the checkbox element
   export function focus() {
     // This will be handled by the runtime DOM connector
-    dispatch('focus');
+    onFocus?.();
   }
 </script>
 

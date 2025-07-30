@@ -4,7 +4,7 @@ Text[$.FILENAME] = 'src/components/ui/Text.svelte';
 
 import * as $ from 'svelte/internal/client';
 
-var root = $.add_locations($.template(`<ttext></ttext>`), Text[$.FILENAME], [[49, 0]]);
+var root = $.add_locations($.ns_template(`<text><!></text>`), Text[$.FILENAME], [[52, 0]]);
 
 export default function Text($$anchor, $$props) {
 	$.check_target(new.target);
@@ -43,17 +43,35 @@ export default function Text($$anchor, $$props) {
 				'border',
 				'style',
 				'zIndex',
-				'hidden'
+				'hidden',
+				'children'
 			],
 			'restProps'
 		);
 
 	// Convert border prop to blessed-compatible value
 	let borderValue = $.derived(() => $.strict_equals(typeof border(), 'boolean') ? border() ? 'line' : false : border());
-	var ttext = root();
+	var text = root();
 	let attributes;
+	var node = $.child(text);
 
-	$.template_effect(() => attributes = $.set_attributes(ttext, attributes, {
+	{
+		var consequent = ($$anchor) => {
+			var fragment = $.comment();
+			var node_1 = $.first_child(fragment);
+
+			$.snippet(node_1, () => $$props.children);
+			$.append($$anchor, fragment);
+		};
+
+		$.if(node, ($$render) => {
+			if ($$props.children) $$render(consequent);
+		});
+	}
+
+	$.reset(text);
+
+	$.template_effect(() => attributes = $.set_attributes(text, attributes, {
 		left: left(),
 		top: top(),
 		right: $$props.right,
@@ -72,6 +90,6 @@ export default function Text($$anchor, $$props) {
 		...restProps
 	}));
 
-	$.append($$anchor, ttext);
+	$.append($$anchor, text);
 	return $.pop({ ...$.legacy_api() });
 }

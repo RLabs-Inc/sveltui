@@ -8,10 +8,11 @@
 
 import { walk } from 'estree-walker'
 import MagicString from 'magic-string'
-import type { Node } from 'estree'
 import { parse } from 'acorn'
 import { handleNode } from './nodes'
 import { transformDOMMethod } from './transform'
+import type { ExtendedNode, ExtendedIdentifier } from './types'
+import { isCallExpression } from './types'
 import path from 'path'
 
 /**
@@ -26,10 +27,10 @@ export interface SvelTUICompilerOptions {
 
   /** Custom element transformations */
   customElements?: Record<string, string>
-  
+
   /** List of events to handle specially in the terminal */
   terminalEvents?: string[]
-  
+
   /** Additional imports to add */
   additionalImports?: Record<string, string>
 }
@@ -42,13 +43,23 @@ const DEFAULT_OPTIONS: SvelTUICompilerOptions = {
   sourcemap: true,
   customElements: {},
   terminalEvents: [
-    'click', 'mousedown', 'mouseup', 'mouseover', 'mouseout',
-    'keydown', 'keyup', 'keypress', 'focus', 'blur',
-    'select', 'submit', 'change'
+    'click',
+    'mousedown',
+    'mouseup',
+    'mouseover',
+    'mouseout',
+    'keydown',
+    'keyup',
+    'keypress',
+    'focus',
+    'blur',
+    'select',
+    'submit',
+    'change',
   ],
   additionalImports: {
-    'svelte/internal': 'svelte/internal'
-  }
+    'svelte/internal': 'svelte/internal',
+  },
 }
 
 /**
@@ -72,7 +83,7 @@ export function sveltuiPlugin(userOptions: SvelTUICompilerOptions = {}) {
       }
 
       if (options.debug) {
-        console.log(`[SvelTUI] Processing: ${id}`)
+        // console.log(`[SvelTUI] Processing: ${id}`)
       }
 
       // Create a MagicString instance for code manipulation
@@ -83,7 +94,7 @@ export function sveltuiPlugin(userOptions: SvelTUICompilerOptions = {}) {
         const ast = parse(code, {
           ecmaVersion: 2020,
           sourceType: 'module',
-        }) as unknown as Node
+        }) as unknown as ExtendedNode
 
         // Determine the proper path to the API runtime
         const runtimePath = getRelativeImportPath(id, '../api/runtime')
@@ -132,25 +143,28 @@ import {
 /**
  * Determines the relative import path from a source file to a target module
  */
-function getRelativeImportPath(sourceFilePath: string, targetModule: string): string {
+function getRelativeImportPath(
+  sourceFilePath: string,
+  targetModule: string
+): string {
   // Default fallback path
-  let runtimePath = targetModule;
-  
+  let runtimePath = targetModule
+
   // Check the file path to determine the correct relative path
   if (sourceFilePath.includes('/src/components/')) {
     // From components directory
-    runtimePath = '../../api/runtime';
+    runtimePath = '../../api/runtime'
   } else if (sourceFilePath.includes('/examples/')) {
     // From examples directory
-    runtimePath = '../src/api/runtime';
+    runtimePath = '../src/api/runtime'
   } else if (sourceFilePath.includes('/src/')) {
     // From src directory
-    const parts = sourceFilePath.split('/src/')[1].split('/');
-    const depth = parts.length - 1;
-    runtimePath = '../'.repeat(depth) + 'api/runtime';
+    const parts = sourceFilePath.split('/src/')[1].split('/')
+    const depth = parts.length - 1
+    runtimePath = '../'.repeat(depth) + 'api/runtime'
   }
-  
-  return runtimePath;
+
+  return runtimePath
 }
 
 /**
@@ -161,34 +175,40 @@ function getRelativeImportPath(sourceFilePath: string, targetModule: string): st
  * @param options - Compiler options
  */
 function transformCode(
-  ast: Node,
+  ast: ExtendedNode,
   s: MagicString,
   options: SvelTUICompilerOptions
 ) {
   // Track which DOM operations we replace
-  const replacedOperations = new Set<string>();
+  const replacedOperations = new Set<string>()
 
   // Replace references to document and window
-  replaceGlobalReferences(s, ast);
+  replaceGlobalReferences(s, ast)
 
   // We'll walk the AST and transform DOM operations to terminal operations
-  walk(ast, {
-    enter(node: Node, parent: Node | null) {
+  walk(ast as any, {
+    enter(node: any, parent: any) {
+      // Cast to our extended type
+      const extNode = node as ExtendedNode
+      extNode.parent = parent
       if (options.debug) {
-        console.log(`[SvelTUI] Visiting node: ${node.type}`)
+        // console.log(`[SvelTUI] Visiting node: ${extNode.type}`)
       }
 
       // Handle the node with our general handler
-      if (handleNode(node, s)) {
-        return;
+      if (handleNode(extNode, s)) {
+        return
       }
 
       // Transform DOM method calls
-      if (node.type === 'CallExpression') {
-        if (transformDOMMethod(node as any, s)) {
-          if (node.callee.type === 'MemberExpression' && 
-              node.callee.property.type === 'Identifier') {
-            replacedOperations.add(node.callee.property.name);
+      if (isCallExpression(extNode)) {
+        if (transformDOMMethod(extNode, s)) {
+          const callee = extNode.callee
+          if (
+            callee.type === 'MemberExpression' &&
+            callee.property.type === 'Identifier'
+          ) {
+            replacedOperations.add(callee.property.name)
           }
         }
       }
@@ -196,39 +216,50 @@ function transformCode(
   })
 
   // Add code to initialize terminal UI after component is mounted
-  appendInitializationCode(s, options);
+  appendInitializationCode(s, options)
 }
 
 /**
  * Replaces global references to document and window
  */
-function replaceGlobalReferences(s: MagicString, ast: Node): void {
-  walk(ast, {
-    enter(node: Node) {
-      if (node.type === 'Identifier' && 
-          (node.name === 'document' || node.name === 'window') &&
+function replaceGlobalReferences(s: MagicString, ast: ExtendedNode): void {
+  walk(ast as any, {
+    enter(node: any, parent: any) {
+      // Cast to our extended type
+      const extNode = node as ExtendedNode
+      extNode.parent = parent
+
+      if (extNode.type === 'Identifier') {
+        const idNode = extNode as ExtendedIdentifier
+        if (
+          (idNode.name === 'document' || idNode.name === 'window') &&
           // Make sure it's not part of a property access or import
-          !(node.parent?.type === 'MemberExpression' && node.parent.property === node) &&
-          !(node.parent?.type === 'ImportSpecifier')) {
-        
-        s.overwrite(
-          node.start as number, 
-          node.end as number, 
-          `__sveltui_${node.name}`
-        );
+          !(
+            idNode.parent?.type === 'MemberExpression' &&
+            (idNode.parent as any).property === idNode
+          ) &&
+          !(idNode.parent?.type === 'ImportSpecifier')
+        ) {
+          if (idNode.start !== undefined && idNode.end !== undefined) {
+            s.overwrite(idNode.start, idNode.end, `__sveltui_${idNode.name}`)
+          }
+        }
       }
-    }
-  });
+    },
+  })
 }
 
 /**
  * Appends code to initialize terminal UI
  */
-function appendInitializationCode(s: MagicString, options: SvelTUICompilerOptions): void {
+function appendInitializationCode(
+  s: MagicString,
+  options: SvelTUICompilerOptions
+): void {
   // Add comment at the end to indicate the file was processed
   s.append(`
 // SvelTUI: This file was processed by the SvelTUI compiler plugin
-`);
+`)
 }
 
 /**

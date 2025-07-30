@@ -3,7 +3,6 @@ import 'svelte/internal/disclose-version';
 Input[$.FILENAME] = 'src/components/ui/Input.svelte';
 
 import * as $ from 'svelte/internal/client';
-import { createEventDispatcher } from 'svelte';
 
 var root = $.add_locations(
 	$.template(
@@ -15,14 +14,12 @@ var root = $.add_locations(
 		1
 	),
 	Input[$.FILENAME],
-	[[117, 0]]
+	[[114, 0]]
 );
 
 export default function Input($$anchor, $$props) {
 	$.check_target(new.target);
 	$.push($$props, true, Input);
-
-	const dispatch = createEventDispatcher();
 
 	// Define component props with defaults
 	let left = $.prop($$props, 'left', 3, 0),
@@ -53,6 +50,10 @@ export default function Input($$anchor, $$props) {
 				'width',
 				'height',
 				'value',
+				'onChange',
+				'onSubmit',
+				'onFocus',
+				'onSelectAll',
 				'placeholder',
 				'secret',
 				'disabled',
@@ -71,11 +72,6 @@ export default function Input($$anchor, $$props) {
 
 	// Track input value internally
 	let inputValue = $.state($.proxy(value()));
-
-	$.user_effect(() => {
-		$.set(inputValue, value());
-	});
-
 	// Convert border prop to blessed-compatible value
 	let borderValue = $.derived(() => $.strict_equals(typeof border(), 'boolean') ? border() ? 'line' : false : border());
 
@@ -91,28 +87,28 @@ export default function Input($$anchor, $$props) {
 		}
 
 		$.set(inputValue, newValue, true);
-		dispatch('change', { value: newValue });
+		$$props.onChange?.({ value: newValue });
 	}
 
 	// Handle submit event (Enter key)
 	function handleSubmit() {
 		if (disabled()) return;
-		dispatch('submit', { value: $.get(inputValue) });
+		$$props.onSubmit?.({ value: $.get(inputValue) });
 	}
 
 	function focus() {
 		// This will be handled by the runtime DOM connector
-		dispatch('focus');
+		$$props.onFocus?.();
 	}
 
 	function selectAll() {
 		// This will be handled by the runtime DOM connector
-		dispatch('selectAll');
+		$$props.onSelectAll?.();
 	}
 
 	function clear() {
 		$.set(inputValue, '');
-		dispatch('change', { value: '' });
+		$$props.onChange?.({ value: '' });
 	}
 
 	$.next();

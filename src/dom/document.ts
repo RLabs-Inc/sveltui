@@ -30,6 +30,22 @@ export class TerminalDocument implements TerminalDocumentNode {
   previousSibling: TerminalNode | null = null
   childNodes: TerminalNode[] = []
   _instanceId = generateNodeId()
+  
+  // DOM compatibility properties
+  body: TerminalElementNode
+  head: TerminalElementNode
+  documentElement: TerminalElementNode
+
+  constructor() {
+    // Create the basic DOM structure
+    this.documentElement = this.createElement('html')
+    this.head = this.createElement('head')
+    this.body = this.createElement('body')
+    
+    this.documentElement.appendChild(this.head)
+    this.documentElement.appendChild(this.body)
+    this.appendChild(this.documentElement)
+  }
 
   /**
    * Adds an event listener (DOM Level 2)
@@ -377,6 +393,9 @@ export class TerminalTemplateElement implements TerminalElementNode {
     cssText: string
     [key: string]: any
   }
+  
+  // Svelte internal style cache
+  __style?: any
 
   /**
    * Creates a new terminal template element node
@@ -561,6 +580,9 @@ export class TerminalElement implements TerminalElementNode {
     cssText: string
     [key: string]: any
   }
+  
+  // Svelte internal style cache
+  __style?: any
 
   /**
    * Creates a new terminal element node

@@ -1,50 +1,38 @@
 <script>
-  import { applyThemeToProps } from '../../theme/currentTheme.svelte'
-  
   // Props with proper defaults
   let {
     children,
-    onClick = () => {},
+    onclick = () => {},
     color = 'primary',
     border = false,
-    width = 'auto',
-    height = 'auto',
+    width = 'shrink',
+    height = 'shrink',
     bold = false,
     disabled = false,
     style = {},
     ...props
   } = $props()
   
-  // Apply theme to props
-  const themedProps = $derived(applyThemeToProps('button', {
-    color,
-    border,
-    width, 
-    height,
-    bold,
-    disabled,
-    style,
-    ...props
-  }))
-  
   function handleClick(event) {
-    if (!disabled && onClick) {
-      onClick(event)
+    if (!disabled) {
+      onclick?.(event)
     }
   }
 </script>
 
 <!-- Button is essentially a styled Box that responds to clicks -->
 <box
-  {...themedProps}
+  width={width}
+  height={height}
+  border={border}
+  style={style}
   onclick={handleClick}
   clickable={!disabled}
   mouse={true}
   keys={true}
-  style={{
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    ...themedProps.style
-  }}
+  {...props}
 >
-  {@render children?.()}
+  {#if children}
+    {@render children()}
+  {/if}
 </box>

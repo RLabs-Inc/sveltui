@@ -3,7 +3,6 @@ import 'svelte/internal/disclose-version';
 Checkbox[$.FILENAME] = 'src/components/ui/Checkbox.svelte';
 
 import * as $ from 'svelte/internal/client';
-import { createEventDispatcher } from 'svelte';
 
 var root = $.add_locations(
 	$.template(
@@ -15,21 +14,19 @@ var root = $.add_locations(
 		1
 	),
 	Checkbox[$.FILENAME],
-	[[106, 0]]
+	[[98, 0]]
 );
 
 export default function Checkbox($$anchor, $$props) {
 	$.check_target(new.target);
 	$.push($$props, true, Checkbox);
 
-	const dispatch = createEventDispatcher();
-
 	// Define component props with defaults
 	let left = $.prop($$props, 'left', 3, 0),
 		top = $.prop($$props, 'top', 3, 0),
 		width = $.prop($$props, 'width', 3, 'shrink'),
 		height = $.prop($$props, 'height', 3, 1),
-		checked = $.prop($$props, 'checked', 11, false),
+		checked = $.prop($$props, 'checked', 15, false),
 		label = $.prop($$props, 'label', 3, ''),
 		disabled = $.prop($$props, 'disabled', 3, false),
 		border = $.prop($$props, 'border', 3, false),
@@ -53,6 +50,8 @@ export default function Checkbox($$anchor, $$props) {
 				'width',
 				'height',
 				'checked',
+				'onChange',
+				'onFocus',
 				'label',
 				'disabled',
 				'border',
@@ -68,25 +67,18 @@ export default function Checkbox($$anchor, $$props) {
 			'restProps'
 		);
 
-	// Track checkbox state internally
-	let isChecked = $.state($.proxy(checked()));
-
-	$.user_effect(() => {
-		$.set(isChecked, checked());
-	});
-
 	// Convert border prop to blessed-compatible value
 	let borderValue = $.derived(() => $.strict_equals(typeof border(), 'boolean') ? border() ? 'line' : false : border());
 	// Current checkbox character
-	let currentChar = $.derived(() => $.get(isChecked) ? checkedChar() : uncheckedChar());
+	let currentChar = $.derived(() => checked() ? checkedChar() : uncheckedChar());
 	// Full content with label
 	let content = $.derived(() => `${$.get(currentChar)} ${label()}`);
 
 	// Handle toggle
 	function handleToggle() {
 		if (disabled()) return;
-		$.set(isChecked, !$.get(isChecked));
-		dispatch('change', { checked: $.get(isChecked) });
+		checked(!checked());
+		$$props.onChange?.({ checked: checked() });
 	}
 
 	// Handle keypress events
@@ -105,7 +97,7 @@ export default function Checkbox($$anchor, $$props) {
 
 	function focus() {
 		// This will be handled by the runtime DOM connector
-		dispatch('focus');
+		$$props.onFocus?.();
 	}
 
 	$.next();

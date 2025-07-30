@@ -16,8 +16,8 @@
     bottom,
     
     // Dimension properties
-    width = '100%',
-    height = 'shrink',
+    width = '30%',  // Test: changed default
+    height = '8',   // Test: changed default
     
     // Appearance properties
     border = false,

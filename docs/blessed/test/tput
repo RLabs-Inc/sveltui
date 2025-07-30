@@ -1,0 +1,20 @@
+#!/bin/bash
+
+term="$1"
+
+dir=$(dirname $(readlink -f "$0"))
+cd "$dir/.."
+
+if test -z "$term"; then
+  term="$dir/../usr/xterm"
+  set -- "$term" "$@"
+fi
+
+node test/tput.js "$@" | grep -v 'dir:\|file:' | tee test/logs/terminfo.log
+out=$(git diff --color=always --no-index test/terminfo test/logs/terminfo.log)
+
+if test -n "$out"; then
+  echo "$out" | less -c -R
+else
+  echo 'Files are identical.'
+fi

@@ -24,8 +24,8 @@ export default function Box($$anchor, $$props) {
 	// Define component props with defaults
 	let left = $.prop($$props, 'left', 3, 0),
 		top = $.prop($$props, 'top', 3, 0),
-		width = $.prop($$props, 'width', 3, '100%'),
-		height = $.prop($$props, 'height', 3, 'shrink'),
+		width = $.prop($$props, 'width', 3, '30%'),
+		height = $.prop($$props, 'height', 3, '8'),
 		border = $.prop($$props, 'border', 3, false),
 		focusable = $.prop($$props, 'focusable', 3, false),
 		scrollable = $.prop($$props, 'scrollable', 3, false),

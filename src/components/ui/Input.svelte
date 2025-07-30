@@ -5,10 +5,6 @@
  */
 
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-  
-  const dispatch = createEventDispatcher();
-  
   // Define component props with defaults
   let {
     // Position properties
@@ -23,6 +19,12 @@
     
     // Input value
     value = $bindable(''),
+    
+    // Event handlers
+    onChange,
+    onSubmit,
+    onFocus,
+    onSelectAll,
     
     // Placeholder text
     placeholder = '',
@@ -65,11 +67,6 @@
   // Track input value internally
   let inputValue = $state(value);
   
-  // Update internal state when prop changes
-  $effect(() => {
-    inputValue = value;
-  });
-  
   // Convert border prop to blessed-compatible value
   let borderValue = $derived(typeof border === 'boolean' ? (border ? 'line' : false) : border);
   
@@ -85,32 +82,32 @@
     }
     
     inputValue = newValue;
-    dispatch('change', { value: newValue });
+    onChange?.({ value: newValue });
   }
   
   // Handle submit event (Enter key)
   function handleSubmit() {
     if (disabled) return;
     
-    dispatch('submit', { value: inputValue });
+    onSubmit?.({ value: inputValue });
   }
   
   // Focus the input element
   export function focus() {
     // This will be handled by the runtime DOM connector
-    dispatch('focus');
+    onFocus?.();
   }
   
   // Select all text in the input
   export function selectAll() {
     // This will be handled by the runtime DOM connector
-    dispatch('selectAll');
+    onSelectAll?.();
   }
   
   // Clear the input
   export function clear() {
     inputValue = '';
-    dispatch('change', { value: '' });
+    onChange?.({ value: '' });
   }
 </script>
 

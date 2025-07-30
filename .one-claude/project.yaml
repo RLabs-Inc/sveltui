@@ -1,0 +1,9 @@
+project:
+  id: sveltui
+  name: SvelTUI
+  description: A framework to build terminal applications using svelte 5
+  type: coding
+  created: 2025-07-29T18:44:03.304356+00:00
+  version: 1.0.0
+  theme: terminal
+  root_path: /Users/rusty/Documents/Projects/TUI/sveltui

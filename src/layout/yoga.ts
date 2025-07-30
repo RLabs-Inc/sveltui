@@ -6,6 +6,7 @@
  */
 
 import Yoga from 'yoga-layout-prebuilt';
+import type { Node as YogaNode } from 'yoga-layout-prebuilt';
 import type { TerminalElement } from '../dom/elements';
 
 /**
@@ -93,7 +94,7 @@ interface YogaLayoutResult {
 /**
  * A cache of yoga nodes to avoid recreating them
  */
-const nodeCache = new WeakMap<TerminalElement, Yoga.Node>();
+const nodeCache = new WeakMap<TerminalElement, YogaNode>();
 
 /**
  * Applies Yoga layout to a container and its children
@@ -142,7 +143,7 @@ export function applyYogaLayout(
 function createYogaNode(
   element: TerminalElement,
   options: YogaLayoutOptions = {}
-): Yoga.Node {
+): YogaNode {
   // Check if node already exists
   let node = nodeCache.get(element);
   
@@ -315,8 +316,8 @@ function createYogaNode(
  */
 function createYogaNodeForElement(
   element: TerminalElement,
-  parentNode: Yoga.Node
-): Yoga.Node {
+  parentNode: YogaNode
+): YogaNode {
   // Extract layout options from element properties
   const options: YogaLayoutOptions = extractLayoutOptions(element);
   
@@ -386,7 +387,7 @@ function extractLayoutOptions(element: TerminalElement): YogaLayoutOptions {
  * @param container - The container element
  * @param node - The yoga node
  */
-function applyLayoutToElements(container: TerminalElement, node: Yoga.Node): void {
+function applyLayoutToElements(container: TerminalElement, node: YogaNode): void {
   // Apply layout to container
   const left = Math.round(node.getComputedLeft());
   const top = Math.round(node.getComputedTop());
