@@ -9,8 +9,33 @@ export {
   render,
   refresh,
   exit,
-  type RendererOptions
+  type RendererOptions,
+  createRenderer,
+  type ComponentRenderOptions
 } from '../renderer';
+
+// Export render scheduler
+export {
+  RenderScheduler,
+  globalScheduler
+} from '../renderer/render-scheduler';
+
+export {
+  type RenderPriority,
+  type RenderRequest,
+  type RenderStats,
+  type QueueStats,
+  RenderQueue
+} from '../renderer/render-queue';
+
+// Export screen utilities with scheduler support
+export {
+  renderScreen,
+  renderImmediate,
+  getRenderStats,
+  pauseRendering,
+  resumeRendering
+} from '../renderer/screen';
 
 // Export runtime DOM connector
 export {
@@ -65,6 +90,77 @@ export type {
   ProgressBarElementProps,
 } from '../dom/elements';
 
+// Export style state system
+export {
+  StyleState,
+  createStyleState,
+  useStyleStateEvents,
+  type TerminalStyle,
+  type StyleStateConfig,
+} from '../dom/style-state.svelte.ts';
+
+export {
+  parseColor,
+  parseStyleAttributes,
+  parseBlessedStyle,
+  mergeStyles,
+  styleToString,
+  createStyle,
+  inheritStyles,
+  applyTheme,
+  TERMINAL_COLORS,
+  TEXT_ATTRIBUTES,
+  BORDER_TYPES,
+  type TerminalColor,
+  type TextAttribute,
+  type BorderType,
+} from '../dom/style-utils';
+
+// Export reactive event system
+export {
+  ReactiveEventEmitter,
+  createElementEventEmitter,
+  getElementEventEmitter,
+  globalEventBus,
+  createEventWatcher,
+  createEventSummary,
+  type ReactiveEventData,
+  type ReactiveEventHandler,
+} from '../dom/reactive-events.svelte.ts';
+
+export {
+  bridgeElementEvents,
+  bridgeScreenEvents,
+  createCustomEvent,
+  EventDelegator,
+  createBlessedUpdater,
+  blessedUpdaters,
+} from '../dom/event-bridge';
+
+// Export focus management system
+export {
+  createFocusContext,
+  getFocusContext,
+  hasFocusContext,
+  type FocusContext,
+  type FocusableElement,
+} from '../dom/focus-context.svelte.ts';
+
+export {
+  isFocusable,
+  getFocusableElements,
+  calculateTabOrder,
+  getNextFocusable,
+  getPreviousFocusable,
+  applyFocusRing,
+  createFocusIndicator,
+  setupKeyboardNavigation,
+  createFocusTrap,
+  type FocusableElementInfo,
+  type KeyboardShortcuts,
+  defaultKeyboardShortcuts,
+} from '../dom/focus-manager';
+
 /**
  * Creates a component bound to a specific element type
  * 
@@ -116,6 +212,56 @@ export const List = createComponent('list');
 export const Input = createComponent('input');
 export const Button = createComponent('button');
 export const Progress = createComponent('progress');
+
+// Export streaming utilities
+export {
+  ReactiveStream,
+  createReactiveStream,
+  type StreamOptions,
+  type StreamMetrics,
+} from '../streaming/reactive-stream.svelte.ts';
+
+export {
+  responseToStream,
+  textToStream,
+  createMockClaudeStream,
+  parseSSEStream,
+  createBackpressureStream,
+  mergeStreams,
+  transformStream,
+  throttleStream,
+  bufferStream,
+} from '../streaming/stream-utils';
+
+// Export mouse tracking system
+export {
+  SimpleMouseState,
+  mouseState,
+  isMouseOver,
+  getMouseRelativePosition,
+  type MouseButtonState,
+  type MousePosition,
+  type DragState,
+  type MouseMovement,
+} from '../input/simple-mouse-state';
+
+export {
+  convertToElementCoordinates,
+  getElementBounds,
+  hitTest,
+  getElementAtPosition,
+  distance,
+  angle,
+  normalizeMouseEvent,
+  isDraggable,
+  isDropTarget,
+  calculateDragOffset,
+  applyDragConstraints,
+  detectGesture,
+  createDebouncedMouseHandler,
+  createThrottledMouseHandler,
+  type GestureDetection,
+} from '../input/mouse-utils';
 
 /**
  * SvelTUI version

@@ -14,6 +14,9 @@ import {
 } from '../dom';
 import { refresh } from '../renderer';
 import { getReconciler } from '../reconciler';
+import { setupBinding, cleanupBindings } from '../dom/binding-bridge';
+import { hasFocusContext, getFocusContext } from '../dom/focus-context.svelte.ts';
+import { isFocusable } from '../dom/focus-manager';
 
 // DOM operations that will be called by the compiler-generated code
 
@@ -65,6 +68,15 @@ export function insertNode(
 ): void {
   parent.insertBefore(node, anchor);
   
+  // Register with focus context if focusable
+  if (node.nodeType === 1 && hasFocusContext()) {
+    const element = node as TerminalElementNode;
+    if (isFocusable(element)) {
+      const focusContext = getFocusContext();
+      focusContext.registerElement(element);
+    }
+  }
+  
   // Force a reconciler flush to ensure the terminal is updated
   const reconciler = getReconciler();
   reconciler.forceFlush();
@@ -81,6 +93,15 @@ export function insertNode(
 export function appendChild(parent: TerminalNode, child: TerminalNode): void {
   parent.appendChild(child);
   
+  // Register with focus context if focusable
+  if (child.nodeType === 1 && hasFocusContext()) {
+    const element = child as TerminalElementNode;
+    if (isFocusable(element)) {
+      const focusContext = getFocusContext();
+      focusContext.registerElement(element);
+    }
+  }
+  
   // Force a reconciler flush to ensure the terminal is updated
   const reconciler = getReconciler();
   reconciler.forceFlush();
@@ -96,6 +117,13 @@ export function appendChild(parent: TerminalNode, child: TerminalNode): void {
  */
 export function removeChild(parent: TerminalNode, child: TerminalNode): void {
   parent.removeChild(child);
+  
+  // Unregister from focus context if focusable
+  if (child.nodeType === 1 && hasFocusContext()) {
+    const element = child as TerminalElementNode;
+    const focusContext = getFocusContext();
+    focusContext.unregisterElement(element);
+  }
   
   // Force a reconciler flush to ensure the terminal is updated
   const reconciler = getReconciler();
@@ -728,3 +756,44 @@ export const __sveltui_window = {
  * The root element for the terminal
  */
 export const __sveltui_root = document.createElement('div');
+
+/**
+ * Setup binding for a property
+ * Called when a bindable property is created
+ * @param node - Element node
+ * @param propName - Property name
+ * @param getValue - Function to get current value
+ * @param setValue - Function to set new value
+ */
+export function setupPropertyBinding(
+  node: TerminalElementNode,
+  propName: string,
+  getValue: () => any,
+  setValue: (value: any) => void
+): () => void {
+  // Wait for terminal element to be created
+  if (!node._terminalElement) {
+    // Return empty cleanup function if no element yet
+    return () => {};
+  }
+  
+  // Set up the binding
+  const syncFn = setupBinding(node._terminalElement, propName, getValue, setValue);
+  
+  // Return cleanup function
+  return () => {
+    if (node._terminalElement) {
+      cleanupBindings(node._terminalElement);
+    }
+  };
+}
+
+/**
+ * Clean up all bindings when element is destroyed
+ * @param node - Element node
+ */
+export function cleanupElementBindings(node: TerminalElementNode): void {
+  if (node._terminalElement) {
+    cleanupBindings(node._terminalElement);
+  }
+}

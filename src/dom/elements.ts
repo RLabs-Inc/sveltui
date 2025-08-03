@@ -253,6 +253,9 @@ export interface TerminalElement {
 
   /** Node type from virtual DOM */
   nodeType: NodeType
+  
+  /** Binding cleanup functions */
+  _bindingCleanup?: Array<() => void>
 
   /**
    * Sets element properties

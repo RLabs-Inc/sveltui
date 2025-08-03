@@ -14,6 +14,7 @@ import { createElement } from '../dom/factories.js'
 import { happyDomToTerminal, observeHappyDom, setupKeyboardEvents, setupGlobalKeyboardHandler } from './bridge.js'
 import { setupReactiveSync } from './dom-sync.js'
 import type { RendererOptions } from './index.js'
+// import { mouseState } from '../input/simple-mouse-state'
 import type { TerminalNode, TerminalElementNode } from '../dom/nodes.js'
 import type { TerminalElement } from '../dom/elements.js'
 import { getReconciler } from '../reconciler/index.js'
@@ -78,6 +79,9 @@ export function renderComponent(
 
   // Create the blessed element for the root
   rootElement.create(rootBox)
+  
+  // Initialize mouse state with the root element
+  // mouseState.setRootElement(rootElement)
   
   // Set up global keyboard handler
   setupGlobalKeyboardHandler(screen)

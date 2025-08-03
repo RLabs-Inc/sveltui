@@ -9,6 +9,16 @@ import type { Component } from 'svelte'
 import { renderComponent, refreshComponents, destroyComponents } from './render'
 import { getScreen, destroyScreen } from './screen'
 import { document } from '../dom'
+import type { RenderScheduler } from './render-scheduler'
+
+// Export createRenderer from svelte-renderer
+export { createRenderer } from './svelte-renderer'
+export type { ComponentRenderOptions } from './svelte-renderer'
+
+// Export render scheduler utilities
+export { RenderScheduler, globalScheduler } from './render-scheduler'
+export { type RenderPriority, type RenderRequest, type RenderStats, type QueueStats, RenderQueue } from './render-queue'
+export { renderScreen, renderImmediate, getRenderStats, pauseRendering, resumeRendering } from './screen'
 
 export interface RendererOptions {
   /** Title for the terminal window */
@@ -23,6 +33,14 @@ export interface RendererOptions {
   props?: Record<string, any>
   /** Custom blessed configuration options */
   blessed?: Record<string, any>
+  /** Whether to use the render scheduler (default: true) */
+  useScheduler?: boolean
+  /** Custom render scheduler instance */
+  scheduler?: RenderScheduler
+  /** Maximum FPS for render scheduling (default: 60) */
+  maxFPS?: number
+  /** Enable performance monitoring */
+  performanceMonitoring?: boolean
 }
 
 /**

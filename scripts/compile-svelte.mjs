@@ -33,7 +33,9 @@ export function compileComponent(componentPath, options = {}) {
     // Ensure we're using Svelte 5 component API
     compatibility: {
       componentApi: 5
-    }
+    },
+    // Disable hydratable since we're not doing SSR
+    hydratable: false,
   });
   
   // Output path

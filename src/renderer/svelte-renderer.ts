@@ -5,13 +5,21 @@
  * to the terminal UI. It connects Svelte's runtime with our terminal DOM implementation.
  */
 
+// Ensure browser globals are set up before anything else
+import '../utils/browser-globals'
+
 import type { Component, ComponentConstructorOptions } from 'svelte'
-import type { Widgets } from 'blessed'
-import { getScreen, createRootBox } from './screen'
-import { document } from '../dom'
+import blessed, { type Widgets } from 'blessed'
+import { getScreen, createRootBox, getRenderStats } from './screen'
+// Using global document (Happy DOM) instead of our custom DOM
+// import { document } from '../dom'
 import type { TerminalNode, TerminalElementNode } from '../dom/nodes'
 import type { TerminalElement } from '../dom/elements'
 import { getReconciler } from '../reconciler'
+import { setDOMConfig } from '../dom/config'
+import type { RenderScheduler } from './render-scheduler'
+import { happyDomToTerminal, observeHappyDom, setupKeyboardEvents, setupGlobalKeyboardHandler } from './bridge'
+import { setupReactiveSync } from './dom-sync'
 
 /**
  * Options for rendering a Svelte component
@@ -40,6 +48,27 @@ export interface ComponentRenderOptions {
 
   /** Whether to enable debug mode */
   debug?: boolean
+  
+  /** Whether to enable reactive elements (uses Svelte's fine-grained reactivity) */
+  reactive?: boolean
+  
+  /** Terminal window title (shorthand for screen.title) */
+  title?: string
+  
+  /** Whether to use fullscreen mode (shorthand for screen.fullscreen) */
+  fullscreen?: boolean
+  
+  /** Whether to use the render scheduler (default: true) */
+  useScheduler?: boolean
+  
+  /** Custom render scheduler instance */
+  scheduler?: RenderScheduler
+  
+  /** Maximum FPS for render scheduling (default: 60) */
+  maxFPS?: number
+  
+  /** Enable performance monitoring */
+  performanceMonitoring?: boolean
 }
 
 /**
@@ -66,10 +95,15 @@ export interface RenderResult {
  * @param options - Component render options
  * @returns Render result with destroy function
  */
-export function renderComponent(
+export async function renderComponent(
   Component: any,
   options: ComponentRenderOptions = {}
-): RenderResult {
+): Promise<RenderResult> {
+  // Configure DOM for reactive elements if requested
+  if (options.reactive) {
+    setDOMConfig({ reactive: true, debug: options.debug || false })
+  }
+  
   // Initialize the reconciler
   const reconciler = getReconciler({
     debug: options.debug,
@@ -78,8 +112,13 @@ export function renderComponent(
 
   // Get or create the screen
   const screen = getScreen({
-    title: options.screen?.title,
-    fullscreen: options.screen?.fullscreen,
+    title: options.title || options.screen?.title,
+    fullscreen: options.fullscreen ?? options.screen?.fullscreen,
+    useScheduler: options.useScheduler,
+    scheduler: options.scheduler,
+    maxFPS: options.maxFPS,
+    performanceMonitoring: options.performanceMonitoring,
+    debug: options.debug,
     ...options.screen?.options,
   })
 
@@ -87,18 +126,18 @@ export function renderComponent(
   const rootBox = createRootBox(screen, {
     debug: options.debug,
   })
+  
+  // Set up global keyboard handler BEFORE bridging elements
+  setupGlobalKeyboardHandler(screen)
 
-  // Create a target element if not provided
-  const target = options.target || document.createElement('div')
-  if (target.nodeType !== 1) {
-    throw new Error('Target must be an element node')
-  }
+  // Create a Happy DOM target element for mounting (not our custom DOM)
+  const happyDomTarget = document.createElement('div')
+  document.body.appendChild(happyDomTarget)
 
   try {
     // Check if Svelte 5 module is available
     let instance: any
     const props = options.props || {}
-    const targetEl = target as any
 
     // Try to dynamically import Svelte directly
     try {
@@ -146,9 +185,9 @@ export function renderComponent(
             Component = require(Component).default
           }
 
-          // For Svelte 5 functional components
+          // For Svelte 5 functional components - mount to Happy DOM
           instance = svelte.mount(Component, {
-            target: targetEl,
+            target: happyDomTarget,
             props,
           })
         } catch (mountError) {
@@ -161,7 +200,7 @@ export function renderComponent(
             }
 
             // Call the function with target and props
-            instance = Component(targetEl, props)
+            instance = Component(happyDomTarget, props)
           } else {
             throw mountError
           }
@@ -174,7 +213,7 @@ export function renderComponent(
 
         // Create the component with the target and props
         const componentOptions: ComponentConstructorOptions = {
-          target: targetEl,
+          target: happyDomTarget,
           props,
         }
 
@@ -186,67 +225,99 @@ export function renderComponent(
       throw error
     }
 
-    // Create and connect DOM elements directly to terminal
-    const connectDOMToTerminal = (
-      domNode: TerminalElementNode,
-      parent: Widgets.Node
-    ): Widgets.Node => {
-      // Skip non-element nodes
-      if (domNode.nodeType !== 1) return parent
-
-      // Get element node properties
-      const tagName = domNode.tagName.toLowerCase()
-      const attributes = domNode.attributes || {}
-
-      // Convert DOM attributes to terminal properties
-      const props: Record<string, any> = {}
-      for (const [name, value] of Object.entries(attributes)) {
-        // Convert from DOM naming convention to terminal naming convention
-        const propName = name.replace(/-([a-z])/g, (_, letter) =>
-          letter.toUpperCase()
-        )
-        props[propName] = value
+    // After Svelte mounts successfully, bridge Happy DOM to terminal elements
+    const bridgeHappyDomToTerminal = () => {
+      if (options.debug) {
+        console.log('[Renderer] Component mounted, bridging Happy DOM to Terminal')
+        console.log('[Renderer] Happy DOM content:', happyDomTarget.innerHTML)
       }
 
-      // Create the terminal element based on the tag
-      const element = domNode._terminalElement
+      // Create a terminal root element
+      const { createElement } = require('../dom/factories')
+      const terminalRoot = createElement('box', {
+        width: '100%',
+        height: '100%',
+        left: 0,
+        top: 0,
+        content: '',
+        style: {
+          fg: 'white',
+          bg: undefined,
+          transparent: true
+        },
+      })
 
-      if (!element) {
-        console.warn(
-          `[Renderer] Element ${tagName} has no associated terminal element`
-        )
-        return parent
-      }
+      // Create the blessed element for the root
+      terminalRoot.create(rootBox)
 
-      // Create the blessed element
-      if (!element.blessed) {
-        element.create(parent)
-      }
-
-      // Recursively process child nodes
-      for (const child of domNode.childNodes) {
-        if (child.nodeType === 1) {
-          connectDOMToTerminal(child as TerminalElementNode, element.blessed!)
-        } else if (child.nodeType === 3) {
-          // Handle text nodes by setting content on parent
-          const text = (child as any).nodeValue || ''
-          if (text.trim() && element.props.content === undefined) {
-            element.setProps({ ...element.props, content: text })
-          }
+      // Convert Happy DOM to Terminal elements
+      for (const child of happyDomTarget.childNodes) {
+        const terminalChild = happyDomToTerminal(child, terminalRoot)
+        // Set up keyboard events for interactive elements
+        if (terminalChild && child instanceof Element) {
+          setupKeyboardForElement(child, terminalChild, screen)
         }
       }
 
-      return element.blessed!
+      // Set up observer for reactive updates
+      if (options.debug) {
+        console.log('[Renderer] Setting up observer - element type:', happyDomTarget.constructor.name)
+        console.log('[Renderer] Element has observeMutations:', typeof (happyDomTarget as any)[Symbol.for('happy-dom.observeMutations')])
+      }
+      const observer = observeHappyDom(happyDomTarget, terminalRoot, screen)
+
+      // Set up reactive synchronization for Svelte updates
+      const cleanupSync = setupReactiveSync(happyDomTarget, terminalRoot, screen)
+
+      // Helper to recursively set up keyboard events
+      function setupKeyboardForElement(domEl: Element, termEl: TerminalElement, screen: any) {
+        // Check if this is an interactive element
+        const tagName = domEl.tagName.toLowerCase()
+        if (tagName === 'box' || tagName === 'text' || tagName === 'button' || tagName === 'input') {
+          // Check if it has focus-related props or keyboard events
+          if (domEl.hasAttribute('focused') || domEl.hasAttribute('onfocus') || domEl.hasAttribute('onblur') || domEl.hasAttribute('onkeydown')) {
+            setupKeyboardEvents(domEl, termEl, screen)
+            // If it has focused=true, focus it
+            if (domEl.getAttribute('focused') === 'true' || domEl.getAttribute('focused') === '') {
+              termEl.blessed?.focus()
+            }
+          }
+        }
+
+        // Process children
+        const domChildren = Array.from(domEl.children)
+        termEl.children.forEach((termChild, index) => {
+          if (domChildren[index]) {
+            setupKeyboardForElement(domChildren[index], termChild, screen)
+          }
+        })
+      }
+
+      return terminalRoot
     }
 
-    // Connect the DOM tree to the terminal
-    const rootElement = connectDOMToTerminal(
-      target as TerminalElementNode,
-      rootBox
-    )
+    // Call the bridge function after a short delay to ensure Svelte has rendered
+    let rootElement: any = null
+    setTimeout(() => {
+      rootElement = bridgeHappyDomToTerminal()
+      
+      // Force screen render
+      screen.render()
+    }, 100)
 
+    // Debug: Check if root box has children
+    if (options.debug) {
+      console.log('[Renderer] Root box blessed:', !!rootBox)
+      console.log('[Renderer] Root box children:', rootBox.children?.length || 0)
+      console.log('[Renderer] Happy DOM target children:', happyDomTarget.childNodes.length)
+    }
+    
     // Render the screen
     screen.render()
+    
+    if (options.debug) {
+      console.log('[Renderer] Screen rendered')
+    }
 
     // Return the render result with destroy function
     return {
@@ -275,9 +346,19 @@ export function renderComponent(
           console.error('[Renderer] Error during component cleanup:', error)
         }
 
-        // Remove the component's DOM elements
-        while (target.firstChild) {
-          target.removeChild(target.firstChild)
+        // Remove the component's DOM elements from Happy DOM
+        while (happyDomTarget.firstChild) {
+          happyDomTarget.removeChild(happyDomTarget.firstChild)
+        }
+        
+        // Remove from document body
+        if (happyDomTarget.parentNode) {
+          happyDomTarget.parentNode.removeChild(happyDomTarget)
+        }
+        
+        // Clean up the root element if it exists
+        if (rootElement && rootElement.destroy) {
+          rootElement.destroy()
         }
 
         // Refresh the screen
@@ -288,7 +369,8 @@ export function renderComponent(
     console.error('Error rendering component:', error)
 
     // Create a simple error display
-    const errorBox = rootBox.box({
+    const errorBox = blessed.box({
+      parent: rootBox,
       top: 'center',
       left: 'center',
       width: '80%',
@@ -323,29 +405,73 @@ export function renderComponent(
  * Creates a component renderer
  *
  * @param options - Default render options
- * @returns A function to render components
+ * @returns A renderer object with mount and unmount methods
  */
 export function createRenderer(options: ComponentRenderOptions = {}) {
-  return function render(
-    Component: Component,
-    componentOptions: ComponentRenderOptions = {}
-  ): RenderResult {
-    // Merge default options with component-specific options
-    const mergedOptions: ComponentRenderOptions = {
-      ...options,
-      ...componentOptions,
-      screen: {
-        ...options.screen,
-        ...componentOptions.screen,
-      },
-      props: {
-        ...options.props,
-        ...componentOptions.props,
-      },
+  let currentResult: RenderResult | null = null
+  
+  return {
+    /**
+     * Mount a component
+     * @returns A promise that resolves to a cleanup function
+     */
+    async mount(Component: Component | any, props?: Record<string, any>) {
+      // Unmount any existing component synchronously
+      if (currentResult) {
+        currentResult.destroy()
+      }
+      
+      // Render the new component and wait for it
+      try {
+        const result = await renderComponent(Component, {
+          ...options,
+          props: props || options.props
+        })
+        currentResult = result
+        
+        // Return cleanup function
+        return () => {
+          if (currentResult) {
+            currentResult.destroy()
+            currentResult = null
+          }
+        }
+      } catch (error) {
+        console.error('Failed to mount component:', error)
+        throw error
+      }
+    },
+    
+    /**
+     * Unmount the current component
+     */
+    unmount(): void {
+      if (currentResult) {
+        currentResult.destroy()
+        currentResult = null
+      }
+    },
+    
+    /**
+     * Get the current screen
+     */
+    get screen() {
+      return currentResult?.screen
+    },
+    
+    /**
+     * Get the current component instance
+     */
+    get component() {
+      return currentResult?.component
+    },
+    
+    /**
+     * Get render performance statistics
+     */
+    getRenderStats() {
+      return getRenderStats()
     }
-
-    // Render the component
-    return renderComponent(Component, mergedOptions)
   }
 }
 

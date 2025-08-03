@@ -7,6 +7,11 @@
 
 import type { TerminalElement } from '../dom/elements'
 
+// Export reactive layout system
+export * from './reactive-layout.svelte.ts'
+export * from './layout-context.svelte.ts'
+export * from './layout-utils'
+
 /**
  * Layout direction
  */

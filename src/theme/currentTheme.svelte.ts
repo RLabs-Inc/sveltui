@@ -1,5 +1,5 @@
 import { type Theme, type Color } from '../types'
-import { getThemeRegistry } from './theme-utils.svelte'
+import { getThemeRegistry } from './theme-utils.svelte.ts'
 // import {
 //   darken,
 //   isDarkColor,

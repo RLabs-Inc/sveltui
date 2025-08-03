@@ -8,11 +8,28 @@
 import blessed from 'blessed'
 import type { Widgets } from 'blessed'
 import type { RendererOptions } from './index'
+import { RenderScheduler, globalScheduler } from './render-scheduler'
+import type { RenderPriority } from './render-queue'
 
 /**
  * The global screen instance
  */
 let globalScreen: Widgets.Screen | null = null
+
+/**
+ * Render scheduler instance
+ */
+let scheduler: RenderScheduler | null = null
+
+/**
+ * Performance monitoring
+ */
+let performanceMonitor = {
+  renderCount: 0,
+  totalRenderTime: 0,
+  lastRenderTime: 0,
+  enabled: false
+}
 
 /**
  * Creates a blessed screen instance
@@ -23,6 +40,12 @@ export function createScreen(options: RendererOptions = {}): Widgets.Screen {
   // If a screen already exists, return it
   if (globalScreen) {
     return globalScreen
+  }
+
+  // Force terminal size if not detected properly
+  if (!process.stdout.columns || process.stdout.columns === 1 || !process.stdout.rows || process.stdout.rows === 1) {
+    process.stdout.columns = 80;
+    process.stdout.rows = 24;
   }
 
   // Create a blessed screen with merged options
@@ -44,6 +67,9 @@ export function createScreen(options: RendererOptions = {}): Widgets.Screen {
     mouse: true,
     // Use BCE (Background Color Erase) for better rendering
     useBCE: true,
+    // Force dimensions if needed
+    width: process.stdout.columns,
+    height: process.stdout.rows,
     // Merge in blessed options from renderer options
     ...options.blessed,
   }
@@ -53,6 +79,9 @@ export function createScreen(options: RendererOptions = {}): Widgets.Screen {
   }
 
   globalScreen = blessed.screen(screenOptions)
+
+  // Force initial render to establish screen dimensions
+  globalScreen.render()
 
   // Set up key bindings for quit - only specific keys should exit
   globalScreen.key(['q', 'C-c'], () => {
@@ -85,6 +114,35 @@ export function createScreen(options: RendererOptions = {}): Widgets.Screen {
     globalScreen.focus()
   }
 
+  // Initialize render scheduler
+  scheduler = options.useScheduler !== false ? 
+    (options.scheduler || globalScheduler) : 
+    null;
+    
+  if (scheduler) {
+    scheduler.setRenderCallback((elementIds) => {
+      if (globalScreen) {
+        const startTime = performanceMonitor.enabled ? performance.now() : 0;
+        globalScreen.render();
+        
+        if (performanceMonitor.enabled) {
+          const renderTime = performance.now() - startTime;
+          performanceMonitor.renderCount++;
+          performanceMonitor.totalRenderTime += renderTime;
+          performanceMonitor.lastRenderTime = renderTime;
+        }
+      }
+    });
+    
+    // Configure scheduler based on options
+    if (options.maxFPS) {
+      scheduler.setMaxFPS(options.maxFPS);
+    }
+  }
+
+  // Enable performance monitoring if requested
+  performanceMonitor.enabled = options.debug || options.performanceMonitoring || false;
+
   if (options.debug) {
     // console.log('[Terminal] Screen created, stdin resumed');
   }
@@ -103,10 +161,80 @@ export function getScreen(options: RendererOptions = {}): Widgets.Screen {
 
 /**
  * Renders the screen
+ * @param priority - Render priority (when using scheduler)
+ * @param elementId - Optional element ID for targeted rendering
  */
-export function renderScreen(): void {
+export function renderScreen(priority?: RenderPriority, elementId?: string): void {
+  if (!globalScreen) return;
+  
+  if (scheduler) {
+    // Use scheduler for batched rendering
+    if (elementId) {
+      scheduler.scheduleRender(elementId, priority || 'normal');
+    } else {
+      // Schedule full screen render
+      scheduler.scheduleRender('__screen__', priority || 'normal');
+    }
+  } else {
+    // Direct render without scheduler
+    const startTime = performanceMonitor.enabled ? performance.now() : 0;
+    globalScreen.render();
+    
+    if (performanceMonitor.enabled) {
+      const renderTime = performance.now() - startTime;
+      performanceMonitor.renderCount++;
+      performanceMonitor.totalRenderTime += renderTime;
+      performanceMonitor.lastRenderTime = renderTime;
+    }
+  }
+}
+
+/**
+ * Force immediate render (bypasses scheduler)
+ */
+export function renderImmediate(): void {
   if (globalScreen) {
-    globalScreen.render()
+    if (scheduler) {
+      scheduler.renderImmediate();
+    } else {
+      globalScreen.render();
+    }
+  }
+}
+
+/**
+ * Get render performance statistics
+ */
+export function getRenderStats() {
+  const schedulerStats = scheduler ? scheduler.stats : null;
+  
+  return {
+    screen: {
+      renderCount: performanceMonitor.renderCount,
+      averageRenderTime: performanceMonitor.renderCount > 0 ? 
+        performanceMonitor.totalRenderTime / performanceMonitor.renderCount : 0,
+      lastRenderTime: performanceMonitor.lastRenderTime,
+      totalRenderTime: performanceMonitor.totalRenderTime
+    },
+    scheduler: schedulerStats
+  };
+}
+
+/**
+ * Pause rendering (when using scheduler)
+ */
+export function pauseRendering(): void {
+  if (scheduler) {
+    scheduler.pause();
+  }
+}
+
+/**
+ * Resume rendering (when using scheduler)
+ */
+export function resumeRendering(): void {
+  if (scheduler) {
+    scheduler.resume();
   }
 }
 
@@ -118,6 +246,16 @@ export function destroyScreen(): void {
     globalScreen.destroy()
     globalScreen = null
   }
+  if (scheduler) {
+    scheduler.clear();
+    scheduler = null;
+  }
+  performanceMonitor = {
+    renderCount: 0,
+    totalRenderTime: 0,
+    lastRenderTime: 0,
+    enabled: false
+  };
 }
 
 /**

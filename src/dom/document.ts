@@ -16,6 +16,7 @@ import type {
 import { NodeType, generateNodeId } from './nodes'
 // Import types only to avoid circular dependencies
 import type { TerminalElement, BaseElementProps } from './elements'
+import { safeSetProperty, updateNodeRelationships, ensureNodeProperties } from './node-utils'
 
 /**
  * Implementation of the terminal document node
@@ -23,13 +24,29 @@ import type { TerminalElement, BaseElementProps } from './elements'
 export class TerminalDocument implements TerminalDocumentNode {
   nodeType = NodeType.DOCUMENT
   nodeName = '#document'
-  parentNode: TerminalNode | null = null
-  firstChild: TerminalNode | null = null
-  lastChild: TerminalNode | null = null
-  nextSibling: TerminalNode | null = null
-  previousSibling: TerminalNode | null = null
+  private _parentNode: TerminalNode | null = null
+  private _firstChild: TerminalNode | null = null
+  private _lastChild: TerminalNode | null = null
+  private _nextSibling: TerminalNode | null = null
+  private _previousSibling: TerminalNode | null = null
   childNodes: TerminalNode[] = []
   _instanceId = generateNodeId()
+  
+  // Define getters/setters to ensure writability
+  get parentNode() { return this._parentNode }
+  set parentNode(value) { this._parentNode = value }
+  
+  get firstChild() { return this._firstChild }
+  set firstChild(value) { this._firstChild = value }
+  
+  get lastChild() { return this._lastChild }
+  set lastChild(value) { this._lastChild = value }
+  
+  get nextSibling() { return this._nextSibling }
+  set nextSibling(value) { this._nextSibling = value }
+  
+  get previousSibling() { return this._previousSibling }
+  set previousSibling(value) { this._previousSibling = value }
   
   // DOM compatibility properties
   body: TerminalElementNode
@@ -206,6 +223,9 @@ export class TerminalDocument implements TerminalDocumentNode {
    * @returns The appended node
    */
   appendChild(child: TerminalNode): TerminalNode {
+    // Ensure child has all required properties
+    ensureNodeProperties(child)
+    
     // If child already has a parent, remove it first
     if (child.parentNode) {
       child.parentNode.removeChild(child)
@@ -213,19 +233,13 @@ export class TerminalDocument implements TerminalDocumentNode {
 
     this.childNodes.push(child)
 
-    // Update child node
-    child.parentNode = this
-    child.nextSibling = null
+    // Update child node using safe property setter
+    updateNodeRelationships(this, child, this.lastChild, null)
 
-    // Update sibling references
-    if (this.lastChild) {
-      child.previousSibling = this.lastChild
-      this.lastChild.nextSibling = child
-    } else {
-      child.previousSibling = null
+    // Update first/last child pointers
+    if (!this.firstChild) {
       this.firstChild = child
     }
-
     this.lastChild = child
 
     return child
@@ -255,18 +269,18 @@ export class TerminalDocument implements TerminalDocumentNode {
     // Insert node at the correct position
     this.childNodes.splice(index, 0, node)
 
-    // Update node references
-    node.parentNode = this
-    node.nextSibling = refNode
-    node.previousSibling = refNode.previousSibling
-
-    if (refNode.previousSibling) {
-      refNode.previousSibling.nextSibling = node
-    } else {
+    // Ensure nodes have all required properties
+    ensureNodeProperties(node)
+    ensureNodeProperties(refNode)
+    
+    // Update node references using safe property setter
+    const prevSibling = refNode.previousSibling
+    updateNodeRelationships(this, node, prevSibling, refNode)
+    
+    // Update first child pointer if needed
+    if (!prevSibling) {
       this.firstChild = node
     }
-
-    refNode.previousSibling = node
 
     return node
   }
@@ -298,10 +312,10 @@ export class TerminalDocument implements TerminalDocumentNode {
       this.lastChild = child.previousSibling
     }
 
-    // Clear references on the removed child
-    child.parentNode = null
-    child.previousSibling = null
-    child.nextSibling = null
+    // Clear references on the removed child using safe property setter
+    safeSetProperty(child, 'parentNode', null)
+    safeSetProperty(child, 'previousSibling', null)
+    safeSetProperty(child, 'nextSibling', null)
 
     return child
   }
@@ -376,17 +390,33 @@ export class TerminalTemplateElement implements TerminalElementNode {
   nodeType = NodeType.ELEMENT
   nodeName: string
   tagName: string
-  parentNode: TerminalNode | null = null
-  firstChild: TerminalNode | null = null
-  lastChild: TerminalNode | null = null
-  nextSibling: TerminalNode | null = null
-  previousSibling: TerminalNode | null = null
+  private _parentNode: TerminalNode | null = null
+  private _firstChild: TerminalNode | null = null
+  private _lastChild: TerminalNode | null = null
+  private _nextSibling: TerminalNode | null = null
+  private _previousSibling: TerminalNode | null = null
   childNodes: TerminalNode[] = []
   attributes: Record<string, any> = {}
   _instanceId = generateNodeId()
   _terminalElement: TerminalElement
   content: TerminalDocumentFragment
   _document: TerminalDocumentNode
+  
+  // Define getters/setters to ensure writability
+  get parentNode() { return this._parentNode }
+  set parentNode(value) { this._parentNode = value }
+  
+  get firstChild() { return this._firstChild }
+  set firstChild(value) { this._firstChild = value }
+  
+  get lastChild() { return this._lastChild }
+  set lastChild(value) { this._lastChild = value }
+  
+  get nextSibling() { return this._nextSibling }
+  set nextSibling(value) { this._nextSibling = value }
+  
+  get previousSibling() { return this._previousSibling }
+  set previousSibling(value) { this._previousSibling = value }
   
   // Style property for Svelte compatibility
   style: {
@@ -563,17 +593,33 @@ export class TerminalElement implements TerminalElementNode {
   nodeType = NodeType.ELEMENT
   nodeName: string
   tagName: string
-  parentNode: TerminalNode | null = null
-  firstChild: TerminalNode | null = null
-  lastChild: TerminalNode | null = null
-  nextSibling: TerminalNode | null = null
-  previousSibling: TerminalNode | null = null
+  private _parentNode: TerminalNode | null = null
+  private _firstChild: TerminalNode | null = null
+  private _lastChild: TerminalNode | null = null
+  private _nextSibling: TerminalNode | null = null
+  private _previousSibling: TerminalNode | null = null
   childNodes: TerminalNode[] = []
   attributes: Record<string, any> = {}
   _instanceId = generateNodeId()
   _terminalElement: TerminalElement
   _eventListeners?: Record<string, Array<{ handler: Function; options?: any }>>
   _document: TerminalDocumentNode
+  
+  // Define getters/setters to ensure writability
+  get parentNode() { return this._parentNode }
+  set parentNode(value) { this._parentNode = value }
+  
+  get firstChild() { return this._firstChild }
+  set firstChild(value) { this._firstChild = value }
+  
+  get lastChild() { return this._lastChild }
+  set lastChild(value) { this._lastChild = value }
+  
+  get nextSibling() { return this._nextSibling }
+  set nextSibling(value) { this._nextSibling = value }
+  
+  get previousSibling() { return this._previousSibling }
+  set previousSibling(value) { this._previousSibling = value }
   
   // Style property for Svelte compatibility
   style: {
@@ -598,8 +644,8 @@ export class TerminalElement implements TerminalElementNode {
     // by the reconciler through the factory system
     this._terminalElement = null as any
     
-    // Initialize style object for Svelte compatibility
-    this.style = {
+    // Initialize style object with proxy for Svelte compatibility
+    const styleTarget = {
       cssText: '',
       // Common style properties that might be accessed
       display: '',
@@ -624,6 +670,28 @@ export class TerminalElement implements TerminalElementNode {
       lineHeight: '',
       zIndex: ''
     }
+    
+    // Create a proxy to intercept style changes
+    this.style = new Proxy(styleTarget, {
+      set: (target, prop, value) => {
+        target[prop as string] = value
+        
+        // When style properties change, update the terminal element
+        if (prop !== 'cssText' && this._terminalElement && this._terminalElement !== this) {
+          // Convert CSS styles to blessed format
+          const blessedStyle = this.convertStylesToBlessed()
+          if (typeof this._terminalElement.setProps === 'function') {
+            this._terminalElement.setProps({
+              ...this._terminalElement.props,
+              style: blessedStyle
+            })
+            this._terminalElement.update()
+          }
+        }
+        
+        return true
+      }
+    })
     
     // Make cssText a getter/setter that updates individual properties
     Object.defineProperty(this.style, 'cssText', {
@@ -729,6 +797,9 @@ export class TerminalElement implements TerminalElementNode {
    * @returns The appended node
    */
   appendChild(child: TerminalNode): TerminalNode {
+    // Ensure child has all required properties
+    ensureNodeProperties(child)
+    
     // If child already has a parent, remove it first
     if (child.parentNode) {
       child.parentNode.removeChild(child)
@@ -736,19 +807,13 @@ export class TerminalElement implements TerminalElementNode {
 
     this.childNodes.push(child)
 
-    // Update child node
-    child.parentNode = this
-    child.nextSibling = null
+    // Update child node using safe property setter
+    updateNodeRelationships(this, child, this.lastChild, null)
 
-    // Update sibling references
-    if (this.lastChild) {
-      child.previousSibling = this.lastChild
-      this.lastChild.nextSibling = child
-    } else {
-      child.previousSibling = null
+    // Update first/last child pointers
+    if (!this.firstChild) {
       this.firstChild = child
     }
-
     this.lastChild = child
 
     // If this element has a terminal element and the child is an element node,
@@ -796,18 +861,18 @@ export class TerminalElement implements TerminalElementNode {
     // Insert node at the correct position
     this.childNodes.splice(index, 0, node)
 
-    // Update node references
-    node.parentNode = this
-    node.nextSibling = refNode
-    node.previousSibling = refNode.previousSibling
-
-    if (refNode.previousSibling) {
-      refNode.previousSibling.nextSibling = node
-    } else {
+    // Ensure nodes have all required properties
+    ensureNodeProperties(node)
+    ensureNodeProperties(refNode)
+    
+    // Update node references using safe property setter
+    const prevSibling = refNode.previousSibling
+    updateNodeRelationships(this, node, prevSibling, refNode)
+    
+    // Update first child pointer if needed
+    if (!prevSibling) {
       this.firstChild = node
     }
-
-    refNode.previousSibling = node
 
     // If this element has a terminal element and the node is an element node,
     // we need to connect it to the terminal
@@ -882,10 +947,10 @@ export class TerminalElement implements TerminalElementNode {
       }
     }
 
-    // Clear references on the removed child
-    child.parentNode = null
-    child.previousSibling = null
-    child.nextSibling = null
+    // Clear references on the removed child using safe property setter
+    safeSetProperty(child, 'parentNode', null)
+    safeSetProperty(child, 'previousSibling', null)
+    safeSetProperty(child, 'nextSibling', null)
 
     return child
   }
@@ -1028,6 +1093,56 @@ export class TerminalElement implements TerminalElementNode {
   }
 
   /**
+   * Converts CSS style properties to blessed-compatible style object
+   */
+  private convertStylesToBlessed(): Record<string, any> {
+    const blessedStyle: Record<string, any> = {}
+    
+    // Convert colors
+    if (this.style.color) {
+      blessedStyle.fg = this.style.color
+    }
+    if (this.style.backgroundColor) {
+      blessedStyle.bg = this.style.backgroundColor
+    }
+    
+    // Convert font styles
+    if (this.style.fontWeight === 'bold' || this.style.fontWeight === '700') {
+      blessedStyle.bold = true
+    }
+    
+    // Convert text decoration
+    if (this.style.textDecoration?.includes('underline')) {
+      blessedStyle.underline = true
+    }
+    
+    // Handle border styles (e.g., "2px solid red" or complex objects)
+    if (this.style.border) {
+      if (typeof this.style.border === 'string') {
+        const borderParts = this.style.border.split(' ')
+        if (borderParts.length >= 2) {
+          blessedStyle.border = {
+            type: 'line',
+            fg: borderParts[2] || 'white'
+          }
+        }
+      } else if (typeof this.style.border === 'object') {
+        // Handle object-style borders that Svelte might set
+        blessedStyle.border = this.style.border
+      }
+    }
+    
+    // Pass through any direct blessed-style properties that might be set
+    for (const [key, value] of Object.entries(this.style)) {
+      if (['fg', 'bg', 'bold', 'underline', 'blink', 'inverse', 'invisible'].includes(key)) {
+        blessedStyle[key] = value
+      }
+    }
+    
+    return blessedStyle
+  }
+
+  /**
    * Clones the node
    * @param deep - Whether to clone all descendant nodes
    * @returns A clone of the node
@@ -1057,14 +1172,30 @@ export class TerminalText implements TerminalTextNode {
   nodeType = NodeType.TEXT
   nodeName = '#text'
   nodeValue: string | null
-  parentNode: TerminalNode | null = null
-  firstChild: TerminalNode | null = null
-  lastChild: TerminalNode | null = null
-  nextSibling: TerminalNode | null = null
-  previousSibling: TerminalNode | null = null
+  private _parentNode: TerminalNode | null = null
+  private _firstChild: TerminalNode | null = null
+  private _lastChild: TerminalNode | null = null
+  private _nextSibling: TerminalNode | null = null
+  private _previousSibling: TerminalNode | null = null
   childNodes: TerminalNode[] = []
   _instanceId = generateNodeId()
   _document: TerminalDocumentNode
+  
+  // Define getters/setters to ensure writability
+  get parentNode() { return this._parentNode }
+  set parentNode(value) { this._parentNode = value }
+  
+  get firstChild() { return this._firstChild }
+  set firstChild(value) { this._firstChild = value }
+  
+  get lastChild() { return this._lastChild }
+  set lastChild(value) { this._lastChild = value }
+  
+  get nextSibling() { return this._nextSibling }
+  set nextSibling(value) { this._nextSibling = value }
+  
+  get previousSibling() { return this._previousSibling }
+  set previousSibling(value) { this._previousSibling = value }
 
   /**
    * Creates a new terminal text node
@@ -1167,13 +1298,29 @@ export class TerminalComment implements TerminalNode {
   nodeType = NodeType.COMMENT
   nodeName = '#comment'
   nodeValue: string | null
-  parentNode: TerminalNode | null = null
-  firstChild: TerminalNode | null = null
-  lastChild: TerminalNode | null = null
-  nextSibling: TerminalNode | null = null
-  previousSibling: TerminalNode | null = null
+  private _parentNode: TerminalNode | null = null
+  private _firstChild: TerminalNode | null = null
+  private _lastChild: TerminalNode | null = null
+  private _nextSibling: TerminalNode | null = null
+  private _previousSibling: TerminalNode | null = null
   childNodes: TerminalNode[] = []
   _instanceId = generateNodeId()
+  
+  // Define getters/setters to ensure writability
+  get parentNode() { return this._parentNode }
+  set parentNode(value) { this._parentNode = value }
+  
+  get firstChild() { return this._firstChild }
+  set firstChild(value) { this._firstChild = value }
+  
+  get lastChild() { return this._lastChild }
+  set lastChild(value) { this._lastChild = value }
+  
+  get nextSibling() { return this._nextSibling }
+  set nextSibling(value) { this._nextSibling = value }
+  
+  get previousSibling() { return this._previousSibling }
+  set previousSibling(value) { this._previousSibling = value }
 
   /**
    * Creates a new terminal comment node
@@ -1274,13 +1421,29 @@ export class TerminalComment implements TerminalNode {
 export class TerminalDocumentFragment implements TerminalNode {
   nodeType = NodeType.FRAGMENT
   nodeName = '#document-fragment'
-  parentNode: TerminalNode | null = null
-  firstChild: TerminalNode | null = null
-  lastChild: TerminalNode | null = null
-  nextSibling: TerminalNode | null = null
-  previousSibling: TerminalNode | null = null
+  private _parentNode: TerminalNode | null = null
+  private _firstChild: TerminalNode | null = null
+  private _lastChild: TerminalNode | null = null
+  private _nextSibling: TerminalNode | null = null
+  private _previousSibling: TerminalNode | null = null
   childNodes: TerminalNode[] = []
   _instanceId = generateNodeId()
+  
+  // Define getters/setters to ensure writability
+  get parentNode() { return this._parentNode }
+  set parentNode(value) { this._parentNode = value }
+  
+  get firstChild() { return this._firstChild }
+  set firstChild(value) { this._firstChild = value }
+  
+  get lastChild() { return this._lastChild }
+  set lastChild(value) { this._lastChild = value }
+  
+  get nextSibling() { return this._nextSibling }
+  set nextSibling(value) { this._nextSibling = value }
+  
+  get previousSibling() { return this._previousSibling }
+  set previousSibling(value) { this._previousSibling = value }
   
   constructor(document: TerminalDocumentNode) {
     // No initialization needed - properties are already set as class fields
@@ -1307,6 +1470,9 @@ export class TerminalDocumentFragment implements TerminalNode {
    * @returns The appended node
    */
   appendChild(child: TerminalNode): TerminalNode {
+    // Ensure child has all required properties
+    ensureNodeProperties(child)
+    
     // If child already has a parent, remove it first
     if (child.parentNode) {
       child.parentNode.removeChild(child)
@@ -1314,19 +1480,13 @@ export class TerminalDocumentFragment implements TerminalNode {
 
     this.childNodes.push(child)
 
-    // Update child node
-    child.parentNode = this
-    child.nextSibling = null
+    // Update child node using safe property setter
+    updateNodeRelationships(this, child, this.lastChild, null)
 
-    // Update sibling references
-    if (this.lastChild) {
-      child.previousSibling = this.lastChild
-      this.lastChild.nextSibling = child
-    } else {
-      child.previousSibling = null
+    // Update first/last child pointers
+    if (!this.firstChild) {
       this.firstChild = child
     }
-
     this.lastChild = child
 
     return child
@@ -1356,18 +1516,18 @@ export class TerminalDocumentFragment implements TerminalNode {
     // Insert node at the correct position
     this.childNodes.splice(index, 0, node)
 
-    // Update node references
-    node.parentNode = this
-    node.nextSibling = refNode
-    node.previousSibling = refNode.previousSibling
-
-    if (refNode.previousSibling) {
-      refNode.previousSibling.nextSibling = node
-    } else {
+    // Ensure nodes have all required properties
+    ensureNodeProperties(node)
+    ensureNodeProperties(refNode)
+    
+    // Update node references using safe property setter
+    const prevSibling = refNode.previousSibling
+    updateNodeRelationships(this, node, prevSibling, refNode)
+    
+    // Update first child pointer if needed
+    if (!prevSibling) {
       this.firstChild = node
     }
-
-    refNode.previousSibling = node
 
     return node
   }
@@ -1399,10 +1559,10 @@ export class TerminalDocumentFragment implements TerminalNode {
       this.lastChild = child.previousSibling
     }
 
-    // Clear references on the removed child
-    child.parentNode = null
-    child.previousSibling = null
-    child.nextSibling = null
+    // Clear references on the removed child using safe property setter
+    safeSetProperty(child, 'parentNode', null)
+    safeSetProperty(child, 'previousSibling', null)
+    safeSetProperty(child, 'nextSibling', null)
 
     return child
   }

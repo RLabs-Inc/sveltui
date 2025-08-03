@@ -20,6 +20,10 @@ import type {
 } from './elements'
 import { registerElement } from './elements'
 import type { TerminalElementNode, TerminalTextNode } from './nodes'
+import { calculateElementPosition } from './position-utils'
+import { ReactiveTerminalElement } from './reactive-element'
+import { createReactiveBridge } from './reactive-bridge'
+import { isReactiveEnabled } from './config'
 
 /**
  * Base terminal element implementation
@@ -76,6 +80,41 @@ export class BaseTerminalElement implements TerminalElement {
     // Update DOM node to point to this terminal element
     node._terminalElement = this
   }
+
+  /**
+   * Calculates positioning using blessed-compatible algorithm
+   * @param parent - Parent element for dimension calculations
+   */
+  protected calculatePositioning(parent?: Widgets.Node): {
+    top: number | string;
+    left: number | string;
+    width: number | string;
+    height: number | string;
+    right?: number | string;
+    bottom?: number | string;
+  } {
+    // Get content size if available (for shrink calculations)
+    const contentSize = this.getContentSize?.();
+    
+    // Use our blessed-compatible positioning calculator
+    return calculateElementPosition(
+      {
+        top: this.props.top,
+        left: this.props.left,
+        right: this.props.right,
+        bottom: this.props.bottom,
+        width: this.props.width,
+        height: this.props.height
+      },
+      parent,
+      contentSize
+    );
+  }
+
+  /**
+   * Override in subclasses to provide content size for shrink calculations
+   */
+  protected getContentSize?(): { width: number; height: number } | undefined;
 
   /**
    * Appends a child element
@@ -192,15 +231,19 @@ export class BoxElement extends BaseTerminalElement {
       throw new Error('Parent is required for box element')
     }
 
-    // Create blessed box
-    this.blessed = blessed.box({
+    // Calculate positioning with blessed-compatible algorithm
+    const pos = this.calculatePositioning(parent);
+
+    // Create blessed box with calculated positions
+    const boxOptions = {
       parent,
-      top: this.props.top,
-      left: this.props.left,
-      right: this.props.right,
-      bottom: this.props.bottom,
-      width: this.props.width,
-      height: this.props.height,
+      top: pos.top,
+      left: pos.left,
+      width: pos.width,
+      height: pos.height,
+      // Also pass original props for blessed's internal handling
+      right: pos.right !== undefined ? pos.right : this.props.right,
+      bottom: pos.bottom !== undefined ? pos.bottom : this.props.bottom,
       content: this.props.content || '',
       tags: this.props.tags,
       border: this.props.border as Widgets.Border,
@@ -211,7 +254,9 @@ export class BoxElement extends BaseTerminalElement {
       focusable: this.props.focusable !== false || this.props.focused !== undefined || this.props.onkeydown !== undefined,
       keys: true,
       input: true
-    })
+    };
+    
+    this.blessed = blessed.box(boxOptions);
     
     // Auto-focus if focused prop is true
     if (this.props.focused && this.blessed) {
@@ -231,13 +276,18 @@ export class BoxElement extends BaseTerminalElement {
 
     const box = this.blessed as Widgets.BoxElement
 
-    // Update properties
-    box.top = this.props.top
-    box.left = this.props.left
-    box.right = this.props.right
-    box.bottom = this.props.bottom
-    box.width = this.props.width
-    box.height = this.props.height
+    // Recalculate positioning with blessed-compatible algorithm
+    const pos = this.calculatePositioning(box.parent);
+
+    // Update properties with calculated positions
+    box.top = pos.top
+    box.left = pos.left
+    box.width = pos.width
+    box.height = pos.height
+    
+    // Also update original props for blessed's internal handling
+    box.right = pos.right !== undefined ? pos.right : this.props.right
+    box.bottom = pos.bottom !== undefined ? pos.bottom : this.props.bottom
 
     if (this.props.content !== undefined) {
       box.setContent(this.props.content)
@@ -248,7 +298,13 @@ export class BoxElement extends BaseTerminalElement {
     }
 
     if (this.props.border !== undefined) {
-      box.border = this.props.border
+      // Ensure border is an object, not a string
+      if (typeof this.props.border === 'string' && this.props.border === '[object Object]') {
+        // Default border if it was stringified
+        box.border = { type: 'line' }
+      } else {
+        box.border = this.props.border
+      }
     }
 
     if (this.props.label !== undefined) {
@@ -275,6 +331,30 @@ export class TextElement extends BaseTerminalElement {
   constructor(props: TextElementProps) {
     super('text', props)
   }
+  
+  /**
+   * Get content size for shrink calculations
+   */
+  protected getContentSize(): { width: number; height: number } | undefined {
+    // Get content from props or child nodes
+    let content = this.props.content || '';
+    if (!content && this.domNode) {
+      const textContent = Array.from(this.domNode.childNodes)
+        .filter(node => node.nodeType === 3)
+        .map(node => (node as TerminalTextNode).nodeValue || '')
+        .join('');
+      if (textContent) {
+        content = textContent;
+      }
+    }
+    
+    // Calculate dimensions based on content
+    const lines = content.split('\n');
+    const height = lines.length;
+    const width = Math.max(...lines.map(line => line.length));
+    
+    return { width, height };
+  }
 
   create(parent?: Widgets.Node): void {
     if (!parent) {
@@ -293,22 +373,25 @@ export class TextElement extends BaseTerminalElement {
         content = textContent;
       }
     }
-    
 
+    // Calculate positioning with blessed-compatible algorithm
+    const pos = this.calculatePositioning(parent);
+    
     // Create blessed text
-    this.blessed = blessed.text({
+    const blessedOptions = {
       parent,
-      top: this.props.top || 0,
-      left: this.props.left || 0,
-      right: this.props.right,
-      bottom: this.props.bottom,
-      width: this.props.width || 'shrink',
-      height: this.props.height || 'shrink',
+      top: pos.top,
+      left: pos.left,
+      width: pos.width,
+      height: pos.height,
+      // Also pass original props for blessed's internal handling
+      right: pos.right !== undefined ? pos.right : this.props.right,
+      bottom: pos.bottom !== undefined ? pos.bottom : this.props.bottom,
       content: content,
       tags: this.props.tags !== false,
-      style: this.props.style || { 
-        fg: 'white', 
-        bg: undefined,
+      style: this.props.style && typeof this.props.style === 'object' ? this.props.style : { 
+        fg: (this.props.style as any)?.fg || 'white', 
+        bg: (this.props.style as any)?.bg || undefined,
         hover: {
           bg: undefined  // Disable hover background
         }
@@ -318,7 +401,9 @@ export class TextElement extends BaseTerminalElement {
       border: this.props.border,
       // Disable mouse interaction for text
       mouse: false,
-    })
+    };
+    
+    this.blessed = blessed.text(blessedOptions);
     
     // Make sure the text element is visible
     this.blessed.show();
@@ -332,13 +417,18 @@ export class TextElement extends BaseTerminalElement {
 
     const text = this.blessed as Widgets.TextElement
 
-    // Update properties
-    text.top = this.props.top
-    text.left = this.props.left
-    text.right = this.props.right
-    text.bottom = this.props.bottom
-    text.width = this.props.width
-    text.height = this.props.height
+    // Recalculate positioning with blessed-compatible algorithm
+    const pos = this.calculatePositioning(text.parent);
+
+    // Update properties with calculated positions
+    text.top = pos.top
+    text.left = pos.left
+    text.width = pos.width
+    text.height = pos.height
+    
+    // Also update original props for blessed's internal handling
+    text.right = pos.right !== undefined ? pos.right : this.props.right
+    text.bottom = pos.bottom !== undefined ? pos.bottom : this.props.bottom
 
     // Get content from props or from child text nodes
     let content = this.props.content;
@@ -357,12 +447,17 @@ export class TextElement extends BaseTerminalElement {
 
     if (content !== undefined) {
       text.setContent(content)
-      // Force screen render to show updated content
-      const screen = text.screen || (this.blessed.parent && this.blessed.parent.screen);
-      if (screen) {
-        screen.render()
-      } else {
-      }
+    }
+    
+    // Update style
+    if (this.props.style && typeof this.props.style === 'object') {
+      text.style = { ...text.style, ...this.props.style }
+    }
+    
+    // Force screen render to show updated content
+    const screen = text.screen || (this.blessed.parent && this.blessed.parent.screen);
+    if (screen) {
+      screen.render()
     }
 
     if (this.props.style) {
@@ -397,15 +492,19 @@ export class ListElement extends BaseTerminalElement {
 
     const listProps = this.props as ListElementProps
 
+    // Calculate positioning
+    const pos = this.calculatePositioning(parent);
+    
     // Create blessed list
     this.blessed = blessed.list({
       parent,
-      top: this.props.top,
-      left: this.props.left,
+      top: pos.top,
+      left: pos.left,
+      width: pos.width,
+      height: pos.height,
+      // Also pass original props for blessed's internal handling
       right: this.props.right,
       bottom: this.props.bottom,
-      width: this.props.width,
-      height: this.props.height,
       items: listProps.items || [],
       tags: this.props.tags,
       style: this.props.style,
@@ -432,13 +531,18 @@ export class ListElement extends BaseTerminalElement {
     const list = this.blessed as Widgets.ListElement
     const listProps = this.props as ListElementProps
 
+    // Recalculate positioning
+    const pos = this.calculatePositioning(list.parent);
+    
     // Update properties
-    list.top = this.props.top
-    list.left = this.props.left
+    list.top = pos.top
+    list.left = pos.left
+    list.width = pos.width
+    list.height = pos.height
+    
+    // Also update original props for blessed's internal handling
     list.right = this.props.right
     list.bottom = this.props.bottom
-    list.width = this.props.width
-    list.height = this.props.height
 
     if (listProps.items) {
       list.setItems(listProps.items)
@@ -484,15 +588,19 @@ export class InputElement extends BaseTerminalElement {
 
     const inputProps = this.props as InputElementProps
 
+    // Calculate positioning
+    const pos = this.calculatePositioning(parent);
+    
     // Create blessed textbox
     this.blessed = blessed.textbox({
       parent,
-      top: this.props.top,
-      left: this.props.left,
+      top: pos.top,
+      left: pos.left,
+      width: pos.width,
+      height: pos.height,
+      // Also pass original props for blessed's internal handling
       right: this.props.right,
       bottom: this.props.bottom,
-      width: this.props.width,
-      height: this.props.height,
       value: inputProps.value || '',
       style: this.props.style,
       border: this.props.border,
@@ -514,13 +622,18 @@ export class InputElement extends BaseTerminalElement {
     const input = this.blessed as Widgets.TextboxElement
     const inputProps = this.props as InputElementProps
 
+    // Recalculate positioning
+    const pos = this.calculatePositioning(input.parent);
+    
     // Update properties
-    input.top = this.props.top
-    input.left = this.props.left
+    input.top = pos.top
+    input.left = pos.left
+    input.width = pos.width
+    input.height = pos.height
+    
+    // Also update original props for blessed's internal handling
     input.right = this.props.right
     input.bottom = this.props.bottom
-    input.width = this.props.width
-    input.height = this.props.height
 
     if (inputProps.value !== undefined) {
       input.setValue(inputProps.value)
@@ -560,15 +673,19 @@ export class ButtonElement extends BaseTerminalElement {
       throw new Error('Parent is required for button element')
     }
 
+    // Calculate positioning
+    const pos = this.calculatePositioning(parent);
+    
     // Create blessed button
     this.blessed = blessed.button({
       parent,
-      top: this.props.top,
-      left: this.props.left,
+      top: pos.top,
+      left: pos.left,
+      width: pos.width,
+      height: pos.height,
+      // Also pass original props for blessed's internal handling
       right: this.props.right,
       bottom: this.props.bottom,
-      width: this.props.width,
-      height: this.props.height,
       content: this.props.content || '',
       tags: this.props.tags,
       style: this.props.style,
@@ -589,13 +706,18 @@ export class ButtonElement extends BaseTerminalElement {
 
     const button = this.blessed as Widgets.ButtonElement
 
+    // Recalculate positioning
+    const pos = this.calculatePositioning(button.parent);
+    
     // Update properties
-    button.top = this.props.top
-    button.left = this.props.left
+    button.top = pos.top
+    button.left = pos.left
+    button.width = pos.width
+    button.height = pos.height
+    
+    // Also update original props for blessed's internal handling
     button.right = this.props.right
     button.bottom = this.props.bottom
-    button.width = this.props.width
-    button.height = this.props.height
 
     if (this.props.content !== undefined) {
       button.setContent(this.props.content)
@@ -637,15 +759,19 @@ export class ProgressBarElement extends BaseTerminalElement {
 
     const progressProps = this.props as ProgressBarElementProps
 
+    // Calculate positioning
+    const pos = this.calculatePositioning(parent);
+    
     // Create blessed progress bar
     this.blessed = blessed.progressbar({
       parent,
-      top: this.props.top,
-      left: this.props.left,
+      top: pos.top,
+      left: pos.left,
+      width: pos.width,
+      height: pos.height,
+      // Also pass original props for blessed's internal handling
       right: this.props.right,
       bottom: this.props.bottom,
-      width: this.props.width,
-      height: this.props.height,
       orientation: progressProps.orientation || 'horizontal',
       style: this.props.style,
       border: this.props.border,
@@ -665,13 +791,18 @@ export class ProgressBarElement extends BaseTerminalElement {
     const progress = this.blessed as Widgets.ProgressBarElement
     const progressProps = this.props as ProgressBarElementProps
 
+    // Recalculate positioning
+    const pos = this.calculatePositioning(progress.parent);
+    
     // Update properties
-    progress.top = this.props.top
-    progress.left = this.props.left
+    progress.top = pos.top
+    progress.left = pos.left
+    progress.width = pos.width
+    progress.height = pos.height
+    
+    // Also update original props for blessed's internal handling
     progress.right = this.props.right
     progress.bottom = this.props.bottom
-    progress.width = this.props.width
-    progress.height = this.props.height
 
     if (progressProps.value !== undefined) {
       progress.setProgress(progressProps.value)
@@ -699,6 +830,231 @@ export class ProgressBarElement extends BaseTerminalElement {
 }
 
 /**
+ * Reactive Box element implementation
+ */
+export class ReactiveBoxElement extends ReactiveTerminalElement {
+  constructor(props: BoxElementProps) {
+    super('box', props)
+  }
+  
+  /**
+   * Get content size for shrink calculations
+   */
+  protected getContentSize(): { width: number; height: number } | undefined {
+    // Box elements don't have intrinsic content size
+    return undefined
+  }
+  
+  /**
+   * Calculates positioning using blessed-compatible algorithm
+   * @param parent - Parent element for dimension calculations
+   */
+  protected calculatePositioning(parent?: Widgets.Node): {
+    top: number | string;
+    left: number | string;
+    width: number | string;
+    height: number | string;
+    right?: number | string;
+    bottom?: number | string;
+  } {
+    // Get content size if available (for shrink calculations)
+    const contentSize = this.getContentSize?.();
+    
+    // Use our blessed-compatible positioning calculator
+    return calculateElementPosition(
+      {
+        top: this.props.top,
+        left: this.props.left,
+        right: this.props.right,
+        bottom: this.props.bottom,
+        width: this.props.width,
+        height: this.props.height
+      },
+      parent,
+      contentSize
+    );
+  }
+
+  create(parent?: Widgets.Node): void {
+    if (!parent) {
+      throw new Error('Parent is required for box element')
+    }
+
+    // Calculate positioning with blessed-compatible algorithm
+    const pos = this.calculatePositioning(parent);
+
+    // Create blessed box with calculated positions
+    const boxOptions = {
+      parent,
+      top: pos.top,
+      left: pos.left,
+      width: pos.width,
+      height: pos.height,
+      // Also pass original props for blessed's internal handling
+      right: pos.right !== undefined ? pos.right : this.props.right,
+      bottom: pos.bottom !== undefined ? pos.bottom : this.props.bottom,
+      content: this.props.content || '',
+      tags: this.props.tags,
+      border: this.props.border as Widgets.Border,
+      style: this.props.style,
+      label: this.props.label,
+      scrollable: this.props.scrollable,
+      mouse: this.props.mouse,
+      focusable: this.props.focusable !== false || this.props.focused !== undefined || this.props.onkeydown !== undefined,
+      keys: true,
+      input: true
+    };
+    
+    this.blessed = blessed.box(boxOptions);
+    
+    // Auto-focus if focused prop is true
+    if (this.props.focused && this.blessed) {
+      setImmediate(() => {
+        this.blessed?.focus()
+      })
+    }
+
+    // Create children
+    for (const child of this.children) {
+      child.create(this.blessed)
+    }
+  }
+
+  update(): void {
+    // Reactive updates are handled by effects in ReactiveTerminalElement
+    // This method is kept for compatibility
+    if (!this.blessed) return
+    super.update()
+  }
+}
+
+/**
+ * Reactive Text element implementation
+ */
+export class ReactiveTextElement extends ReactiveTerminalElement {
+  constructor(props: TextElementProps) {
+    super('text', props)
+  }
+  
+  /**
+   * Calculates positioning using blessed-compatible algorithm
+   * @param parent - Parent element for dimension calculations
+   */
+  protected calculatePositioning(parent?: Widgets.Node): {
+    top: number | string;
+    left: number | string;
+    width: number | string;
+    height: number | string;
+    right?: number | string;
+    bottom?: number | string;
+  } {
+    // Get content size if available (for shrink calculations)
+    const contentSize = this.getContentSize?.();
+    
+    // Use our blessed-compatible positioning calculator
+    return calculateElementPosition(
+      {
+        top: this.props.top,
+        left: this.props.left,
+        right: this.props.right,
+        bottom: this.props.bottom,
+        width: this.props.width,
+        height: this.props.height
+      },
+      parent,
+      contentSize
+    );
+  }
+  
+  /**
+   * Get content size for shrink calculations
+   */
+  protected getContentSize(): { width: number; height: number } | undefined {
+    // Get content from props or child nodes
+    let content = this.props.content || '';
+    if (!content && this.domNode) {
+      const textContent = Array.from(this.domNode.childNodes)
+        .filter(node => node.nodeType === 3)
+        .map(node => (node as TerminalTextNode).nodeValue || '')
+        .join('');
+      if (textContent) {
+        content = textContent;
+      }
+    }
+    
+    // Calculate dimensions based on content
+    const lines = content.split('\n');
+    const height = lines.length;
+    const width = Math.max(...lines.map(line => line.length));
+    
+    return { width, height };
+  }
+
+  create(parent?: Widgets.Node): void {
+    if (!parent) {
+      throw new Error('Parent is required for text element')
+    }
+
+    // Get content from props or from child text nodes
+    let content = this.props.content || '';
+    if (!content && this.domNode) {
+      // Check for text content in child nodes
+      const textContent = Array.from(this.domNode.childNodes)
+        .filter(node => node.nodeType === 3) // Text nodes
+        .map(node => (node as TerminalTextNode).nodeValue || '')
+        .join('');
+      if (textContent) {
+        content = textContent;
+      }
+    }
+    
+    // Calculate positioning with blessed-compatible algorithm
+    const pos = this.calculatePositioning(parent);
+    
+    // Create blessed text
+    const blessedOptions = {
+      parent,
+      top: pos.top,
+      left: pos.left,
+      width: pos.width,
+      height: pos.height,
+      // Also pass original props for blessed's internal handling
+      right: pos.right !== undefined ? pos.right : this.props.right,
+      bottom: pos.bottom !== undefined ? pos.bottom : this.props.bottom,
+      content: content,
+      tags: this.props.tags !== false,
+      style: this.props.style && typeof this.props.style === 'object' ? this.props.style : { 
+        fg: (this.props.style as any)?.fg || 'white', 
+        bg: (this.props.style as any)?.bg || undefined,
+        hover: {
+          bg: undefined  // Disable hover background
+        }
+      },
+      align: (this.props as TextElementProps).align,
+      wrap: (this.props as TextElementProps).wrap,
+      border: this.props.border,
+      // Disable mouse interaction for text
+      mouse: false,
+    };
+    
+    this.blessed = blessed.text(blessedOptions);
+    
+    // Make sure the text element is visible
+    this.blessed.show();
+
+    // Don't create child elements for text elements
+    // Text elements should only contain text content
+  }
+
+  update(): void {
+    // Reactive updates are handled by effects in ReactiveTerminalElement
+    // This method is kept for compatibility
+    if (!this.blessed) return
+    super.update()
+  }
+}
+
+/**
  * Factory functions for creating terminal elements
  */
 export const factories = {
@@ -716,28 +1072,51 @@ export const factories = {
 }
 
 /**
+ * Reactive factory functions for creating reactive terminal elements
+ */
+export const reactiveFactories = {
+  box: (props: BoxElementProps) => new ReactiveBoxElement(props),
+  text: (props: TextElementProps) => new ReactiveTextElement(props),
+  ttext: (props: TextElementProps) => new ReactiveTextElement(props), // Alias for text to avoid SVG issues
+  list: (props: ListElementProps) => new ReactiveTerminalElement('list', props), // Using base reactive for now
+  input: (props: InputElementProps) => new ReactiveTerminalElement('input', props), // Using base reactive for now
+  button: (props: ButtonElementProps) => new ReactiveTerminalElement('button', props), // Using base reactive for now
+  progress: (props: ProgressBarElementProps) => new ReactiveTerminalElement('progress', props), // Using base reactive for now
+  // Add fallback for div and other common HTML elements to map to box
+  div: (props: BoxElementProps) => new ReactiveBoxElement(props),
+  span: (props: TextElementProps) => new ReactiveTextElement(props),
+  p: (props: TextElementProps) => new ReactiveTextElement(props),
+}
+
+/**
  * Creates a terminal element
  * @param type - Element type
  * @param props - Element properties
  * @param domNode - Optional DOM node to attach to
+ * @param options - Creation options
  * @returns The created element
  */
 export function createElement(
   type: string,
   props: BaseElementProps,
-  domNode?: TerminalElementNode
+  domNode?: TerminalElementNode,
+  options?: { reactive?: boolean }
 ): TerminalElement {
   // Normalize type to lowercase for consistency
   const normalizedType = type.toLowerCase()
 
+  // Choose factory based on reactive option or global config
+  const useReactive = options?.reactive ?? isReactiveEnabled()
+  const factoryMap = useReactive ? reactiveFactories : factories
+
   // Try to get factory for the exact type
-  let factory = factories[normalizedType as keyof typeof factories]
+  let factory = factoryMap[normalizedType as keyof typeof factoryMap]
 
   // If no factory found, fallback to box for container elements
   // or text for inline elements
   if (!factory) {
     console.warn(`Unknown element type: ${type}, falling back to div`)
-    factory = factories.div
+    factory = factoryMap.div
   }
 
   // Create the terminal element
@@ -759,4 +1138,20 @@ export function registerElementFactories(): void {
   for (const [type, factory] of Object.entries(factories)) {
     registerElement(type, factory)
   }
+  
+  // Also register reactive factories with a prefix
+  for (const [type, factory] of Object.entries(reactiveFactories)) {
+    registerElement(`reactive-${type}`, factory)
+  }
+}
+
+/**
+ * Helper to create a reactive element directly
+ */
+export function createReactiveElement(
+  type: string,
+  props: BaseElementProps,
+  domNode?: TerminalElementNode
+): TerminalElement {
+  return createElement(type, props, domNode, { reactive: true })
 }

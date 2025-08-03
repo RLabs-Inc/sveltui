@@ -17,6 +17,7 @@
  */
 
 import { Window } from 'happy-dom'
+import { applyNodePatches } from '../dom/node-patch'
 
 let happyWindow: Window | null = null
 
@@ -172,6 +173,9 @@ export function setupBrowserGlobals(options: BrowserGlobalsOptions = {}) {
   
   // Merge custom window properties
   Object.assign(globalAny.window, windowProps)
+  
+  // Apply node patches for Svelte 5 compatibility
+  applyNodePatches(globalAny.Element, globalAny.Document)
   
   // IMPORTANT: Set up getters that Svelte expects
   // Svelte's internal DOM operations use these

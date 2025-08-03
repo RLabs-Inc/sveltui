@@ -4,14 +4,16 @@ Button[$.FILENAME] = 'src/components/ui/Button.svelte';
 
 import * as $ from 'svelte/internal/client';
 
-var root = $.add_locations($.template(`<box><!></box>`), Button[$.FILENAME], [[24, 0]]);
+var root = $.add_locations($.template(`<box><!></box>`), Button[$.FILENAME], [[31, 0]]);
 
 export default function Button($$anchor, $$props) {
 	$.check_target(new.target);
 	$.push($$props, true, Button);
 
 	// Props with proper defaults
-	let onclick = $.prop($$props, 'onclick', 3, () => {}),
+	let content = $.prop($$props, 'content', 3, ''),
+		onclick = $.prop($$props, 'onclick', 3, () => {}),
+		onPress = $.prop($$props, 'onPress', 3, () => {}),
 		color = $.prop($$props, 'color', 3, 'primary'),
 		border = $.prop($$props, 'border', 3, false),
 		width = $.prop($$props, 'width', 3, 'shrink'),
@@ -26,14 +28,20 @@ export default function Button($$anchor, $$props) {
 				'$$events',
 				'$$legacy',
 				'children',
+				'content',
 				'onclick',
+				'onPress',
 				'color',
 				'border',
 				'width',
 				'height',
 				'bold',
 				'disabled',
-				'style'
+				'style',
+				'left',
+				'right',
+				'top',
+				'bottom'
 			],
 			'props'
 		);
@@ -41,6 +49,7 @@ export default function Button($$anchor, $$props) {
 	function handleClick(event) {
 		if (!disabled()) {
 			onclick()?.(event);
+			onPress()?.(event);
 		}
 	}
 
@@ -65,10 +74,15 @@ export default function Button($$anchor, $$props) {
 	$.reset(box);
 
 	$.template_effect(() => attributes = $.set_attributes(box, attributes, {
+		left: $$props.left,
+		right: $$props.right,
+		top: $$props.top,
+		bottom: $$props.bottom,
 		width: width(),
 		height: height(),
 		border: border(),
 		style: style(),
+		content: content(),
 		onclick: handleClick,
 		clickable: !disabled(),
 		mouse: true,

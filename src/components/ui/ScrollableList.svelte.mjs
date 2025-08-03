@@ -360,7 +360,7 @@ export default function ScrollableList($$anchor, $$props) {
 	let showScrollbar = $.derived(() => scrollbar() && (alwaysScroll() || $.get(filteredItems).length > pageSize()));
 
 	// Calculate scrollbar position and size
-	let scrollbarHeight = $.derived(() => () => {
+	let scrollbarHeight = $.derived(() => {
 		if (!$.get(showScrollbar)) return 0;
 
 		const contentHeight = $.get(filteredItems).length;
@@ -369,7 +369,7 @@ export default function ScrollableList($$anchor, $$props) {
 		return Math.max(1, Math.floor(visibleHeight / contentHeight * visibleHeight));
 	});
 
-	let scrollbarTop = $.derived(() => () => {
+	let scrollbarTop = $.derived(() => {
 		if (!$.get(showScrollbar)) return 0;
 
 		const contentHeight = $.get(filteredItems).length;

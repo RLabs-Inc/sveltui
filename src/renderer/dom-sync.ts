@@ -145,7 +145,7 @@ export function setupReactiveSync(
     
     // Render screen
     screen.render()
-  }, 50)
+  }, SYNC_INTERVAL)
   
   // Return cleanup function
   return () => {

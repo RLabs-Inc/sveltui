@@ -13,6 +13,19 @@ import {
   createTextAwareMutationObserver,
   clearTextContent,
 } from './text-sync-fix'
+import { 
+  bridgeElementEvents, 
+  bridgeScreenEvents, 
+  createCustomEvent,
+  EventDelegator 
+} from '../dom/event-bridge'
+// Temporarily disable reactive events for debugging
+// import { 
+//   globalEventBus, 
+//   getElementEventEmitter,
+//   ReactiveEventEmitter 
+// } from '../dom/reactive-events.svelte.ts'
+// import { mouseState } from '../input/simple-mouse-state'
 
 // Map to track DOM element to terminal element relationships
 const domToTerminalMap = new WeakMap<Element, TerminalElement>()
@@ -40,7 +53,7 @@ export function happyDomToTerminal(
     const element = happyNode as Element
     const tagName = element.tagName.toLowerCase()
 
-    // console.log(`[Bridge] Converting element: ${tagName}`)
+    // console.log(`[Bridge] Converting element: ${tagName}, attrs:`, Array.from(element.attributes).map(a => `${a.name}="${a.value}"`).join(' '))
 
     // Skip HTML/HEAD/BODY wrapper elements
     if (tagName === 'html' || tagName === 'head' || tagName === 'body') {
@@ -58,6 +71,24 @@ export function happyDomToTerminal(
       const propName = attr.name === 'class' ? 'className' : attr.name
       let value: any = attr.value
 
+      // Try to parse JSON attributes
+      if (['border', 'style'].includes(propName)) {
+        try {
+          // Handle [object Object] case
+          if (value === '[object Object]' && propName === 'border') {
+            // Default border style
+            value = { type: 'line' }
+          } else if (value === '[object Object]' && propName === 'style') {
+            // Skip - will be handled by inline style parsing
+            continue
+          } else if (value.startsWith('{')) {
+            value = JSON.parse(value)
+          }
+        } catch (e) {
+          // Keep as string if JSON parsing fails
+        }
+      }
+
       // Convert numeric attributes to numbers
       if (
         ['width', 'height', 'top', 'left', 'right', 'bottom'].includes(propName)
@@ -73,21 +104,60 @@ export function happyDomToTerminal(
     }
 
     // Handle special attributes
-    if (element.hasAttribute('style')) {
-      // Parse inline styles if needed
-      const styleAttr = element.getAttribute('style')
-      if (styleAttr) {
-        props.style = parseInlineStyle(styleAttr)
+    // For style, check if element has __style (Svelte's internal cache)
+    if ((element as any).__style) {
+      // Svelte has set styles via $.set_style()
+      // __style contains the raw style object passed to $.set_style()
+      props.style = (element as any).__style
+      // console.log(`[Bridge] Found __style:`, props.style)
+    } else if (element instanceof HTMLElement) {
+      // Check for inline styles on the element
+      const styleObj: Record<string, any> = {}
+      let hasStyles = false
+      
+      // Parse color styles
+      if (element.style.color) {
+        styleObj.fg = element.style.color
+        hasStyles = true
       }
+      if (element.style.backgroundColor) {
+        styleObj.bg = element.style.backgroundColor
+        hasStyles = true
+      }
+      
+      // Check for font weight
+      if (element.style.fontWeight === 'bold') {
+        styleObj.bold = true
+        hasStyles = true
+      }
+      
+      // Check for borders and other blessed-specific styles
+      if (element.style.border && typeof element.style.border === 'object') {
+        styleObj.border = element.style.border
+        hasStyles = true
+      }
+      
+      // Only override if we found actual styles
+      if (hasStyles) {
+        props.style = styleObj
+      }
+    } else if (element.hasAttribute('style') && typeof props.style === 'string' && !props.style.startsWith('{')) {
+      // Fallback: parse style attribute if it's a CSS string
+      props.style = parseInlineStyle(props.style)
     }
 
     // Create terminal element
     const terminalElement = createElement(tagName, props)
-    // console.log(`[Bridge] Created terminal element: ${tagName}, props:`, props)
+    // console.log(`[Bridge] Created terminal element: ${tagName}, blessed:`, !!terminalElement.blessed, 'props:', props)
 
     // Store the bidirectional mapping
     domToTerminalMap.set(element, terminalElement)
     terminalToDomMap.set(terminalElement, element)
+
+    // Set up reactive event system for this element
+    // Temporarily disabled for debugging
+    // const parentEmitter = parent ? getElementEventEmitter(parent) : globalEventBus
+    // const elementEmitter = bridgeElementEvents(terminalElement, parentEmitter)
 
     // Add to parent if provided
     if (parent) {
@@ -95,6 +165,9 @@ export function happyDomToTerminal(
       parent.appendChild(terminalElement)
       if (parent.blessed && !terminalElement.blessed) {
         terminalElement.create(parent.blessed)
+        // Bridge events after blessed element is created
+        // Temporarily disabled for debugging
+        // bridgeElementEvents(terminalElement, parentEmitter)
         // console.log(`[Bridge] Created blessed element for ${tagName}`)
         // Make sure the element is visible
         if (terminalElement.blessed) {
@@ -124,6 +197,44 @@ export function happyDomToTerminal(
         }
       } else {
         happyDomToTerminal(child, terminalElement)
+      }
+    }
+
+    // Set up keyboard events if this element is focusable
+    const isFocusable =
+      tagName === 'input' ||
+      tagName === 'button' ||
+      tagName === 'box' ||
+      element.hasAttribute('tabindex') ||
+      element.hasAttribute('focused') ||
+      element.hasAttribute('onkeydown') ||
+      element.hasAttribute('onkeyup')
+
+    // console.log(`[Bridge] Element ${tagName} focusable:`, isFocusable, 'has focused attr:', element.hasAttribute('focused'))
+
+    if (isFocusable && terminalElement.blessed && globalScreen) {
+      // console.log(`[Bridge] Setting up keyboard events for ${tagName} during initial bridge`)
+      setupKeyboardEvents(element, terminalElement, globalScreen)
+      
+      // If element has focused="true", focus it
+      if (element.getAttribute('focused') === 'true' || element.hasAttribute('focused')) {
+        // Focus after a small delay to ensure screen is ready
+        setTimeout(() => {
+          if (terminalElement.blessed) {
+            // console.log('[Bridge] Auto-focusing element with focused attribute:', terminalElement.type, 'width:', terminalElement.blessed.width, 'height:', terminalElement.blessed.height)
+            terminalElement.blessed.focus()
+            // console.log('[Bridge] Element focused:', terminalElement.blessed.focused)
+            
+            // Blessed might not focus elements with 0 width/height, let's give it minimum size
+            if (terminalElement.blessed.width === 0 || terminalElement.blessed.height === 0) {
+              // console.log('[Bridge] Element has 0 size, setting minimum size')
+              terminalElement.blessed.width = 1
+              terminalElement.blessed.height = 1
+              terminalElement.blessed.focus()
+              // console.log('[Bridge] Element focused after resize:', terminalElement.blessed.focused)
+            }
+          }
+        }, 50)
       }
     }
 
@@ -172,6 +283,7 @@ export function observeHappyDom(
   terminalElement: TerminalElement,
   screen: any
 ): MutationObserver {
+  // console.log(`[Bridge] Setting up observer for ${happyElement.tagName}`)
   // Set up keyboard events for this element if it's focusable
   const tagName = happyElement.tagName.toLowerCase()
   const isFocusable =
@@ -183,15 +295,32 @@ export function observeHappyDom(
     happyElement.hasAttribute('onkeydown') ||
     happyElement.hasAttribute('onkeyup')
 
+  // console.log(`[Bridge] Element ${tagName} focusable:`, isFocusable, 'has focused attr:', happyElement.hasAttribute('focused'))
+
   if (isFocusable) {
+    // console.log(`[Bridge] Setting up keyboard events for ${tagName}`)
     setupKeyboardEvents(happyElement, terminalElement, screen)
+    
+    // If element has focused="true", focus it
+    if (happyElement.getAttribute('focused') === 'true' || happyElement.hasAttribute('focused')) {
+      // Focus after a small delay to ensure screen is ready
+      setTimeout(() => {
+        if (terminalElement.blessed) {
+          // console.log('[Bridge] Auto-focusing element with focused attribute:', terminalElement.type)
+          terminalElement.blessed.focus()
+        }
+      }, 50)
+    }
   }
+
+  // Track last known __style state for polling
+  let lastKnownStyle = (happyElement as any).__style
 
   // Use enhanced observer for text elements
   const observerCallback = (mutations: MutationRecord[]) => {
     let needsUpdate = false
 
-    // console.log(`[Observer] Detected ${mutations.length} mutations`)
+    // console.log(`[Observer] Detected ${mutations.length} mutations for ${happyElement.tagName}`)
 
     for (const mutation of mutations) {
       if (mutation.type === 'childList') {
@@ -244,10 +373,61 @@ export function observeHappyDom(
           const propName = attrName === 'class' ? 'className' : attrName
 
           if (value !== null) {
-            terminalElement.setProps({
-              ...terminalElement.props,
-              [propName]: value,
-            })
+            // Special handling for style attribute
+            if (attrName === 'style') {
+              let styleObj: Record<string, any> = {}
+              
+              // First check if element has __style (Svelte's internal cache)
+              if ((happyElement as any).__style) {
+                // Svelte has set styles via $.set_style()
+                // __style contains the raw style object passed to $.set_style()
+                styleObj = (happyElement as any).__style
+                // console.log(`[Observer] Found __style during update:`, styleObj)
+              } else if (happyElement instanceof HTMLElement) {
+                // Convert inline styles to blessed style object (fallback)
+                // Parse color styles
+                if (happyElement.style.color) {
+                  styleObj.fg = happyElement.style.color
+                }
+                if (happyElement.style.backgroundColor) {
+                  styleObj.bg = happyElement.style.backgroundColor
+                }
+                
+                // Check for font weight
+                if (happyElement.style.fontWeight === 'bold') {
+                  styleObj.bold = true
+                }
+              }
+              
+              // Update props with style object
+              terminalElement.setProps({
+                ...terminalElement.props,
+                style: styleObj
+              })
+            } else {
+              // Handle other attributes including border
+              let processedValue: any = value
+              
+              // Try to parse JSON attributes like border
+              if (['border'].includes(propName)) {
+                try {
+                  // Handle [object Object] case
+                  if (processedValue === '[object Object]' && propName === 'border') {
+                    // Default border style
+                    processedValue = { type: 'line' }
+                  } else if (processedValue.startsWith('{')) {
+                    processedValue = JSON.parse(processedValue)
+                  }
+                } catch (e) {
+                  // Keep as string if JSON parsing fails
+                }
+              }
+              
+              terminalElement.setProps({
+                ...terminalElement.props,
+                [propName]: processedValue,
+              })
+            }
           }
 
           // Special handling for focus-related attributes
@@ -296,12 +476,38 @@ export function observeHappyDom(
     }
   }
 
+  // Set up polling for __style changes (since they don't trigger mutations)
+  const stylePollingInterval = setInterval(() => {
+    const currentStyle = (happyElement as any).__style
+    if (currentStyle !== lastKnownStyle) {
+      // console.log(`[StylePolling] ${happyElement.tagName}[${happyElement.getAttribute('top')}/${happyElement.getAttribute('left')}] __style changed from`, JSON.stringify(lastKnownStyle), 'to', JSON.stringify(currentStyle))
+      lastKnownStyle = currentStyle
+      
+      // Update terminal element with new style
+      if (currentStyle) {
+        terminalElement.setProps({
+          ...terminalElement.props,
+          style: currentStyle
+        })
+        terminalElement.update()
+        screen.render()
+      }
+    }
+  }, 16) // Check every ~16ms (60fps)
+
   const observer = createTextAwareMutationObserver(
     happyElement,
     terminalElement,
     screen,
     observerCallback
   )
+
+  // Store cleanup function
+  const originalDisconnect = observer.disconnect.bind(observer)
+  observer.disconnect = () => {
+    clearInterval(stylePollingInterval)
+    originalDisconnect()
+  }
 
   // Start observing
   observer.observe(happyElement, {
@@ -464,6 +670,7 @@ export function setupKeyboardEvents(
     focusedElements.clear()
     focusedElements.add(happyElement)
     currentlyFocusedTerminal = terminalElement
+    // console.log('[Bridge] Added to focusedElements, size:', focusedElements.size)
 
     // Dispatch focus event
     const focusEvent = new FocusEvent('focus', {
@@ -596,15 +803,24 @@ function setupDocumentEventDelegation(): void {
  */
 export function setupGlobalKeyboardHandler(screen: any): void {
   globalScreen = screen
-  // console.log('[Bridge] Setting up global keyboard handler')
+  // console.log('[Bridge] Setting up global keyboard handler, screen:', !!screen)
 
   // Set up document-level event delegation for Svelte 5
   setupDocumentEventDelegation()
+  
+  // Bridge screen events to global event bus
+  // Temporarily disabled for debugging
+  // bridgeScreenEvents(screen, globalEventBus)
+  
+  // Initialize mouse state with the root element when available
+  // The root element will be set when the first terminal element is created
+  // This is handled in happyDomToTerminal function
 
   // Track recently handled keys to avoid double-processing
   const recentlyHandledKeys = new Map<string, number>()
 
   // Handle all key events at the screen level
+  // console.log('[Bridge] Registering keypress handler')
   screen.on('keypress', (ch: string, key: any) => {
     // console.log('[Bridge] Global keypress event - ch:', ch, 'key:', key)
 
@@ -648,7 +864,10 @@ export function setupGlobalKeyboardHandler(screen: any): void {
   })
 
   // Handle special keys via the 'key' event
+  // console.log('[Bridge] Registering key handler')
   screen.on('key', (name: string, key: any) => {
+    // console.log('[Bridge] Screen key event:', name, 'focused elements:', focusedElements.size, 'current terminal:', !!currentlyFocusedTerminal)
+    // console.log('[Bridge] Key details:', { name, ch: key.ch, full: key.full, sequence: key.sequence })
     // Check if we recently handled this key
     const now = Date.now()
     const keyIdentifier = `${name}-${key.sequence || ''}`
@@ -695,23 +914,24 @@ function handleKeyPress(element: Element, ch: string | null, key: any): void {
 
   // Check if element has delegated handler
   if ((element as any).__keydown) {
-    // console.log('[Bridge] Element has __keydown handler, calling directly')
+    // console.log('[Bridge] Element has __keydown handler')
     const [handler, ...args] = (element as any).__keydown
+    // console.log('[Bridge] Handler type:', typeof handler, 'args length:', args.length)
     if (typeof handler === 'function') {
-      const keydownEvent = createKeyboardEvent('keydown', ch, key)
-      // Set the target properly
-      Object.defineProperty(keydownEvent, 'target', {
-        value: element,
-        writable: false,
-        configurable: true,
-      })
-      Object.defineProperty(keydownEvent, 'currentTarget', {
-        value: element,
-        writable: false,
-        configurable: true,
-      })
-      handler(keydownEvent, ...args)
-      return
+      // Get the key name (e.g., "up", "down", "q", etc.)
+      const keyName = key.name || (ch && ch.length === 1 ? ch : null)
+      // console.log('[Bridge] Key name:', keyName, 'ch:', ch, 'key.name:', key.name, 'key.full:', key.full)
+      if (keyName) {
+        // console.log('[Bridge] Calling __keydown handler with key:', keyName)
+        try {
+          // Call with just the key name, not the full event
+          handler(keyName, ...args)
+          // console.log('[Bridge] Handler called successfully')
+        } catch (error) {
+          console.error('[Bridge] Error calling handler:', error)
+        }
+        return
+      }
     }
   }
 

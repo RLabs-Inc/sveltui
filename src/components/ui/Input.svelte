@@ -64,8 +64,7 @@
     ...restProps
   } = $props();
   
-  // Track input value internally
-  let inputValue = $state(value);
+  // No need for internal state - use bindable value directly
   
   // Convert border prop to blessed-compatible value
   let borderValue = $derived(typeof border === 'boolean' ? (border ? 'line' : false) : border);
@@ -74,14 +73,15 @@
   function handleChange(event: any) {
     if (disabled) return;
     
-    const newValue = event.value;
+    const newValue = event.value || '';
     
     // Apply maxLength restriction if specified
     if (maxLength !== undefined && newValue.length > maxLength) {
       return;
     }
     
-    inputValue = newValue;
+    // Update the bindable value directly
+    value = newValue;
     onChange?.({ value: newValue });
   }
   
@@ -89,7 +89,7 @@
   function handleSubmit() {
     if (disabled) return;
     
-    onSubmit?.({ value: inputValue });
+    onSubmit?.({ value });
   }
   
   // Focus the input element
@@ -106,7 +106,7 @@
   
   // Clear the input
   export function clear() {
-    inputValue = '';
+    value = '';
     onChange?.({ value: '' });
   }
 </script>
@@ -118,7 +118,7 @@
   bottom={bottom}
   width={width}
   height={height}
-  value={inputValue}
+  value={value}
   placeholder={placeholder}
   secret={secret}
   disabled={disabled}

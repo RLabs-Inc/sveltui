@@ -26,7 +26,7 @@ export default function Input($$anchor, $$props) {
 		top = $.prop($$props, 'top', 3, 0),
 		width = $.prop($$props, 'width', 3, '50%'),
 		height = $.prop($$props, 'height', 3, 1),
-		value = $.prop($$props, 'value', 11, ''),
+		value = $.prop($$props, 'value', 15, ''),
 		placeholder = $.prop($$props, 'placeholder', 3, ''),
 		secret = $.prop($$props, 'secret', 3, false),
 		disabled = $.prop($$props, 'disabled', 3, false),
@@ -70,8 +70,7 @@ export default function Input($$anchor, $$props) {
 			'restProps'
 		);
 
-	// Track input value internally
-	let inputValue = $.state($.proxy(value()));
+	// No need for internal state - use bindable value directly
 	// Convert border prop to blessed-compatible value
 	let borderValue = $.derived(() => $.strict_equals(typeof border(), 'boolean') ? border() ? 'line' : false : border());
 
@@ -79,21 +78,22 @@ export default function Input($$anchor, $$props) {
 	function handleChange(event) {
 		if (disabled()) return;
 
-		const newValue = event.value;
+		const newValue = event.value || '';
 
 		// Apply maxLength restriction if specified
 		if ($.strict_equals($$props.maxLength, undefined, false) && newValue.length > $$props.maxLength) {
 			return;
 		}
 
-		$.set(inputValue, newValue, true);
+		// Update the bindable value directly
+		value(newValue);
 		$$props.onChange?.({ value: newValue });
 	}
 
 	// Handle submit event (Enter key)
 	function handleSubmit() {
 		if (disabled()) return;
-		$$props.onSubmit?.({ value: $.get(inputValue) });
+		$$props.onSubmit?.({ value: value() });
 	}
 
 	function focus() {
@@ -107,7 +107,7 @@ export default function Input($$anchor, $$props) {
 	}
 
 	function clear() {
-		$.set(inputValue, '');
+		value('');
 		$$props.onChange?.({ value: '' });
 	}
 
@@ -127,7 +127,7 @@ export default function Input($$anchor, $$props) {
 		bottom: $$props.bottom,
 		width: width(),
 		height: height(),
-		value: $.get(inputValue),
+		value: value(),
 		placeholder: placeholder(),
 		secret: secret(),
 		disabled: disabled(),
