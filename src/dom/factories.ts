@@ -65,6 +65,18 @@ export class BaseTerminalElement implements TerminalElement {
    * @param props - New properties
    */
   setProps(props: BaseElementProps): void {
+    // Fix border if it's been stringified
+    if (props.border && typeof props.border === 'string' && props.border === '[object Object]') {
+      props.border = { 
+        type: 'line',
+        ch: ' ',
+        left: true,
+        top: true,
+        right: true,
+        bottom: true
+      }
+    }
+    
     this.props = { ...this.props, ...props }
     if (this.blessed) {
       this.update()
@@ -234,6 +246,28 @@ export class BoxElement extends BaseTerminalElement {
     // Calculate positioning with blessed-compatible algorithm
     const pos = this.calculatePositioning(parent);
 
+    // Handle border and style merging during creation
+    let finalBorder = this.props.border as Widgets.Border;
+    let finalStyle = this.props.style;
+
+    // If style contains border properties, merge them into the main border
+    if (this.props.style?.border && this.props.border) {
+      // Merge border style with existing border structure
+      const existingBorder = typeof this.props.border === 'object' ? this.props.border : { 
+        type: 'line',
+        ch: ' ',
+        left: true,
+        top: true,
+        right: true,
+        bottom: true
+      };
+      finalBorder = { ...existingBorder, ...this.props.style.border };
+      
+      // Remove border from style object to avoid conflicts
+      const { border, ...styleWithoutBorder } = this.props.style;
+      finalStyle = styleWithoutBorder;
+    }
+
     // Create blessed box with calculated positions
     const boxOptions = {
       parent,
@@ -246,8 +280,8 @@ export class BoxElement extends BaseTerminalElement {
       bottom: pos.bottom !== undefined ? pos.bottom : this.props.bottom,
       content: this.props.content || '',
       tags: this.props.tags,
-      border: this.props.border as Widgets.Border,
-      style: this.props.style,
+      border: finalBorder,
+      style: finalStyle,
       label: this.props.label,
       scrollable: this.props.scrollable,
       mouse: this.props.mouse,
@@ -276,6 +310,9 @@ export class BoxElement extends BaseTerminalElement {
 
     const box = this.blessed as Widgets.BoxElement
 
+    // Store current border configuration before updates
+    const currentBorder = box.border
+    
     // Recalculate positioning with blessed-compatible algorithm
     const pos = this.calculatePositioning(box.parent);
 
@@ -293,18 +330,45 @@ export class BoxElement extends BaseTerminalElement {
       box.setContent(this.props.content)
     }
 
-    if (this.props.style) {
-      Object.assign(box.style, this.props.style)
-    }
-
+    // Handle border before style to ensure it's preserved
     if (this.props.border !== undefined) {
       // Ensure border is an object, not a string
       if (typeof this.props.border === 'string' && this.props.border === '[object Object]') {
-        // Default border if it was stringified
-        box.border = { type: 'line' }
+        // Default border with complete blessed.js specification
+        box.border = { 
+          type: 'line',
+          ch: ' ',
+          left: true,
+          top: true,
+          right: true,
+          bottom: true
+        }
       } else {
         box.border = this.props.border
       }
+    } else if (currentBorder) {
+      // Preserve existing border if no new border is specified
+      box.border = currentBorder
+    }
+
+    if (this.props.style) {
+      // If style contains border properties, merge with existing border
+      if (this.props.style.border && box.border) {
+        // Merge the border styling with the existing border structure
+        box.border = { ...box.border, ...this.props.style.border }
+        // Remove border from style object to avoid conflicts
+        const { border, ...styleWithoutBorder } = this.props.style
+        Object.assign(box.style, styleWithoutBorder)
+      } else {
+        Object.assign(box.style, this.props.style)
+      }
+    }
+
+    // Ensure border is reapplied after all other updates
+    if (box.border) {
+      // Force border refresh by reassigning it
+      const borderConfig = box.border
+      box.border = borderConfig
     }
 
     if (this.props.label !== undefined) {
@@ -883,6 +947,28 @@ export class ReactiveBoxElement extends ReactiveTerminalElement {
     // Calculate positioning with blessed-compatible algorithm
     const pos = this.calculatePositioning(parent);
 
+    // Handle border and style merging during creation
+    let finalBorder = this.props.border as Widgets.Border;
+    let finalStyle = this.props.style;
+
+    // If style contains border properties, merge them into the main border
+    if (this.props.style?.border && this.props.border) {
+      // Merge border style with existing border structure
+      const existingBorder = typeof this.props.border === 'object' ? this.props.border : { 
+        type: 'line',
+        ch: ' ',
+        left: true,
+        top: true,
+        right: true,
+        bottom: true
+      };
+      finalBorder = { ...existingBorder, ...this.props.style.border };
+      
+      // Remove border from style object to avoid conflicts
+      const { border, ...styleWithoutBorder } = this.props.style;
+      finalStyle = styleWithoutBorder;
+    }
+
     // Create blessed box with calculated positions
     const boxOptions = {
       parent,
@@ -895,8 +981,8 @@ export class ReactiveBoxElement extends ReactiveTerminalElement {
       bottom: pos.bottom !== undefined ? pos.bottom : this.props.bottom,
       content: this.props.content || '',
       tags: this.props.tags,
-      border: this.props.border as Widgets.Border,
-      style: this.props.style,
+      border: finalBorder,
+      style: finalStyle,
       label: this.props.label,
       scrollable: this.props.scrollable,
       mouse: this.props.mouse,

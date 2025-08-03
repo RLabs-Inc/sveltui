@@ -76,8 +76,15 @@ export function happyDomToTerminal(
         try {
           // Handle [object Object] case
           if (value === '[object Object]' && propName === 'border') {
-            // Default border style
-            value = { type: 'line' }
+            // Default border style with complete blessed.js specification
+            value = { 
+              type: 'line',
+              ch: ' ',
+              left: true,
+              top: true,
+              right: true,
+              bottom: true
+            }
           } else if (value === '[object Object]' && propName === 'style') {
             // Skip - will be handled by inline style parsing
             continue
@@ -153,6 +160,131 @@ export function happyDomToTerminal(
     // Store the bidirectional mapping
     domToTerminalMap.set(element, terminalElement)
     terminalToDomMap.set(terminalElement, element)
+
+    // Schedule a check for initial reactive styles after template_effect runs
+    // This ensures initial reactive values are applied on first render
+    setTimeout(() => {
+      if ((element as any).__style) {
+        // Check if the reactive style is different from current props
+        const reactiveStyle = (element as any).__style
+        const currentStyle = terminalElement.props.style || {}
+        const needsUpdate = JSON.stringify(reactiveStyle) !== JSON.stringify(currentStyle)
+        
+        if (needsUpdate) {
+          // Apply the reactive style that was set by template_effect
+          const currentProps = { ...terminalElement.props }
+          
+          // Debug log for border styles
+          if (reactiveStyle.border) {
+            console.log(`[Bridge] Applying initial border style:`, reactiveStyle.border)
+          }
+          
+          terminalElement.setProps({
+            ...currentProps,
+            style: reactiveStyle
+          })
+          terminalElement.update()
+          
+          // Force screen render to show the updated style
+          if (terminalElement.blessed?.screen) {
+            terminalElement.blessed.screen.render()
+          }
+        }
+      }
+    }, 0)
+
+    // Hook into the element's style property to intercept Svelte's set_style calls
+    if (element instanceof HTMLElement) {
+      // Store original style property descriptor
+      const originalStyleDescriptor = Object.getOwnPropertyDescriptor(element, 'style')
+      const originalStyle = element.style
+      
+      // Override the style property to intercept changes
+      Object.defineProperty(element, 'style', {
+        get() {
+          return originalStyle
+        },
+        set(value) {
+          // Update the original style
+          if (originalStyleDescriptor?.set) {
+            originalStyleDescriptor.set.call(this, value)
+          } else if (originalStyle) {
+            Object.assign(originalStyle, value)
+          }
+          
+          // If this style change comes from Svelte's set_style, trigger terminal update  
+          if ((element as any).__style) {
+            // Critical fix: When style contains border, preserve existing border structure
+            const currentProps = { ...terminalElement.props }
+            const newStyle = (element as any).__style
+            
+            if (newStyle.border && currentProps.border) {
+              // Merge border style with existing border structure
+              const existingBorder = typeof currentProps.border === 'object' ? currentProps.border : { 
+                type: 'line',
+                ch: ' ',
+                left: true,
+                top: true,
+                right: true,
+                bottom: true
+              }
+              const mergedBorder = { ...existingBorder, ...newStyle.border }
+              
+              // Remove border from style and set as separate border prop
+              const { border, ...styleWithoutBorder } = newStyle
+              
+              terminalElement.setProps({
+                ...currentProps,
+                style: styleWithoutBorder,
+                border: mergedBorder
+              })
+            } else {
+              terminalElement.setProps({
+                ...currentProps,
+                style: newStyle
+              })
+            }
+            
+            terminalElement.update()
+            if (terminalElement.blessed?.screen) {
+              terminalElement.blessed.screen.render()
+            }
+          }
+        },
+        configurable: true,
+        enumerable: true
+      })
+      
+      // Also override the cssText property specifically
+      if (originalStyle && originalStyle.cssText !== undefined) {
+        const originalCssTextDescriptor = Object.getOwnPropertyDescriptor(originalStyle, 'cssText')
+        Object.defineProperty(originalStyle, 'cssText', {
+          get() {
+            return originalCssTextDescriptor?.get?.call(this) || ''
+          },
+          set(value) {
+            // Call original setter
+            if (originalCssTextDescriptor?.set) {
+              originalCssTextDescriptor.set.call(this, value)
+            }
+            
+            // Check if Svelte set the __style property
+            if ((element as any).__style) {
+              terminalElement.setProps({
+                ...terminalElement.props,
+                style: (element as any).__style
+              })
+              terminalElement.update()
+              if (terminalElement.blessed?.screen) {
+                terminalElement.blessed.screen.render()
+              }
+            }
+          },
+          configurable: true,
+          enumerable: true
+        })
+      }
+    }
 
     // Set up reactive event system for this element
     // Temporarily disabled for debugging
@@ -313,14 +445,13 @@ export function observeHappyDom(
     }
   }
 
-  // Track last known __style state for polling
-  let lastKnownStyle = (happyElement as any).__style
+  // Note: Style changes are now handled via DOM element style property hooks
 
   // Use enhanced observer for text elements
   const observerCallback = (mutations: MutationRecord[]) => {
     let needsUpdate = false
 
-    // console.log(`[Observer] Detected ${mutations.length} mutations for ${happyElement.tagName}`)
+    // console.log(`[Observer] Detected ${mutations.length} mutations for ${happyElement.tagName} (${happyElement.constructor.name})`)
 
     for (const mutation of mutations) {
       if (mutation.type === 'childList') {
@@ -372,6 +503,7 @@ export function observeHappyDom(
           const value = happyElement.getAttribute(attrName)
           const propName = attrName === 'class' ? 'className' : attrName
 
+
           if (value !== null) {
             // Special handling for style attribute
             if (attrName === 'style') {
@@ -382,7 +514,6 @@ export function observeHappyDom(
                 // Svelte has set styles via $.set_style()
                 // __style contains the raw style object passed to $.set_style()
                 styleObj = (happyElement as any).__style
-                // console.log(`[Observer] Found __style during update:`, styleObj)
               } else if (happyElement instanceof HTMLElement) {
                 // Convert inline styles to blessed style object (fallback)
                 // Parse color styles
@@ -413,8 +544,15 @@ export function observeHappyDom(
                 try {
                   // Handle [object Object] case
                   if (processedValue === '[object Object]' && propName === 'border') {
-                    // Default border style
-                    processedValue = { type: 'line' }
+                    // Default border style with complete blessed.js specification
+                    processedValue = { 
+                      type: 'line',
+                      ch: ' ',
+                      left: true,
+                      top: true,
+                      right: true,
+                      bottom: true
+                    }
                   } else if (processedValue.startsWith('{')) {
                     processedValue = JSON.parse(processedValue)
                   }
@@ -476,38 +614,12 @@ export function observeHappyDom(
     }
   }
 
-  // Set up polling for __style changes (since they don't trigger mutations)
-  const stylePollingInterval = setInterval(() => {
-    const currentStyle = (happyElement as any).__style
-    if (currentStyle !== lastKnownStyle) {
-      // console.log(`[StylePolling] ${happyElement.tagName}[${happyElement.getAttribute('top')}/${happyElement.getAttribute('left')}] __style changed from`, JSON.stringify(lastKnownStyle), 'to', JSON.stringify(currentStyle))
-      lastKnownStyle = currentStyle
-      
-      // Update terminal element with new style
-      if (currentStyle) {
-        terminalElement.setProps({
-          ...terminalElement.props,
-          style: currentStyle
-        })
-        terminalElement.update()
-        screen.render()
-      }
-    }
-  }, 16) // Check every ~16ms (60fps)
-
   const observer = createTextAwareMutationObserver(
     happyElement,
     terminalElement,
     screen,
     observerCallback
   )
-
-  // Store cleanup function
-  const originalDisconnect = observer.disconnect.bind(observer)
-  observer.disconnect = () => {
-    clearInterval(stylePollingInterval)
-    originalDisconnect()
-  }
 
   // Start observing
   observer.observe(happyElement, {
@@ -927,6 +1039,12 @@ function handleKeyPress(element: Element, ch: string | null, key: any): void {
           // Call with just the key name, not the full event
           handler(keyName, ...args)
           // console.log('[Bridge] Handler called successfully')
+          
+          // For keyboard responsiveness: force one immediate render after handler
+          // This eliminates the 16ms delay from DOM sync polling
+          if (globalScreen) {
+            globalScreen.render()
+          }
         } catch (error) {
           console.error('[Bridge] Error calling handler:', error)
         }

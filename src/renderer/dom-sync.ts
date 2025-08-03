@@ -130,11 +130,11 @@ export function setupReactiveSync(
   // Build initial sync map
   let syncMap = buildSyncMap(happyDomRoot, terminalRoot)
   
-  // Polling interval for updates - configurable via env var or default to 16ms
+  // Polling interval for updates - configurable via env var or default to 8ms
+  // Optimized for keyboard responsiveness: 8ms = ~120fps, 16ms = 60fps
   // Lower values = more responsive but higher CPU usage
-  // 16ms = ~60fps (default - silky smooth!), 25ms = 40fps, 50ms = 20fps
   const SYNC_INTERVAL = process.env.SVELTUI_SYNC_INTERVAL ? 
-    parseInt(process.env.SVELTUI_SYNC_INTERVAL, 10) : 16
+    parseInt(process.env.SVELTUI_SYNC_INTERVAL, 10) : 8
   
   const interval = setInterval(() => {
     // Rebuild sync map in case structure changed

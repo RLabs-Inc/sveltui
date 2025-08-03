@@ -460,12 +460,15 @@ export class TerminalTemplateElement implements TerminalElementNode {
         return styles.join('; ')
       },
       set: (value: string) => {
+        // console.log(`[DOM] style.cssText setter called on ${this.tagName} with value:`, value)
         if (!value) {
           for (const key in this.style) {
             if (key !== 'cssText') {
               this.style[key] = ''
             }
           }
+          // Trigger style attribute change for mutation observers
+          this.setAttribute('style', '')
           return
         }
         
@@ -477,6 +480,9 @@ export class TerminalTemplateElement implements TerminalElementNode {
             this.style[camelProp] = val
           }
         }
+        
+        // Trigger style attribute change for mutation observers
+        this.setAttribute('style', value)
       },
       enumerable: true,
       configurable: true

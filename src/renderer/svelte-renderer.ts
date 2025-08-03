@@ -107,16 +107,16 @@ export async function renderComponent(
   // Initialize the reconciler
   const reconciler = getReconciler({
     debug: options.debug,
-    batchUpdates: true,
+    batchUpdates: true, // Re-enable batching - might help with performance
   })
 
   // Get or create the screen
   const screen = getScreen({
     title: options.title || options.screen?.title,
     fullscreen: options.fullscreen ?? options.screen?.fullscreen,
-    useScheduler: options.useScheduler,
+    useScheduler: true, // Re-enable scheduler but with high FPS
     scheduler: options.scheduler,
-    maxFPS: options.maxFPS,
+    maxFPS: 120, // Increase FPS for better responsiveness
     performanceMonitoring: options.performanceMonitoring,
     debug: options.debug,
     ...options.screen?.options,
@@ -296,14 +296,15 @@ export async function renderComponent(
       return terminalRoot
     }
 
-    // Call the bridge function after a short delay to ensure Svelte has rendered
+    // Call the bridge function immediately using queueMicrotask for instant response
+    // This ensures Svelte has rendered without adding artificial delay
     let rootElement: any = null
-    setTimeout(() => {
+    queueMicrotask(() => {
       rootElement = bridgeHappyDomToTerminal()
       
       // Force screen render
       screen.render()
-    }, 100)
+    })
 
     // Debug: Check if root box has children
     if (options.debug) {
