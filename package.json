@@ -1,0 +1,38 @@
+{
+  "name": "sveltui",
+  "version": "0.1.0",
+  "description": "Write Svelte applications for terminal with SvelTUI",
+  "main": "dist/src/index.cjs",
+  "module": "dist/src/index.mjs",
+  "type": "module",
+  "keywords": [
+    "svelte",
+    "terminal",
+    "tui",
+    "cli",
+    "ui"
+  ],
+  "author": "",
+  "license": "MIT",
+  "exports": {
+    ".": "./dist/src/index.mjs",
+    "./mount": "./dist/src/mount.svelte.js"
+  },
+  "scripts": {
+    "build": "bun scripts/build.mjs",
+    "build:watch": "bun scripts/build.mjs --watch",
+    "build:verbose": "bun scripts/build.mjs --verbose",
+    "demo": "bun run build && bun --conditions browser dist/src/main.mjs"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@happy-dom/global-registrator": "^18.0.1",
+    "svelte": "^5.38.7",
+    "yoga-layout": "^3.2.1"
+  }
+}

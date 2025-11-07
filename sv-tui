@@ -1,0 +1,258 @@
+#!/usr/bin/env bun
+/**
+ * SvelTUI CLI
+ * Create new SvelTUI projects
+ */
+
+import { $ } from 'bun'
+import { join } from 'path'
+
+const args = process.argv.slice(2)
+const command = args[0]
+const projectName = args[1]
+
+if (!command || command !== 'create' || !projectName) {
+  console.log(`
+SvelTUI CLI
+
+Usage:
+  sveltui create <project-name>
+
+Example:
+  sveltui create my-app
+`)
+  process.exit(1)
+}
+
+console.log(`\n🚀 Creating SvelTUI project: ${projectName}\n`)
+
+// Create project directory
+await $`mkdir -p ${projectName}/src`
+
+// Create package.json
+const packageJson = {
+  name: projectName,
+  type: "module",
+  scripts: {
+    build: "./sveltui-build",
+    start: "bun --conditions browser dist/src/main.mjs",
+    dev: "bun --conditions browser src/main.ts"
+  },
+  dependencies: {
+    // TODO: Once published to npm, replace with: "sveltui": "^0.1.0"
+    sveltui: "link:sveltui", // Using local package for now
+    svelte: "^5.0.0",
+    "@happy-dom/global-registrator": "^15.0.0"
+  }
+}
+
+await Bun.write(
+  join(projectName, 'package.json'),
+  JSON.stringify(packageJson, null, 2)
+)
+
+// Create main.ts
+const mainTs = `#!/usr/bin/env bun
+import { mount } from 'sveltui'
+import { mount as mountComponent } from 'svelte'
+import App from './App.svelte'
+
+mount(() => {
+  const app = mountComponent(App, {
+    target: document.body
+  })
+}, { fullscreen: true })
+`
+
+await Bun.write(join(projectName, 'src/main.ts'), mainTs)
+
+// Create App.svelte
+const appSvelte = `<script>
+  import { Box, Text, Input } from 'sveltui'
+  
+  let name = $state('')
+</script>
+
+<Box x={2} y={2} width={60} height={12} border="rounded" borderColor={0x06}>
+  <Text x={2} y={1} text="Welcome to SvelTUI!" color={0x0a} />
+  
+  <Input
+    x={2}
+    y={3}
+    width={40}
+    bind:value={name}
+    placeholder="Enter your name..."
+  />
+  
+  <Text 
+    x={2} 
+    y={5} 
+    text={name ? \`Hello, \${name}!\` : 'Type your name above'}
+    color={0x0b}
+  />
+  
+  <Text
+    x={2}
+    y={7}
+    text="Press Tab to focus, Ctrl+C to exit"
+    color={0x08}
+  />
+</Box>
+`
+
+await Bun.write(join(projectName, 'src/App.svelte'), appSvelte)
+
+// Create sveltui-build script
+const buildScript = `#!/usr/bin/env bun
+/**
+ * Build script for SvelTUI applications
+ */
+
+import * as svelte from 'svelte/compiler'
+import { $ } from 'bun'
+import { Glob } from 'bun'
+import { join, dirname } from 'path'
+
+const cwd = process.cwd()
+
+async function build() {
+  console.log('🔨 Building SvelTUI application...\\n')
+  
+  // Clean dist
+  await $\`rm -rf dist\`
+  await $\`mkdir -p dist\`
+  
+  // Find all source files
+  const files = []
+  
+  // App source files
+  const appPatterns = ['src/**/*.svelte', 'src/**/*.ts', 'src/**/*.js']
+  for (const pattern of appPatterns) {
+    const glob = new Glob(pattern)
+    for await (const file of glob.scan({ cwd })) {
+      files.push(file)
+    }
+  }
+  
+  // SvelTUI source files
+  const sveltUIPath = 'node_modules/sveltui/src'
+  const sveltUIPatterns = ['**/*.svelte', '**/*.svelte.ts', '**/*.ts', '**/*.js']
+  for (const pattern of sveltUIPatterns) {
+    const glob = new Glob(pattern)
+    for await (const file of glob.scan({ cwd: join(cwd, sveltUIPath) })) {
+      if (!file.includes('test/')) {
+        files.push(join(sveltUIPath, file))
+      }
+    }
+  }
+  
+  console.log(\`  Found \${files.length} files to compile\`)
+  
+  // Compile each file
+  for (const file of files) {
+    const source = await Bun.file(file).text()
+    const outPath = join('dist', file)
+    
+    await $\`mkdir -p \${dirname(outPath)}\`
+    
+    if (file.endsWith('.svelte')) {
+      const compiled = svelte.compile(source, {
+        filename: file,
+        generate: 'client',
+        css: 'injected',
+        runes: true,
+        compatibility: { componentApi: 5 }
+      })
+      await Bun.write(outPath + '.mjs', compiled.js.code)
+    } else if (file.endsWith('.svelte.ts')) {
+      const transpiler = new Bun.Transpiler({ loader: 'ts' })
+      const jsCode = transpiler.transformSync(source)
+      const compiled = svelte.compileModule(jsCode, {
+        filename: file,
+        generate: 'client'
+      })
+      await Bun.write(outPath.replace('.svelte.ts', '.svelte.js'), compiled.js.code)
+    } else if (file.endsWith('.ts')) {
+      const transpiler = new Bun.Transpiler({ loader: 'ts' })
+      const jsCode = transpiler.transformSync(source)
+      await Bun.write(outPath.replace('.ts', '.mjs'), jsCode)
+    } else {
+      await Bun.write(outPath, source)
+    }
+  }
+  
+  // Fix imports
+  console.log('  Fixing import paths...')
+  const distFiles = []
+  const distGlob = new Glob('**/*.{mjs,js}')
+  for await (const file of distGlob.scan({ cwd: 'dist' })) {
+    distFiles.push(join('dist', file))
+  }
+  
+  for (const file of distFiles) {
+    const content = await Bun.file(file).text()
+    const fixed = content
+      .replace(/from\\s+['"]([^'"]+)\\.svelte['"]/g, "from '$1.svelte.mjs'")
+      .replace(/from\\s+['"]([^'"]+)\\.svelte\\.ts['"]/g, "from '$1.svelte.js'")
+      .replace(/from\\s+['"](\\.\\.?\\/[^'"]+)\\.ts['"]/g, "from '$1.mjs'")
+      .replace(/from\\s+["']sveltui["']/g, "from '../node_modules/sveltui/src/index.mjs'")
+      .replace(/from\\s+["']sveltui\\/src\\//g, "from '../node_modules/sveltui/src/")
+    
+    if (fixed !== content) {
+      await Bun.write(file, fixed)
+    }
+  }
+  
+  console.log('\\n✅ Build complete!')
+  console.log('📁 Output: dist/')
+  console.log('\\nRun with: bun run start')
+}
+
+await build()
+`
+
+await Bun.write(join(projectName, 'sveltui-build'), buildScript)
+await $`chmod +x ${projectName}/sveltui-build`
+
+// Create README
+const readme = `# ${projectName}
+
+A terminal UI application built with SvelTUI.
+
+## Development
+
+\`\`\`bash
+# Install dependencies
+bun install
+
+# Build the application
+bun run build
+
+# Run the application
+bun run start
+
+# Development mode (run from source)
+bun run dev
+\`\`\`
+
+## Controls
+
+- **Tab**: Navigate between focusable elements
+- **Ctrl+C**: Exit the application
+- **Ctrl+P**: Toggle debug panel (when available)
+`
+
+await Bun.write(join(projectName, 'README.md'), readme)
+
+console.log(`✅ Project created successfully!
+
+Next steps:
+  cd ${projectName}
+  bun install
+  
+  # If SvelTUI is not published yet, link the local package:
+  # bun link sveltui
+  
+  bun run build
+  bun run start
+`)
