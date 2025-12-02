@@ -5,6 +5,9 @@
   "main": "dist/src/index.cjs",
   "module": "dist/src/index.mjs",
   "type": "module",
+  "bin": {
+    "sv-tui": "./sv-tui"
+  },
   "keywords": [
     "svelte",
     "terminal",

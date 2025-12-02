@@ -1,9 +1,18 @@
 // ============================================================================
 // SVELTUI V2 - KEYBOARD MODULE
-// Simple event emitter for keyboard events
-// Anyone can subscribe with keyboard.on('key', handler)
+// Hybrid API: Reactive state + imperative event handlers
+//
+// Reactive (for templates/derived):
+//   keyboard.lastEvent  - KeyboardEvent | null
+//   keyboard.lastKey    - string
+//
+// Imperative (for handling events):
+//   keyboard.on(handler)           - subscribe to all keys
+//   keyboard.onKey('Enter', fn)    - specific key callback
+//   keyboard.onFocused(index, fn)  - when component focused
 // ============================================================================
 
+import { createSubscriber } from 'svelte/reactivity'
 import { getEngine, focus } from '../core/state/engine.svelte.ts'
 import { getDebugPanel } from '../debug/debug-panel.svelte.ts'
 
@@ -29,6 +38,27 @@ export interface KeyboardEvent {
 
 type KeyHandler = (event: KeyboardEvent) => void | boolean
 const listeners = new Set<KeyHandler>()
+
+// ============================================================================
+// REACTIVE STATE (via createSubscriber)
+// ============================================================================
+
+// Internal state for last event
+let _lastEvent: KeyboardEvent | null = null
+
+// Reactive update function - called when key is pressed
+let reactiveUpdate: (() => void) | null = null
+
+// Create subscriber for reactive access
+const subscribe = createSubscriber((update) => {
+  // Store the update function so we can call it when keys are pressed
+  reactiveUpdate = update
+
+  // Cleanup when no effects are reading anymore
+  return () => {
+    reactiveUpdate = null
+  }
+})
 
 // Key code mapping for special keys
 const KEY_MAP: Record<string, string> = {
@@ -90,6 +120,14 @@ function initialize() {
       metaKey: key.includes('Meta+'),
     }
 
+    // Update reactive state
+    _lastEvent = event
+
+    // Notify reactive subscribers (effects/templates reading lastEvent/lastKey)
+    if (reactiveUpdate) {
+      reactiveUpdate()
+    }
+
     // Update debug panel
     debug().updateKey(key, raw)
 
@@ -116,6 +154,8 @@ function initialize() {
 function cleanup() {
   initialized = false
   listeners.clear()
+  _lastEvent = null
+  reactiveUpdate = null
   if (process.stdin.isTTY && process.stdin.setRawMode) {
     process.stdin.setRawMode(false)
     process.stdin.pause()
@@ -124,8 +164,34 @@ function cleanup() {
 }
 
 // ============================================================================
-// PUBLIC API - Simple and clean!
+// PUBLIC API
 // ============================================================================
+
+// ----------------------------------------------------------------------------
+// REACTIVE GETTERS (for templates and derived values)
+// ----------------------------------------------------------------------------
+
+/**
+ * Get the last keyboard event (reactive)
+ * Reading this in an effect or template will re-run when a key is pressed
+ */
+function getLastEvent(): KeyboardEvent | null {
+  subscribe() // Make this reactive
+  return _lastEvent
+}
+
+/**
+ * Get the last key pressed (reactive)
+ * Shorthand for keyboard.lastEvent?.key
+ */
+function getLastKey(): string {
+  subscribe() // Make this reactive
+  return _lastEvent?.key ?? ''
+}
+
+// ----------------------------------------------------------------------------
+// IMPERATIVE API (for event handling)
+// ----------------------------------------------------------------------------
 
 /**
  * Subscribe to keyboard events
@@ -202,12 +268,25 @@ export function clearFocus() {
 // ============================================================================
 
 export const keyboard = {
+  // Reactive getters (for templates/derived)
+  get lastEvent() {
+    return getLastEvent()
+  },
+  get lastKey() {
+    return getLastKey()
+  },
+
+  // Imperative API (for event handling)
   on,
   onKey,
   onFocused,
+
+  // Focus management
   focusNext,
   focusPrevious,
   clearFocus,
+
+  // Lifecycle
   initialize,
   cleanup,
 }

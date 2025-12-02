@@ -21,6 +21,11 @@ async function createPackage() {
   // Copy entire src directory as-is using Bun shell
   console.log('  ↳ Copying source files...')
   await $`cp -r src ${join(PACKAGE_DIR, 'src')}`
+
+  // Remove test files from package (not needed for distribution)
+  console.log('  ↳ Removing test files...')
+  await $`rm -rf ${join(PACKAGE_DIR, 'src/test')}`
+  await $`rm -f ${join(PACKAGE_DIR, 'src/main.ts')}`
   
   // Compile just the index.ts to index.js for compatibility
   console.log('  ↳ Compiling index.ts...')
@@ -52,11 +57,13 @@ async function createPackage() {
     author: '',
     license: 'MIT',
     dependencies: {
-      '@happy-dom/global-registrator': '^15.11.7',
-      'svelte': '^5.14.4'
+      '@happy-dom/global-registrator': '^18.0.1',
+      'svelte': '^5.38.7',
+      'yoga-layout': '^3.2.1'
     },
     peerDependencies: {
-      'svelte': '^5.0.0'
+      'svelte': '^5.0.0',
+      'yoga-layout': '^3.0.0'
     },
     engines: {
       node: '>=18.0.0'
@@ -72,45 +79,89 @@ async function createPackage() {
   console.log('  ↳ Creating README.md...')
   const readme = `# SvelTUI
 
-Terminal UI framework powered by Svelte's reactivity system.
+Terminal UI framework powered by Svelte 5's reactivity system and Yoga layout engine.
+
+## Features
+
+- 🎨 **Svelte 5 Runes** - Modern reactivity with \`$state\`, \`$effect\`, \`$derived\`
+- 📐 **Flexbox Layout** - Full CSS flexbox support via Yoga layout engine
+- ⌨️ **Keyboard & Mouse** - Complete input handling with focus management
+- 🎯 **Reactive Rendering** - Only re-renders what changed, when it changes
+- 🎭 **Theming** - Built-in themes (default, dracula, nord, monokai, solarized)
+- 🖼️ **10 Border Styles** - single, double, rounded, heavy, dashed, and more
 
 ## Installation
 
 \`\`\`bash
-npm install sveltui
+bun add sveltui
 \`\`\`
 
-## Usage
+## Quick Start
 
-\`\`\`javascript
+Create \`main.ts\`:
+
+\`\`\`typescript
 import { mount } from 'sveltui'
 import { mount as mountComponent } from 'svelte'
 import App from './App.svelte'
 
 mount(() => {
-  const app = mountComponent(App, {
-    target: document.body
-  })
-})
+  mountComponent(App, { target: document.body })
+}, { fullscreen: true })
 \`\`\`
 
-In your Svelte components:
+Create \`App.svelte\`:
 
 \`\`\`svelte
 <script>
-  import Box from 'sveltui/src/components/Box.svelte'
-  import Text from 'sveltui/src/components/Text.svelte'
-  import Input from 'sveltui/src/components/Input.svelte'
+  import { Box, Text, Input } from 'sveltui'
+
+  let name = $state('')
 </script>
 
-<Box x={2} y={1} width={50} height={10} border="rounded">
-  <Text x={2} y={1} text="Hello, SvelTUI!" />
+<Box border="rounded" borderColor={0x06} padding={1}>
+  <Text text="Welcome to SvelTUI!" color={0x0a} bold />
+
+  <Input bind:value={name} placeholder="Enter your name..." />
+
+  {#if name}
+    <Text text={\`Hello, \${name}!\`} color={0x0b} />
+  {/if}
 </Box>
+\`\`\`
+
+## Components
+
+- **Box** - Flexbox container with borders, padding, and background colors
+- **Text** - Styled text with colors, bold, italic, underline, etc.
+- **Input** - Text input with cursor, placeholder, and focus handling
+
+## Running Your App
+
+\`\`\`bash
+# Build (compiles Svelte + SvelTUI together)
+bun run build
+
+# Run
+bun --conditions browser dist/src/main.mjs
 \`\`\`
 
 ## Build Configuration
 
-Your build tool needs to compile Svelte files. The SvelTUI components will be compiled together with your application code.
+SvelTUI ships as source files that must be compiled together with your application.
+Use the \`sv-tui\` CLI to create a new project with the correct build setup:
+
+\`\`\`bash
+bunx sv-tui create my-app
+cd my-app
+bun install
+bun run build
+bun run start
+\`\`\`
+
+## License
+
+MIT
 `
 
   await Bun.write(join(PACKAGE_DIR, 'README.md'), readme)

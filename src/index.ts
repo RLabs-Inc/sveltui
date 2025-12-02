@@ -25,4 +25,3 @@ export { keyboard, type KeyboardEvent } from './input/keyboard.svelte.ts'
 // Components - export the actual Svelte components
 export { default as Text } from './components/Text.svelte'
 export { default as Box } from './components/Box.svelte'
-export { default as Input } from './components/Input.svelte'
