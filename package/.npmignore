@@ -1,0 +1,23 @@
+# Development files
+node_modules
+*.log
+.DS_Store
+.env
+
+# Source files (we ship compiled)
+*.ts
+!*.d.ts
+
+# Build artifacts
+dist/
+*.tsbuildinfo
+
+# Test files
+**/*.test.*
+**/*.spec.*
+__tests__/
+test/
+
+# Documentation source
+docs/
+examples/

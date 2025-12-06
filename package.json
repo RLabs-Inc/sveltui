@@ -27,6 +27,8 @@
     "build:verbose": "bun scripts/build.mjs --verbose",
     "demo": "bun run build && bun --conditions browser dist/src/main.mjs",
     "demo:counter": "bun run build && bun --conditions browser dist/examples/counter/main.mjs",
+    "package": "bun run build && bun scripts/package.mjs",
+    "create-app": "bun scripts/create-app.mjs",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
