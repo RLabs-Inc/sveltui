@@ -1,11 +1,12 @@
 {
   "name": "sveltui",
-  "module": "index.ts",
-  "type": "module",
   "version": "0.1.0",
+  "description": "Write Svelte applications for terminal with SvelTUI",
+  "main": "dist/src/index.cjs",
+  "module": "dist/src/index.mjs",
+  "type": "module",
   "author": "RLabs Inc.",
   "license": "MIT",
-  "description": "A true Svelte 5 renderer for terminal user interfaces",
   "repository": {
     "type": "git",
     "url": "https://github.com/rlabs/sveltui.git"
@@ -21,16 +22,13 @@
     "ink"
   ],
   "scripts": {
-    "build": "vite build",
-    "dev": "vite",
-    "preview": "vite preview",
-    "example": "bun --conditions browser examples/index.ts",
-    "compile": "node scripts/compile-svelte.mjs",
-    "compile:counter": "node scripts/compile-svelte.mjs examples/simple-counter/App.svelte",
+    "build": "bun scripts/build.mjs",
+    "build:watch": "bun scripts/build.mjs --watch",
+    "build:verbose": "bun scripts/build.mjs --verbose",
+    "demo": "bun run build && bun --conditions browser dist/src/main.mjs",
+    "demo:counter": "bun run build && bun --conditions browser dist/examples/counter/main.mjs",
     "test": "bun test",
-    "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "debug": "NODE_ENV=development DEBUG=true bun --inspect examples/index.ts"
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "6.1.0",

@@ -1,0 +1,14 @@
+{
+  "name": "sveltui-counter-demo",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "Simple counter demo for SvelTUI - Terminal UI with Svelte",
+  "scripts": {
+    "dev": "cd ../.. && bun run build && bun --conditions browser dist/examples/counter/main.mjs",
+    "demo": "bun run dev"
+  },
+  "dependencies": {
+    "sveltui": "file:../.."
+  }
+}
