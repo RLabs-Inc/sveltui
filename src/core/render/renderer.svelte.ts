@@ -37,10 +37,11 @@ import {
   hitGrid,
   getEngine,
 } from '../state/engine.svelte.ts'
-import { contentHeight } from '../layout/layout-simple.svelte.ts'
+import { contentHeight } from '../layout/layout.svelte.ts'
 import { getColorCode } from '../../utils/bun-color.ts'
 import * as ANSI from '../../utils/ansi-codes.ts'
 import { BORDERS as BORDER_STYLES } from '../../utils/borders.ts'
+import { writeStdout } from '../../utils/bun-output.ts'
 
 // ============================================================================
 // CELL STRUCTURE
@@ -145,45 +146,85 @@ function renderBorder(
 
   // Top and bottom borders
   for (let dx = 1; dx < width - 1; dx++) {
-    buffer.setCell(x + dx, y, {
-      char: String.fromCharCode(borderSet.horizontal),
-      fg: color,
-    }, clipRect)
-    buffer.setCell(x + dx, y + height - 1, {
-      char: String.fromCharCode(borderSet.horizontal),
-      fg: color,
-    }, clipRect)
+    buffer.setCell(
+      x + dx,
+      y,
+      {
+        char: String.fromCharCode(borderSet.horizontal),
+        fg: color,
+      },
+      clipRect
+    )
+    buffer.setCell(
+      x + dx,
+      y + height - 1,
+      {
+        char: String.fromCharCode(borderSet.horizontal),
+        fg: color,
+      },
+      clipRect
+    )
   }
 
   // Left and right borders
   for (let dy = 1; dy < height - 1; dy++) {
-    buffer.setCell(x, y + dy, {
-      char: String.fromCharCode(borderSet.vertical),
-      fg: color,
-    }, clipRect)
-    buffer.setCell(x + width - 1, y + dy, {
-      char: String.fromCharCode(borderSet.vertical),
-      fg: color,
-    }, clipRect)
+    buffer.setCell(
+      x,
+      y + dy,
+      {
+        char: String.fromCharCode(borderSet.vertical),
+        fg: color,
+      },
+      clipRect
+    )
+    buffer.setCell(
+      x + width - 1,
+      y + dy,
+      {
+        char: String.fromCharCode(borderSet.vertical),
+        fg: color,
+      },
+      clipRect
+    )
   }
 
   // Corners
-  buffer.setCell(x, y, {
-    char: String.fromCharCode(borderSet.topLeft),
-    fg: color,
-  }, clipRect)
-  buffer.setCell(x + width - 1, y, {
-    char: String.fromCharCode(borderSet.topRight),
-    fg: color,
-  }, clipRect)
-  buffer.setCell(x, y + height - 1, {
-    char: String.fromCharCode(borderSet.bottomLeft),
-    fg: color,
-  }, clipRect)
-  buffer.setCell(x + width - 1, y + height - 1, {
-    char: String.fromCharCode(borderSet.bottomRight),
-    fg: color,
-  }, clipRect)
+  buffer.setCell(
+    x,
+    y,
+    {
+      char: String.fromCharCode(borderSet.topLeft),
+      fg: color,
+    },
+    clipRect
+  )
+  buffer.setCell(
+    x + width - 1,
+    y,
+    {
+      char: String.fromCharCode(borderSet.topRight),
+      fg: color,
+    },
+    clipRect
+  )
+  buffer.setCell(
+    x,
+    y + height - 1,
+    {
+      char: String.fromCharCode(borderSet.bottomLeft),
+      fg: color,
+    },
+    clipRect
+  )
+  buffer.setCell(
+    x + width - 1,
+    y + height - 1,
+    {
+      char: String.fromCharCode(borderSet.bottomRight),
+      fg: color,
+    },
+    clipRect
+  )
 }
 
 // ============================================================================
@@ -202,11 +243,14 @@ function intersectClipRects(a: ClipRect, b: ClipRect): ClipRect | null {
     x,
     y,
     width: right - x,
-    height: bottom - y
+    height: bottom - y,
   }
 }
 
-function getContentClipRect(index: number, parentClip?: ClipRect): ClipRect | null {
+function getContentClipRect(
+  index: number,
+  parentClip?: ClipRect
+): ClipRect | null {
   const x = computedX[index] || 0
   const y = computedY[index] || 0
   const width = computedWidth[index] || 0
@@ -225,7 +269,7 @@ function getContentClipRect(index: number, parentClip?: ClipRect): ClipRect | nu
     x: contentX,
     y: contentY,
     width: contentWidth,
-    height: contentHeight
+    height: contentHeight,
   }
 
   // If there's a parent clip, intersect with it
@@ -240,7 +284,13 @@ function getContentClipRect(index: number, parentClip?: ClipRect): ClipRect | nu
 // COMPONENT RENDERING
 // ============================================================================
 
-function renderComponent(buffer: FrameBuffer, index: number, parentClip?: ClipRect, parentScrollY = 0, parentScrollX = 0) {
+function renderComponent(
+  buffer: FrameBuffer,
+  index: number,
+  parentClip?: ClipRect,
+  parentScrollY = 0,
+  parentScrollX = 0
+) {
   if (!visibility[index]) return
 
   // Apply parent's scroll offset to this component's position
@@ -248,7 +298,6 @@ function renderComponent(buffer: FrameBuffer, index: number, parentClip?: ClipRe
   const y = (computedY[index] || 0) - parentScrollY
   const width = computedWidth[index] || 0
   const height = computedHeight[index] || 0
-
 
   if (width <= 0 || height <= 0) return
 
@@ -268,8 +317,14 @@ function renderComponent(buffer: FrameBuffer, index: number, parentClip?: ClipRe
   const borderStyle = borderStyles[index] || 0
 
   // Get scroll offset for THIS component (only if it's a scrollable BOX)
-  const yOffset = (scrollable[index] && componentType[index] === ComponentType.BOX) ? scrollOffset[index] || 0 : 0
-  const xOffset = (scrollable[index] && componentType[index] === ComponentType.BOX) ? scrollOffsetX[index] || 0 : 0
+  const yOffset =
+    scrollable[index] && componentType[index] === ComponentType.BOX
+      ? scrollOffset[index] || 0
+      : 0
+  const xOffset =
+    scrollable[index] && componentType[index] === ComponentType.BOX
+      ? scrollOffsetX[index] || 0
+      : 0
 
   // Fill background (respecting parent clip)
   if (bgColor !== undefined) {
@@ -294,10 +349,15 @@ function renderComponent(buffer: FrameBuffer, index: number, parentClip?: ClipRe
     const borderSet = getBorderSet(topStyle)
     if (borderSet) {
       for (let dx = 1; dx < width - 1; dx++) {
-        buffer.setCell(x + dx, y, {
-          char: String.fromCharCode(borderSet.horizontal),
-          fg: borderColor,
-        }, parentClip)
+        buffer.setCell(
+          x + dx,
+          y,
+          {
+            char: String.fromCharCode(borderSet.horizontal),
+            fg: borderColor,
+          },
+          parentClip
+        )
       }
     }
   }
@@ -306,10 +366,15 @@ function renderComponent(buffer: FrameBuffer, index: number, parentClip?: ClipRe
     const borderSet = getBorderSet(bottomStyle)
     if (borderSet) {
       for (let dx = 1; dx < width - 1; dx++) {
-        buffer.setCell(x + dx, y + height - 1, {
-          char: String.fromCharCode(borderSet.horizontal),
-          fg: borderColor,
-        }, parentClip)
+        buffer.setCell(
+          x + dx,
+          y + height - 1,
+          {
+            char: String.fromCharCode(borderSet.horizontal),
+            fg: borderColor,
+          },
+          parentClip
+        )
       }
     }
   }
@@ -318,10 +383,15 @@ function renderComponent(buffer: FrameBuffer, index: number, parentClip?: ClipRe
     const borderSet = getBorderSet(leftStyle)
     if (borderSet) {
       for (let dy = 1; dy < height - 1; dy++) {
-        buffer.setCell(x, y + dy, {
-          char: String.fromCharCode(borderSet.vertical),
-          fg: borderColor,
-        }, parentClip)
+        buffer.setCell(
+          x,
+          y + dy,
+          {
+            char: String.fromCharCode(borderSet.vertical),
+            fg: borderColor,
+          },
+          parentClip
+        )
       }
     }
   }
@@ -330,10 +400,15 @@ function renderComponent(buffer: FrameBuffer, index: number, parentClip?: ClipRe
     const borderSet = getBorderSet(rightStyle)
     if (borderSet) {
       for (let dy = 1; dy < height - 1; dy++) {
-        buffer.setCell(x + width - 1, y + dy, {
-          char: String.fromCharCode(borderSet.vertical),
-          fg: borderColor,
-        }, parentClip)
+        buffer.setCell(
+          x + width - 1,
+          y + dy,
+          {
+            char: String.fromCharCode(borderSet.vertical),
+            fg: borderColor,
+          },
+          parentClip
+        )
       }
     }
   }
@@ -343,10 +418,15 @@ function renderComponent(buffer: FrameBuffer, index: number, parentClip?: ClipRe
     const cornerStyle = topStyle || leftStyle
     const borderSet = getBorderSet(cornerStyle)
     if (borderSet) {
-      buffer.setCell(x, y, {
-        char: String.fromCharCode(borderSet.topLeft),
-        fg: borderColor,
-      }, parentClip)
+      buffer.setCell(
+        x,
+        y,
+        {
+          char: String.fromCharCode(borderSet.topLeft),
+          fg: borderColor,
+        },
+        parentClip
+      )
     }
   }
 
@@ -354,10 +434,15 @@ function renderComponent(buffer: FrameBuffer, index: number, parentClip?: ClipRe
     const cornerStyle = topStyle || rightStyle
     const borderSet = getBorderSet(cornerStyle)
     if (borderSet) {
-      buffer.setCell(x + width - 1, y, {
-        char: String.fromCharCode(borderSet.topRight),
-        fg: borderColor,
-      }, parentClip)
+      buffer.setCell(
+        x + width - 1,
+        y,
+        {
+          char: String.fromCharCode(borderSet.topRight),
+          fg: borderColor,
+        },
+        parentClip
+      )
     }
   }
 
@@ -365,10 +450,15 @@ function renderComponent(buffer: FrameBuffer, index: number, parentClip?: ClipRe
     const cornerStyle = bottomStyle || leftStyle
     const borderSet = getBorderSet(cornerStyle)
     if (borderSet) {
-      buffer.setCell(x, y + height - 1, {
-        char: String.fromCharCode(borderSet.bottomLeft),
-        fg: borderColor,
-      }, parentClip)
+      buffer.setCell(
+        x,
+        y + height - 1,
+        {
+          char: String.fromCharCode(borderSet.bottomLeft),
+          fg: borderColor,
+        },
+        parentClip
+      )
     }
   }
 
@@ -376,10 +466,15 @@ function renderComponent(buffer: FrameBuffer, index: number, parentClip?: ClipRe
     const cornerStyle = bottomStyle || rightStyle
     const borderSet = getBorderSet(cornerStyle)
     if (borderSet) {
-      buffer.setCell(x + width - 1, y + height - 1, {
-        char: String.fromCharCode(borderSet.bottomRight),
-        fg: borderColor,
-      }, parentClip)
+      buffer.setCell(
+        x + width - 1,
+        y + height - 1,
+        {
+          char: String.fromCharCode(borderSet.bottomRight),
+          fg: borderColor,
+        },
+        parentClip
+      )
     }
   }
 
@@ -389,9 +484,11 @@ function renderComponent(buffer: FrameBuffer, index: number, parentClip?: ClipRe
     x: x + (borderStyle > 0 ? 1 : 0),
     y: y + (borderStyle > 0 ? 1 : 0),
     width: width - (borderStyle > 0 ? 2 : 0),
-    height: height - (borderStyle > 0 ? 2 : 0)
+    height: height - (borderStyle > 0 ? 2 : 0),
   }
-  const contentClip = parentClip ? intersectClipRects(adjustedClipRect, parentClip) : adjustedClipRect as ClipRect
+  const contentClip = parentClip
+    ? intersectClipRects(adjustedClipRect, parentClip)
+    : (adjustedClipRect as ClipRect)
 
   // Render text content
   if (componentType[index] === ComponentType.TEXT) {
@@ -404,12 +501,17 @@ function renderComponent(buffer: FrameBuffer, index: number, parentClip?: ClipRe
     const contentHeight = borderStyle > 0 ? height - 2 : height
 
     // Text components don't scroll themselves - they're scrolled by their parent
-    for (let lineIdx = 0; lineIdx < lines.length && lineIdx < contentHeight; lineIdx++) {
+    for (
+      let lineIdx = 0;
+      lineIdx < lines.length && lineIdx < contentHeight;
+      lineIdx++
+    ) {
       const line = lines[lineIdx]
       const py = contentY + lineIdx
 
       // Skip lines outside the clip rect
-      if (py < contentClip.y || py >= contentClip.y + contentClip.height) continue
+      if (py < contentClip.y || py >= contentClip.y + contentClip.height)
+        continue
 
       const visibleLine = line
 
@@ -420,11 +522,16 @@ function renderComponent(buffer: FrameBuffer, index: number, parentClip?: ClipRe
         charIdx++
       ) {
         const cellX = contentX + charIdx
-        buffer.setCell(cellX, py, {
-          char: visibleLine[charIdx],
-          fg: fgColor,
-          style: textStyle,
-        }, contentClip)
+        buffer.setCell(
+          cellX,
+          py,
+          {
+            char: visibleLine[charIdx],
+            fg: fgColor,
+            style: textStyle,
+          },
+          contentClip
+        )
       }
     }
 
@@ -446,7 +553,13 @@ function renderComponent(buffer: FrameBuffer, index: number, parentClip?: ClipRe
     const childScrollX = parentScrollX + xOffset
 
     for (const childIndex of children) {
-      renderComponent(buffer, childIndex, contentClip, childScrollY, childScrollX)
+      renderComponent(
+        buffer,
+        childIndex,
+        contentClip,
+        childScrollY,
+        childScrollX
+      )
     }
   }
 }
@@ -496,7 +609,8 @@ function generateDiff(prev: FrameBuffer | null, next: FrameBuffer): string {
   const isFullscreen = terminalSize.fullscreen
 
   // Detect terminal resize - buffer dimensions changed
-  const sizeChanged = prev && (prev.width !== next.width || prev.height !== next.height)
+  const sizeChanged =
+    prev && (prev.width !== next.width || prev.height !== next.height)
 
   // In non-fullscreen mode, if size changed, we need to do full redraw
   // The cursor is already at our origin (restored before calling generateDiff)
@@ -599,7 +713,7 @@ let isFirstRender = true
 export function initializeRenderer() {
   // Save cursor position once for non-fullscreen mode
   if (!terminalSize.fullscreen) {
-    process.stdout.write(ANSI.SAVE_CURSOR)
+    writeStdout(ANSI.SAVE_CURSOR)
   }
 
   // Single effect that watches the derived frameBuffer
@@ -608,7 +722,7 @@ export function initializeRenderer() {
 
     // In non-fullscreen mode, restore to saved position before each frame
     if (!terminalSize.fullscreen && !isFirstRender) {
-      process.stdout.write(ANSI.RESTORE_CURSOR)
+      writeStdout(ANSI.RESTORE_CURSOR)
     }
 
     // Generate differential output
@@ -616,7 +730,7 @@ export function initializeRenderer() {
 
     // Output if there are changes
     if (diff) {
-      process.stdout.write(diff)
+      writeStdout(diff)
     }
 
     // Save for next diff
@@ -626,9 +740,9 @@ export function initializeRenderer() {
 
   // Return cleanup
   return () => {
-    process.stdout.write(ANSI.RESET)
+    writeStdout(ANSI.RESET)
     if (!terminalSize.fullscreen) {
-      process.stdout.write(ANSI.RESTORE_CURSOR)
+      writeStdout(ANSI.RESTORE_CURSOR)
     }
     previousBuffer = null
     isFirstRender = true

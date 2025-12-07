@@ -11,7 +11,7 @@ import {
 } from '../core/state/engine.svelte.ts'
 import { getTheme } from '../theme/theme.svelte.ts'
 import { parseColor, type ColorInput } from '../utils/bun-color.ts'
-import { useSimpleComponent, type SimpleComponentProps } from './base-component-simple.svelte.ts'
+import { useComponent, type ComponentProps } from './base-component.svelte.ts'
 import { keyboard } from '../input/keyboard.svelte.ts'
 import { createSubscriber } from 'svelte/reactivity'
 import type { Snippet } from 'svelte'
@@ -19,7 +19,7 @@ import type { Snippet } from 'svelte'
 const theme = getTheme()
 
 // Props - extends simplified component props
-interface BoxProps extends SimpleComponentProps {
+interface BoxProps extends ComponentProps {
   children?: Snippet
   // Visual
   border?: 'none' | 'single' | 'double' | 'rounded' | 'bold' | 'dashed' | 'dotted'
@@ -39,12 +39,12 @@ let {
   variant,
   // Focus state
   focused = $bindable(false),
-  // All other props from SimpleComponentProps (includes onfocus, onblur)
+  // All other props from ComponentProps (includes onfocus, onblur)
   ...baseProps
 }: BoxProps = $props()
 
 // Create base component
-const component = useSimpleComponent(ComponentType.BOX, baseProps, true) // Can have children
+const component = useComponent(ComponentType.BOX, baseProps, true) // Can have children
 const index = component.getIndex()
 
 // Update visual properties when they change

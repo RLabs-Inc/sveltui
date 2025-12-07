@@ -3,9 +3,6 @@
 import { mount } from './index.ts'
 import { mount as mountComponent } from 'svelte'
 
-import ComprehensiveLayoutDemo from './test/ComprehensiveLayoutDemo.svelte'
-import FocusScrollDemo from './test/FocusScrollDemo.svelte'
-import ComplexScrollDemo from './test/ComplexScrollDemo.svelte'
 import ResizeDemo from './test/ResizeDemo.svelte'
 
 mount(

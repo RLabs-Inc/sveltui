@@ -4,10 +4,11 @@
 // ============================================================================
 
 import { terminalSize, setTerminalSize } from './core/state/engine.svelte.ts'
-import { initializeSimpleLayout } from './core/layout/layout-simple.svelte.ts'
+import { initializeLayout } from './core/layout/layout.svelte.ts'
 import { initializeRenderer } from './core/render/renderer.svelte.ts'
 import { keyboard } from './input/keyboard.svelte.ts'
 import * as ANSI from './utils/ansi-codes.ts'
+import { writeStdout } from './utils/bun-output.ts'
 
 export type MountOptions = {
   fullscreen?: boolean
@@ -27,14 +28,14 @@ export function mount(rootComponent: any, options: MountOptions = {}) {
 
   // Enter fullscreen if requested
   if (options.fullscreen) {
-    process.stdout.write(ANSI.ENTER_ALT_SCREEN)
-    process.stdout.write(ANSI.CLEAR_SCREEN)
+    writeStdout(ANSI.ENTER_ALT_SCREEN)
+    writeStdout(ANSI.CLEAR_SCREEN)
   }
 
   // Hide cursor during rendering
-  process.stdout.write(ANSI.HIDE_CURSOR)
+  writeStdout(ANSI.HIDE_CURSOR)
 
-  process.stdout.write(ANSI.ENABLE_MOUSE)
+  writeStdout(ANSI.ENABLE_MOUSE)
 
   // Set up keyboard - using the existing keyboard module
   keyboard.initialize()
@@ -47,13 +48,13 @@ export function mount(rootComponent: any, options: MountOptions = {}) {
   const handleError = (error: Error) => {
     // Exit fullscreen mode first
     if (options?.fullscreen) {
-      process.stdout.write(ANSI.EXIT_ALT_SCREEN)
+      writeStdout(ANSI.EXIT_ALT_SCREEN)
     }
     // Show cursor
-    process.stdout.write(ANSI.SHOW_CURSOR)
-    process.stdout.write(ANSI.CLEAR_SCREEN)
-    process.stdout.write(ANSI.DISABLE_MOUSE)
-    process.stdout.write(ANSI.RESET)
+    writeStdout(ANSI.SHOW_CURSOR)
+    writeStdout(ANSI.CLEAR_SCREEN)
+    writeStdout(ANSI.DISABLE_MOUSE)
+    writeStdout(ANSI.RESET)
 
     // Clear screen for clean error display
     console.clear()
@@ -96,7 +97,7 @@ export function mount(rootComponent: any, options: MountOptions = {}) {
   // Initialize systems inside effect root
   const effectCleanup = $effect.root(() => {
     // Initialize simplified layout system (calculates positions)
-    const layoutCleanup = initializeSimpleLayout()
+    const layoutCleanup = initializeLayout()
 
     // Initialize our new optimized renderer
     const rendererCleanup = initializeRenderer()
@@ -128,12 +129,12 @@ export function mount(rootComponent: any, options: MountOptions = {}) {
   const cleanup = () => {
     effectCleanup()
     keyboard.cleanup()
-    process.stdout.write(ANSI.DISABLE_MOUSE)
+    writeStdout(ANSI.DISABLE_MOUSE)
     if (options.fullscreen) {
-      process.stdout.write(ANSI.EXIT_ALT_SCREEN)
+      writeStdout(ANSI.EXIT_ALT_SCREEN)
     }
-    process.stdout.write(ANSI.SHOW_CURSOR)
-    process.stdout.write(ANSI.RESET)
+    writeStdout(ANSI.SHOW_CURSOR)
+    writeStdout(ANSI.RESET)
   }
 
   // Handle exit

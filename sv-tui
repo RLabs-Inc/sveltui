@@ -1,104 +1,346 @@
 #!/usr/bin/env bun
 /**
  * SvelTUI CLI
- * Create new SvelTUI projects
+ * Create beautiful terminal applications with Svelte 5
  */
 
 import { $ } from 'bun'
 import { join } from 'path'
+import { existsSync } from 'fs'
 
-const args = process.argv.slice(2)
-const command = args[0]
-const projectName = args[1]
+// ============================================================================
+// ANSI UTILITIES - Showcase what SvelTUI can do!
+// ============================================================================
 
-if (!command || command !== 'create' || !projectName) {
-  console.log(`
-SvelTUI CLI
+// Use standard 16-color palette - respects user's terminal theme
+const c = {
+  reset: '\x1b[0m',
+  bold: '\x1b[1m',
+  dim: '\x1b[2m',
 
-Usage:
-  sveltui create <project-name>
+  // Standard colors (0-7) - adapt to terminal theme
+  black: '\x1b[30m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  white: '\x1b[37m',
 
-Example:
-  sveltui create my-app
-`)
-  process.exit(1)
+  // Bright colors (8-15) - adapt to terminal theme
+  gray: '\x1b[90m',        // bright black
+  brightRed: '\x1b[91m',
+  brightGreen: '\x1b[92m',
+  brightYellow: '\x1b[93m',
+  brightBlue: '\x1b[94m',
+  brightMagenta: '\x1b[95m',
+  brightCyan: '\x1b[96m',
+  brightWhite: '\x1b[97m',
 }
 
-console.log(`\n🚀 Creating SvelTUI project: ${projectName}\n`)
+// Box drawing characters
+const box = {
+  topLeft: '╭',
+  topRight: '╮',
+  bottomLeft: '╰',
+  bottomRight: '╯',
+  horizontal: '─',
+  vertical: '│',
+}
 
-// Create project directory
-await $`mkdir -p ${projectName}/src`
+function printBox(lines, color = c.cyan) {
+  const maxLen = Math.max(...lines.map(l => stripAnsi(l).length))
+  const width = maxLen + 4
 
-// Create package.json
-const packageJson = {
-  name: projectName,
-  type: "module",
-  scripts: {
-    build: "./sveltui-build",
-    start: "bun --conditions browser dist/src/main.mjs"
+  console.log(color + box.topLeft + box.horizontal.repeat(width - 2) + box.topRight + c.reset)
+  for (const line of lines) {
+    const stripped = stripAnsi(line)
+    const padding = ' '.repeat(maxLen - stripped.length)
+    console.log(color + box.vertical + c.reset + ' ' + line + padding + ' ' + color + box.vertical + c.reset)
+  }
+  console.log(color + box.bottomLeft + box.horizontal.repeat(width - 2) + box.bottomRight + c.reset)
+}
+
+function stripAnsi(str) {
+  return str.replace(/\x1b\[[0-9;]*m/g, '')
+}
+
+function printStep(emoji, text) {
+  console.log(`  ${emoji} ${c.gray}${text}${c.reset}`)
+}
+
+function printSuccess(text) {
+  console.log(`  ${c.green}✓${c.reset} ${text}`)
+}
+
+// ============================================================================
+// TEMPLATES
+// ============================================================================
+
+const TEMPLATES = {
+  minimal: {
+    name: 'Minimal',
+    description: 'Clean starting point - just the essentials',
+    app: `<script>
+  import { Box, Text } from 'sveltui'
+</script>
+
+<Box width="100%" height="100%" padding={2}>
+  <Text text="Hello, SvelTUI!" color={0x00ff88} bold />
+</Box>
+`
   },
-  dependencies: {
-    // TODO: Once published to npm, replace with: "sveltui": "^0.1.0"
-    sveltui: "link:sveltui", // Using local package for now
-    svelte: "^5.38.7",
-    "@happy-dom/global-registrator": "^18.0.1",
-    "yoga-layout": "^3.2.1"
+
+  counter: {
+    name: 'Counter',
+    description: 'Interactive demo with keyboard input and reactivity',
+    app: `<script>
+  import { Box, Text, keyboard } from 'sveltui'
+  import { onDestroy } from 'svelte'
+
+  let count = $state(0)
+
+  // Keyboard handlers
+  const unsub1 = keyboard.onKey('Space', () => count++)
+  const unsub2 = keyboard.onKey('r', () => count = 0)
+  const unsub3 = keyboard.onKey('ArrowUp', () => count++)
+  const unsub4 = keyboard.onKey('ArrowDown', () => count = Math.max(0, count - 1))
+
+  onDestroy(() => {
+    unsub1(); unsub2(); unsub3(); unsub4()
+  })
+</script>
+
+<Box
+  width="100%"
+  height="100%"
+  flexDirection="column"
+  alignItems="center"
+  justifyContent="center"
+  gap={1}
+>
+  <Box border="rounded" borderColor={0x6366f1} padding={2} paddingX={4}>
+    <Text text="SvelTUI Counter" color={0x6366f1} bold />
+  </Box>
+
+  <Box
+    border="single"
+    borderColor={0x22c55e}
+    padding={2}
+    paddingX={6}
+    marginY={1}
+  >
+    <Text text={\`Count: \${count}\`} color={0x22c55e} bold />
+  </Box>
+
+  <Box flexDirection="column" alignItems="center" gap={1}>
+    <Text text="Controls:" color={0xfbbf24} />
+    <Text text="Space or ↑  Increment" color={0x94a3b8} />
+    <Text text="↓           Decrement" color={0x94a3b8} />
+    <Text text="R           Reset" color={0x94a3b8} />
+  </Box>
+
+  <Box position="absolute" bottom={1} left={2}>
+    <Text text="Press Ctrl+C to exit" color={0x64748b} dim />
+  </Box>
+</Box>
+`
+  },
+
+  dashboard: {
+    name: 'Dashboard',
+    description: 'Full showcase - layout, scrolling, themes, and more',
+    app: `<script>
+  import { Box, Text, keyboard } from 'sveltui'
+  import { onDestroy } from 'svelte'
+
+  // Live clock
+  let time = $state(new Date().toLocaleTimeString())
+  const timer = setInterval(() => {
+    time = new Date().toLocaleTimeString()
+  }, 1000)
+
+  // Activity log
+  let logs = $state([
+    { time: '12:00:01', msg: 'System initialized', type: 'info' },
+    { time: '12:00:02', msg: 'Connected to server', type: 'success' },
+    { time: '12:00:03', msg: 'Loading dashboard...', type: 'info' },
+  ])
+
+  // Stats
+  let stats = $state({
+    cpu: 42,
+    memory: 68,
+    requests: 1247,
+  })
+
+  // Simulate activity
+  const activity = setInterval(() => {
+    stats.cpu = Math.min(100, Math.max(10, stats.cpu + (Math.random() - 0.5) * 20))
+    stats.memory = Math.min(100, Math.max(20, stats.memory + (Math.random() - 0.5) * 10))
+    stats.requests += Math.floor(Math.random() * 10)
+
+    if (Math.random() > 0.7) {
+      const types = ['info', 'success', 'warning']
+      const messages = ['Request processed', 'Cache updated', 'User connected', 'Data synced']
+      logs = [...logs.slice(-4), {
+        time: new Date().toLocaleTimeString(),
+        msg: messages[Math.floor(Math.random() * messages.length)],
+        type: types[Math.floor(Math.random() * types.length)]
+      }]
+    }
+  }, 2000)
+
+  onDestroy(() => {
+    clearInterval(timer)
+    clearInterval(activity)
+  })
+
+  function getColor(type) {
+    return { info: 0x60a5fa, success: 0x4ade80, warning: 0xfbbf24 }[type] || 0x94a3b8
+  }
+
+  function getBar(value, width = 20) {
+    const filled = Math.round((value / 100) * width)
+    return '█'.repeat(filled) + '░'.repeat(width - filled)
+  }
+</script>
+
+<Box width="100%" height="100%" flexDirection="column" padding={1} gap={1}>
+  <!-- Header -->
+  <Box
+    flexDirection="row"
+    justifyContent="space-between"
+    border="rounded"
+    borderColor={0x6366f1}
+    padding={1}
+  >
+    <Text text="◆ SvelTUI Dashboard" color={0x6366f1} bold />
+    <Text text={time} color={0x94a3b8} />
+  </Box>
+
+  <!-- Main content area -->
+  <Box flexDirection="row" flexGrow={1} gap={1}>
+    <!-- Left panel: Stats -->
+    <Box
+      width="35%"
+      flexDirection="column"
+      border="single"
+      borderColor={0x3b82f6}
+      padding={1}
+      gap={1}
+    >
+      <Text text="System Stats" color={0x3b82f6} bold />
+
+      <Box flexDirection="column">
+        <Text text={\`CPU: \${Math.round(stats.cpu)}%\`} color={0x22c55e} />
+        <Text text={getBar(stats.cpu)} color={stats.cpu > 80 ? 0xef4444 : 0x22c55e} />
+      </Box>
+
+      <Box flexDirection="column">
+        <Text text={\`Memory: \${Math.round(stats.memory)}%\`} color={0x60a5fa} />
+        <Text text={getBar(stats.memory)} color={stats.memory > 80 ? 0xef4444 : 0x60a5fa} />
+      </Box>
+
+      <Box flexDirection="column" marginTop={1}>
+        <Text text="Requests" color={0x94a3b8} />
+        <Text text={stats.requests.toLocaleString()} color={0xfbbf24} bold />
+      </Box>
+    </Box>
+
+    <!-- Right panel: Activity Log -->
+    <Box
+      flexGrow={1}
+      flexDirection="column"
+      border="single"
+      borderColor={0x8b5cf6}
+      padding={1}
+    >
+      <Text text="Activity Log" color={0x8b5cf6} bold />
+
+      <Box
+        flexDirection="column"
+        flexGrow={1}
+        overflow="scroll"
+        focusable
+        tabIndex={1}
+        marginTop={1}
+      >
+        {#each logs as log}
+          <Box flexDirection="row" gap={1}>
+            <Text text={log.time} color={0x64748b} dim />
+            <Text text={log.msg} color={getColor(log.type)} />
+          </Box>
+        {/each}
+      </Box>
+    </Box>
+  </Box>
+
+  <!-- Footer -->
+  <Box
+    flexDirection="row"
+    justifyContent="space-between"
+    borderColor={0x475569}
+    padding={1}
+  >
+    <Text text="Tab: Navigate | ↑↓: Scroll | Ctrl+C: Exit" color={0x64748b} dim />
+    <Text text="SvelTUI v0.1.0" color={0x475569} />
+  </Box>
+</Box>
+`
   }
 }
 
-await Bun.write(
-  join(projectName, 'package.json'),
-  JSON.stringify(packageJson, null, 2)
-)
+// ============================================================================
+// GENERATED FILES
+// ============================================================================
 
-// Create main.ts
-const mainTs = `#!/usr/bin/env bun
+function getPackageJson(name, useLocal) {
+  const deps = {
+    svelte: '^5.38.7',
+    '@happy-dom/global-registrator': '^18.0.1',
+    'yoga-layout': '^3.2.1',
+  }
+
+  // For local development, sveltui is linked separately via `bun link sveltui`
+  // For npm users, we include the published package
+  if (!useLocal) {
+    deps.sveltui = '^0.1.0'
+  }
+
+  return {
+    name,
+    version: '0.1.0',
+    type: 'module',
+    scripts: {
+      dev: 'bun run build && bun run start',
+      build: './sveltui-build',
+      start: 'bun --conditions browser dist/src/main.mjs',
+    },
+    dependencies: deps,
+  }
+}
+
+const MAIN_TS = `#!/usr/bin/env bun
 import { mount } from 'sveltui'
 import { mount as mountComponent } from 'svelte'
 import App from './App.svelte'
 
 mount(() => {
-  const app = mountComponent(App, {
+  mountComponent(App, {
     target: document.body
   })
 }, { fullscreen: true })
 `
 
-await Bun.write(join(projectName, 'src/main.ts'), mainTs)
-
-// Create App.svelte
-const appSvelte = `<script>
-  import { Box, Text } from 'sveltui'
-
-  let counter = $state(0)
-</script>
-
-<Box x={2} y={2} width={40} height={8} border="rounded" borderColor={0x06}>
-  <Text x={2} y={1} text="Welcome to SvelTUI!" color={0x0a} />
-
-  <Text
-    x={2}
-    y={3}
-    text={\`Counter: \${counter}\`}
-    color={0x0b}
-  />
-
-  <Text
-    x={2}
-    y={5}
-    text="Press Ctrl+C to exit"
-    color={0x08}
-  />
-</Box>
-`
-
-await Bun.write(join(projectName, 'src/App.svelte'), appSvelte)
-
-// Create sveltui-build script
-const buildScript = `#!/usr/bin/env bun
+const BUILD_SCRIPT = `#!/usr/bin/env bun
 /**
- * Build script for SvelTUI applications
- * Compiles both the application and SvelTUI framework together.
+ * SvelTUI Build Script
+ * Compiles your application together with the SvelTUI framework.
+ *
+ * Why compile together? Svelte 5 requires all .svelte and .svelte.ts files
+ * to be compiled in a single pass for proper reactivity.
  */
 
 import * as svelte from 'svelte/compiler'
@@ -109,7 +351,8 @@ import { join, dirname } from 'path'
 const cwd = process.cwd()
 
 async function build() {
-  console.log('🔨 Building SvelTUI application...\\n')
+  const startTime = Date.now()
+  console.log('\\n🔨 Building SvelTUI application...\\n')
 
   // Clean dist
   await $\`rm -rf dist\`
@@ -118,7 +361,7 @@ async function build() {
   // Find all source files
   const files = []
 
-  // App source files (including .svelte.ts for reactive modules)
+  // App source files
   const appPatterns = ['src/**/*.svelte', 'src/**/*.svelte.ts', 'src/**/*.ts', 'src/**/*.js', 'src/**/*.mjs']
   for (const pattern of appPatterns) {
     const glob = new Glob(pattern)
@@ -127,58 +370,60 @@ async function build() {
     }
   }
 
-  // SvelTUI source files - compile framework together with app
+  // SvelTUI framework files - compile together with app
   const sveltUIPath = 'node_modules/sveltui/src'
   const sveltUIPatterns = ['**/*.svelte', '**/*.svelte.ts', '**/*.ts', '**/*.js']
   for (const pattern of sveltUIPatterns) {
     const glob = new Glob(pattern)
     for await (const file of glob.scan({ cwd: join(cwd, sveltUIPath) })) {
-      // Skip test files
       if (file.includes('test/')) continue
       files.push(join(sveltUIPath, file))
     }
   }
 
-  console.log(\`  Found \${files.length} files to compile\`)
+  console.log(\`  Found \${files.length} files to compile\\n\`)
+
+  let compiled = 0
+  const errors = []
 
   // Compile each file
   for (const file of files) {
-    const source = await Bun.file(file).text()
-    const outPath = join('dist', file)
+    try {
+      const source = await Bun.file(file).text()
+      const outPath = join('dist', file)
+      await $\`mkdir -p \${dirname(outPath)}\`
 
-    await $\`mkdir -p \${dirname(outPath)}\`
-
-    if (file.endsWith('.svelte')) {
-      // Compile Svelte component
-      const compiled = svelte.compile(source, {
-        filename: file,
-        generate: 'client',
-        css: 'injected',
-        runes: true,
-        compatibility: { componentApi: 5 }
-      })
-      await Bun.write(outPath + '.mjs', compiled.js.code)
-    } else if (file.endsWith('.svelte.ts')) {
-      // Compile Svelte TS module (reactive .svelte.ts files)
-      const transpiler = new Bun.Transpiler({ loader: 'ts' })
-      const jsCode = transpiler.transformSync(source)
-      const compiled = svelte.compileModule(jsCode, {
-        filename: file,
-        generate: 'client'
-      })
-      await Bun.write(outPath.replace('.svelte.ts', '.svelte.js'), compiled.js.code)
-    } else if (file.endsWith('.ts')) {
-      // Transpile regular TypeScript
-      const transpiler = new Bun.Transpiler({ loader: 'ts' })
-      const jsCode = transpiler.transformSync(source)
-      await Bun.write(outPath.replace('.ts', '.mjs'), jsCode)
-    } else {
-      // Copy JS files as-is
-      await Bun.write(outPath, source)
+      if (file.endsWith('.svelte')) {
+        const result = svelte.compile(source, {
+          filename: file,
+          generate: 'client',
+          css: 'injected',
+          runes: true,
+          compatibility: { componentApi: 5 }
+        })
+        await Bun.write(outPath + '.mjs', result.js.code)
+      } else if (file.endsWith('.svelte.ts')) {
+        const transpiler = new Bun.Transpiler({ loader: 'ts' })
+        const jsCode = transpiler.transformSync(source)
+        const result = svelte.compileModule(jsCode, {
+          filename: file,
+          generate: 'client'
+        })
+        await Bun.write(outPath.replace('.svelte.ts', '.svelte.js'), result.js.code)
+      } else if (file.endsWith('.ts')) {
+        const transpiler = new Bun.Transpiler({ loader: 'ts' })
+        const jsCode = transpiler.transformSync(source)
+        await Bun.write(outPath.replace('.ts', '.mjs'), jsCode)
+      } else {
+        await Bun.write(outPath, source)
+      }
+      compiled++
+    } catch (err) {
+      errors.push({ file, error: err.message })
     }
   }
 
-  // Fix imports in all compiled files
+  // Fix imports
   console.log('  Fixing import paths...')
   const distFiles = []
   const distGlob = new Glob('**/*.{mjs,js}')
@@ -189,13 +434,9 @@ async function build() {
   for (const file of distFiles) {
     const content = await Bun.file(file).text()
     const fixed = content
-      // Fix .svelte imports
       .replace(/from\\s+['"]([^'"]+)\\.svelte['"]/g, "from '$1.svelte.mjs'")
-      // Fix .svelte.ts imports
       .replace(/from\\s+['"]([^'"]+)\\.svelte\\.ts['"]/g, "from '$1.svelte.js'")
-      // Fix .ts imports (relative only)
       .replace(/from\\s+['"](\\.\\.?\\/[^'"]+)\\.ts['"]/g, "from '$1.mjs'")
-      // Fix bare sveltui imports
       .replace(/from\\s+["']sveltui["']/g, "from '../node_modules/sveltui/src/index.mjs'")
       .replace(/from\\s+["']sveltui\\/src\\//g, "from '../node_modules/sveltui/src/")
 
@@ -204,56 +445,274 @@ async function build() {
     }
   }
 
-  console.log('\\n✅ Build complete!')
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(2)
+
+  if (errors.length > 0) {
+    console.log('\\n⚠️  Build completed with errors:\\n')
+    for (const { file, error } of errors) {
+      console.log(\`  ✗ \${file}\`)
+      console.log(\`    \${error}\\n\`)
+    }
+  }
+
+  console.log(\`\\n✅ Build complete! (\${compiled} files in \${elapsed}s)\`)
   console.log('📁 Output: dist/')
-  console.log('\\nRun with: bun run start')
+  console.log('\\n▶  Run with: bun run start\\n')
 }
 
 await build()
 `
 
-await Bun.write(join(projectName, 'sveltui-build'), buildScript)
-await $`chmod +x ${projectName}/sveltui-build`
+const GITIGNORE = `# Dependencies
+node_modules/
 
-// Create README
-const readme = `# ${projectName}
+# Build output
+dist/
 
-A terminal UI application built with SvelTUI.
+# Bun
+bun.lockb
 
-## Development
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Debug
+*.log
+`
+
+function getReadme(name, template) {
+  return `# ${name}
+
+A terminal UI application built with [SvelTUI](https://github.com/user/sveltui).
+
+## Quick Start
 
 \`\`\`bash
 # Install dependencies
 bun install
 
-# Build the application
-bun run build
-
-# Run the application
-bun run start
-
-# Development mode (run from source)
+# Build and run
 bun run dev
+
+# Or separately:
+bun run build
+bun run start
+\`\`\`
+
+## Project Structure
+
+\`\`\`
+${name}/
+├── src/
+│   ├── main.ts      # Entry point
+│   └── App.svelte   # Main component
+├── sveltui-build    # Build script
+└── package.json
 \`\`\`
 
 ## Controls
 
-- **Tab**: Navigate between focusable elements
+- **Tab** / **Shift+Tab**: Navigate between focusable elements
+- **Arrow Keys**: Scroll content / interact with components
 - **Ctrl+C**: Exit the application
-- **Ctrl+P**: Toggle debug panel (when available)
+
+## Learn More
+
+- [SvelTUI Documentation](https://github.com/user/sveltui)
+- [Svelte 5 Docs](https://svelte.dev/docs)
 `
+}
 
-await Bun.write(join(projectName, 'README.md'), readme)
+// ============================================================================
+// CLI LOGIC
+// ============================================================================
 
-console.log(`✅ Project created successfully!
+async function promptTemplate() {
+  console.log(`\n${c.bold}Select a template:${c.reset}\n`)
 
-Next steps:
-  cd ${projectName}
-  bun install
-  
-  # If SvelTUI is not published yet, link the local package:
-  # bun link sveltui
-  
-  bun run build
-  bun run start
+  const entries = Object.entries(TEMPLATES)
+  entries.forEach(([key, tmpl], i) => {
+    console.log(`  ${c.cyan}${i + 1}.${c.reset} ${c.bold}${tmpl.name}${c.reset}`)
+    console.log(`     ${c.gray}${tmpl.description}${c.reset}\n`)
+  })
+
+  process.stdout.write(`${c.cyan}?${c.reset} Enter choice (1-${entries.length}): `)
+
+  for await (const line of console) {
+    const choice = parseInt(line.trim())
+    if (choice >= 1 && choice <= entries.length) {
+      return entries[choice - 1][0]
+    }
+    process.stdout.write(`${c.yellow}Please enter 1-${entries.length}: ${c.reset}`)
+  }
+
+  return 'minimal'
+}
+
+async function create(projectName, options) {
+  const useLocal = options.local
+
+  // Check if directory exists
+  if (existsSync(projectName)) {
+    console.log(`\n${c.red}Error:${c.reset} Directory "${projectName}" already exists.\n`)
+    process.exit(1)
+  }
+
+  // Template selection
+  const templateKey = options.template || await promptTemplate()
+  const template = TEMPLATES[templateKey]
+
+  if (!template) {
+    console.log(`\n${c.red}Error:${c.reset} Unknown template "${templateKey}".\n`)
+    console.log(`Available templates: ${Object.keys(TEMPLATES).join(', ')}\n`)
+    process.exit(1)
+  }
+
+  console.log()
+  printBox([
+    `${c.bold}${c.brightCyan}Creating ${projectName}${c.reset}`,
+    `${c.gray}Template: ${template.name}${c.reset}`,
+  ], c.cyan)
+  console.log()
+
+  // Create project structure
+  printStep('📁', 'Creating project structure...')
+  await $`mkdir -p ${projectName}/src`
+  printSuccess('Created directories')
+
+  // Write package.json
+  printStep('📦', 'Writing package.json...')
+  await Bun.write(
+    join(projectName, 'package.json'),
+    JSON.stringify(getPackageJson(projectName, useLocal), null, 2)
+  )
+  printSuccess('Created package.json')
+
+  // Write main.ts
+  printStep('🚀', 'Creating entry point...')
+  await Bun.write(join(projectName, 'src/main.ts'), MAIN_TS)
+  printSuccess('Created src/main.ts')
+
+  // Write App.svelte
+  printStep('🎨', 'Creating App component...')
+  await Bun.write(join(projectName, 'src/App.svelte'), template.app)
+  printSuccess(`Created src/App.svelte (${template.name} template)`)
+
+  // Write build script
+  printStep('🔧', 'Setting up build script...')
+  await Bun.write(join(projectName, 'sveltui-build'), BUILD_SCRIPT)
+  await $`chmod +x ${projectName}/sveltui-build`
+  printSuccess('Created sveltui-build')
+
+  // Write .gitignore
+  printStep('📝', 'Creating .gitignore...')
+  await Bun.write(join(projectName, '.gitignore'), GITIGNORE)
+  printSuccess('Created .gitignore')
+
+  // Write README
+  printStep('📖', 'Creating README...')
+  await Bun.write(join(projectName, 'README.md'), getReadme(projectName, template))
+  printSuccess('Created README.md')
+
+  // Success message
+  console.log()
+  printBox([
+    `${c.brightGreen}✓ Project created successfully!${c.reset}`,
+  ], c.green)
+
+  console.log(`
+${c.bold}Next steps:${c.reset}
+
+  ${c.cyan}cd${c.reset} ${projectName}
+  ${c.cyan}bun${c.reset} install${useLocal ? `\n  ${c.cyan}bun${c.reset} link sveltui  ${c.gray}# Link local SvelTUI${c.reset}` : ''}
+  ${c.cyan}bun run${c.reset} dev
+
+${c.gray}${box.horizontal.repeat(50)}${c.reset}
+
+${c.bold}Useful commands:${c.reset}
+
+  ${c.cyan}bun run dev${c.reset}     Build and run your app
+  ${c.cyan}bun run build${c.reset}   Build for production
+  ${c.cyan}bun run start${c.reset}   Run the built app
+
+${c.dim}Happy coding! ${c.reset}${c.brightMagenta}♥${c.reset}
 `)
+}
+
+function showHelp() {
+  console.log(`
+${c.bold}${c.brightCyan}SvelTUI CLI${c.reset} ${c.gray}v0.1.0${c.reset}
+
+${c.bold}Usage:${c.reset}
+  ${c.cyan}sv-tui${c.reset} create <project-name> [options]
+
+${c.bold}Options:${c.reset}
+  ${c.cyan}--template${c.reset} <name>   Use a specific template (minimal, counter, dashboard)
+  ${c.cyan}--local${c.reset}             Link to local sveltui-package (for development)
+  ${c.cyan}--help${c.reset}              Show this help message
+
+${c.bold}Examples:${c.reset}
+  ${c.gray}# Interactive template selection${c.reset}
+  ${c.cyan}sv-tui${c.reset} create my-app
+
+  ${c.gray}# Use specific template${c.reset}
+  ${c.cyan}sv-tui${c.reset} create my-app --template dashboard
+
+  ${c.gray}# Development mode (link local SvelTUI)${c.reset}
+  ${c.cyan}sv-tui${c.reset} create my-app --local
+
+${c.bold}Templates:${c.reset}
+  ${c.cyan}minimal${c.reset}     Clean starting point
+  ${c.cyan}counter${c.reset}     Keyboard interaction demo
+  ${c.cyan}dashboard${c.reset}   Full layout showcase
+`)
+}
+
+// ============================================================================
+// MAIN
+// ============================================================================
+
+const args = process.argv.slice(2)
+
+// Parse arguments
+const options = {
+  local: args.includes('--local'),
+  template: null,
+  help: args.includes('--help') || args.includes('-h'),
+}
+
+// Get template from args
+const templateIdx = args.indexOf('--template')
+if (templateIdx !== -1 && args[templateIdx + 1]) {
+  options.template = args[templateIdx + 1]
+}
+
+// Filter out flags to get command and project name
+const positional = args.filter(a => !a.startsWith('--') && a !== options.template)
+const command = positional[0]
+const projectName = positional[1]
+
+if (options.help || !command) {
+  showHelp()
+  process.exit(command ? 0 : 1)
+}
+
+if (command !== 'create') {
+  console.log(`\n${c.red}Error:${c.reset} Unknown command "${command}"\n`)
+  showHelp()
+  process.exit(1)
+}
+
+if (!projectName) {
+  console.log(`\n${c.red}Error:${c.reset} Please provide a project name\n`)
+  console.log(`${c.bold}Usage:${c.reset} sv-tui create <project-name>\n`)
+  process.exit(1)
+}
+
+await create(projectName, options)

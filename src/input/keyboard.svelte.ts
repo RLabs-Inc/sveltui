@@ -14,10 +14,8 @@
 
 import { createSubscriber } from 'svelte/reactivity'
 import { getEngine, focus } from '../core/state/engine.svelte.ts'
-import { getDebugPanel } from '../debug/debug-panel.svelte.ts'
 
 const engine = getEngine()
-const debug = getDebugPanel()
 
 // ============================================================================
 // KEYBOARD EVENT TYPE
@@ -128,19 +126,10 @@ function initialize() {
       reactiveUpdate()
     }
 
-    // Update debug panel
-    debug().updateKey(key, raw)
-
     // System-level handling (always happens)
     if (key === 'Ctrl+C') {
       cleanup()
       process.exit(0)
-    }
-
-    // Debug panel toggle
-    if (key === 'Ctrl+P') {
-      debug().toggle()
-      return
     }
 
     // Emit to all listeners

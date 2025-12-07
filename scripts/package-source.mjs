@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * Package SvelTUI as source files for distribution
- * 
+ *
  * This script packages the framework as source files that will be
  * compiled together with the user's application.
  */
@@ -26,17 +26,17 @@ async function createPackage() {
   console.log('  ↳ Removing test files...')
   await $`rm -rf ${join(PACKAGE_DIR, 'src/test')}`
   await $`rm -f ${join(PACKAGE_DIR, 'src/main.ts')}`
-  
+
   // Compile just the index.ts to index.js for compatibility
   console.log('  ↳ Compiling index.ts...')
   const indexTs = await Bun.file('src/index.ts').text()
-  
+
   // Use Bun's transpiler to convert TS to JS
   const transpiler = new Bun.Transpiler({
     loader: 'ts',
     target: 'browser',
   })
-  
+
   const indexJs = transpiler.transformSync(indexTs)
   await Bun.write(join(PACKAGE_DIR, 'src/index.js'), indexJs)
 
@@ -50,24 +50,24 @@ async function createPackage() {
     main: 'src/index.js',
     exports: {
       '.': './src/index.js',
-      './src/*': './src/*'
+      './src/*': './src/*',
     },
     files: ['src'],
     keywords: ['svelte', 'terminal', 'tui', 'cli', 'ui'],
-    author: '',
+    author: 'RLabs Inc.',
     license: 'MIT',
     dependencies: {
       '@happy-dom/global-registrator': '^18.0.1',
-      'svelte': '^5.38.7',
-      'yoga-layout': '^3.2.1'
+      svelte: '^5.38.7',
+      'yoga-layout': '^3.2.1',
     },
     peerDependencies: {
-      'svelte': '^5.0.0',
-      'yoga-layout': '^3.0.0'
+      svelte: '^5.0.0',
+      'yoga-layout': '^3.0.0',
     },
     engines: {
-      node: '>=18.0.0'
-    }
+      node: '>=18.0.0',
+    },
   }
 
   await Bun.write(

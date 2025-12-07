@@ -3,16 +3,17 @@ import {
   ComponentType,
   colors,
   textStyles,
-  texts
+  texts,
+  yogaNodes
 } from '../core/state/engine.svelte.ts'
 import { getTheme } from '../theme/theme.svelte.ts'
 import { parseColor, type ColorInput } from '../utils/bun-color.ts'
-import { useSimpleComponent, type SimpleComponentProps } from './base-component-simple.svelte.ts'
+import { useComponent, type ComponentProps } from './base-component.svelte.ts'
 
 const theme = getTheme()
 
 // Props - extends simplified component props
-interface TextProps extends SimpleComponentProps {
+interface TextProps extends ComponentProps {
   text: string
   color?: ColorInput
   backgroundColor?: ColorInput
@@ -38,17 +39,23 @@ let {
   muted = false,
   bright = false,
   variant,
-  // All other props from SimpleComponentProps
+  // All other props from ComponentProps
   ...baseProps
 }: TextProps = $props()
 
 // Create base component
-const component = useSimpleComponent(ComponentType.TEXT, baseProps, false) // No children
+const component = useComponent(ComponentType.TEXT, baseProps, false) // No children
 const index = component.getIndex()
 
-// Update text content
+// Update text content and mark Yoga node dirty for re-measurement
 $effect(() => {
   texts[index] = text
+
+  // Tell Yoga the content changed so it re-calls the measure function
+  const node = yogaNodes[index]
+  if (node) {
+    node.markDirty()
+  }
 })
 
 // Update visual properties

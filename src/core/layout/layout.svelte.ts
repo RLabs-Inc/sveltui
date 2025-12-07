@@ -1,12 +1,11 @@
 // ============================================================================
-// SVELTUI V3 - OPTIMIZED LAYOUT SYSTEM
-// Three-phase architecture: Initialize, Update, Calculate
+// SVELTUI - LAYOUT SYSTEM
+// Leverages Svelte's reactive arrays and bottom-up initialization
 // ============================================================================
 
 import {
   visibility,
   borderStyles,
-  childIndices,
   componentType,
   ComponentType,
   computedHeight,
@@ -22,271 +21,199 @@ import {
   wrappedLines,
   yogaNodes,
   maxScrollOffset,
-  maxScrollOffsetX,
-  focus,
   focusable,
 } from '../state/engine.svelte.ts'
-import {
-  getAbsolutePosition,
-  getComputedDimensions,
-  getChildIndices,
-  getParentIndex,
-} from './yoga-helpers.ts'
 import { Yoga } from './yoga-instance.ts'
-import { wrapText, measureText } from '../../utils/text-wrap.ts'
-import { applyYogaProps } from './yoga-props.ts'
-
-// Yoga is already configured globally in yoga-instance.ts
+import { applyTerminalProps, type TerminalLayoutProps } from './yoga-props.ts'
+import {
+  measureText as getTextWidth,
+  wrapText,
+} from '../../utils/bun-text.ts'
 
 // ============================================================================
-// PHASE 1: NODE INITIALIZATION - Called once when node is created
+// TEXT MEASUREMENT - Using Bun's native stringWidth for accurate Unicode support
 // ============================================================================
 
-export function initializeYogaNode(index: number, type: number) {
+function measureText(text: string): { width: number; height: number } {
+  const lines = text.split('\n')
+  return {
+    width: Math.max(...lines.map((line) => getTextWidth(line)), 1),
+    height: Math.max(lines.length, 1),
+  }
+}
+
+// ============================================================================
+// YOGA NODE SETUP
+// ============================================================================
+
+export function setupYogaNode(index: number) {
   const node = yogaNodes[index]
   if (!node) return
 
-  // Set measure function for TEXT components
+  const type = componentType[index]
+
+  // Text nodes get a measure function
   if (type === ComponentType.TEXT) {
-    // SIMPLE: Just return the natural text dimensions
     node.setMeasureFunc(
       (width: number, widthMode: any, height: number, heightMode: any) => {
         const text = texts[index] || ''
+        const { width: textWidth, height: textHeight } = measureText(text)
 
-        // Calculate natural dimensions
-        const lines = text.split('\n')
-        const naturalWidth = Math.max(...lines.map((l) => measureText(l)), 1)
-        const naturalHeight = Math.max(lines.length, 1)
-
-        // Return natural dimensions - let Yoga handle the rest
-        return {
-          width: naturalWidth,
-          height: naturalHeight,
+        // If constrained width, wrap text
+        if (width && width < textWidth) {
+          const wrapped = wrapText(text, Math.floor(width))
+          return {
+            width: Math.min(textWidth, width),
+            height: wrapped.length,
+          }
         }
+
+        return { width: textWidth, height: textHeight }
       }
     )
   }
 }
 
 // ============================================================================
-// PHASE 2: NODE PROPERTY UPDATE - Called when layout props change
+// LAYOUT CALCULATION
 // ============================================================================
 
-function updateYogaNodeProps(index: number) {
-  const node = yogaNodes[index]
-  if (!node) return
-
-  const props = layoutProps[index] || {}
-  const parentIdx = parentIndex[index]
-  const isRoot = parentIdx ? parentIdx < 0 : false
-
-  // Prepare context for smart defaults
-  const context = {
-    componentType: componentType[index],
-    parentProps:
-      parentIdx && (parentIdx >= 0 ? layoutProps[parentIdx] : undefined),
-    isRoot,
-  }
-
-  node.setAlwaysFormsContainingBlock(true /*alwaysFormsContainingBlock*/)
-  // Apply props with smart defaults using the comprehensive function
-  applyYogaProps(node, props, Yoga, context)
-
-  // Additional handling for borders based on borderStyles
-  if (!props.borderWidth && borderStyles[index] && borderStyles[index] > 0) {
-    // If component has a border style but no explicit borderWidth, set it to 1
-    node.setBorder(Yoga.EDGE_ALL, 1)
-  }
-}
-
-// ============================================================================
-// PHASE 3: LAYOUT CALCULATION - Reactive, reads state and triggers layout
-// ============================================================================
-
-function calculateAndUpdateLayout() {
-  // Phase 1: Update all node properties from layoutProps
-  for (let i = 0; i < registry.nextIndex; i++) {
-    if (!registry.allocatedIndices.has(i)) continue
-    updateYogaNodeProps(i)
-  }
-
-  // Phase 3: Calculate layout for all root nodes
-  for (let i = 0; i < registry.nextIndex; i++) {
-    if (!registry.allocatedIndices.has(i)) continue
-    const parentIdx = parentIndex[i]
-    if (parentIdx && parentIdx >= 0) continue // Skip non-root
-
-    const rootNode = yogaNodes[i]
-    if (!rootNode) continue
-
-    rootNode.calculateLayout(
-      terminalSize.width,
-      terminalSize.height,
-      Yoga.DIRECTION_LTR
-    )
-  }
-
-  // Phase 4: Write computed values to output arrays
-  let maxContentHeight = 0
-
+function calculateLayout() {
+  // Step 1: Apply all layout props to yoga nodes
   for (let i = 0; i < registry.nextIndex; i++) {
     if (!registry.allocatedIndices.has(i)) continue
 
     const node = yogaNodes[i]
     if (!node) continue
 
-    // Get all layout values at once - more efficient!
-    const layout = node.getComputedLayout()
+    const props = (layoutProps[i] as TerminalLayoutProps) || {}
+    applyTerminalProps(node, props, Yoga)
 
-    // Calculate absolute position using the fixed helper
-    const position = getAbsolutePosition(i)
-
-    // Write computed values (absolute positions in terminal)
-    computedX[i] = position.x
-    computedY[i] = position.y
-    computedWidth[i] = Math.round(layout.width)
-    computedHeight[i] = Math.round(layout.height)
-
-    // Debug output
-    if (i < 5) {
-      console.log(
-        `Component ${i}: pos(${position.x},${position.y}) size(${Math.round(
-          layout.width
-        )}x${Math.round(layout.height)})`
-      )
-    }
-
-    // Track max content height for root components
-    const parentIdx = parentIndex[i]
-    if (parentIdx && parentIdx < 0 && visibility[i]) {
-      const bottom = computedY[i]! + computedHeight[i]!
-      maxContentHeight = Math.max(maxContentHeight, bottom)
-    }
-
-    // Phase 5: Text wrapping and overflow detection
-    if (componentType[i] === ComponentType.TEXT) {
-      const text = texts[i] || ''
-
-      // Always use parent's content width for text wrapping
-      const parentIdx = parentIndex[i]
-      let wrapWidth = 80 // fallback
-
-      if (parentIdx !== undefined && parentIdx >= 0) {
-        const parentNode = yogaNodes[parentIdx]
-        if (parentNode) {
-          // Get parent's content width (excluding padding and borders)
-          const parentPaddingLeft = parentNode.getComputedPadding(
-            Yoga.EDGE_LEFT
-          )
-          const parentPaddingRight = parentNode.getComputedPadding(
-            Yoga.EDGE_RIGHT
-          )
-          const parentBorderLeft = parentNode.getComputedBorder(Yoga.EDGE_LEFT)
-          const parentBorderRight = parentNode.getComputedBorder(
-            Yoga.EDGE_RIGHT
-          )
-
-          wrapWidth =
-            parentNode.getComputedWidth() -
-            parentPaddingLeft -
-            parentPaddingRight -
-            parentBorderLeft -
-            parentBorderRight
-        }
-      }
-
-      // Wrap text to parent's available width
-      const wrapped = wrapText(text, Math.floor(Math.max(1, wrapWidth)))
-      wrappedLines[i] = wrapped
-
-      maxScrollOffset[i] = 0
-      maxScrollOffsetX[i] = 0
-    } else if (componentType[i] === ComponentType.BOX) {
-      // Box components: check if children overflow
-      wrappedLines[i] = []
-
-      const children = getChildIndices(i) // Use yoga helper
-      if (children.length > 0) {
-        let maxChildBottom = 0
-        let maxChildRight = 0
-
-        // Calculate the bounds of all children
-        for (const childIdx of children) {
-          if (!visibility[childIdx]) continue
-
-          const childNode = yogaNodes[childIdx]
-          if (childNode) {
-            const childBottom =
-              childNode.getComputedTop() + childNode.getComputedHeight()
-            const childRight =
-              childNode.getComputedLeft() + childNode.getComputedWidth()
-            maxChildBottom = Math.max(maxChildBottom, childBottom)
-            maxChildRight = Math.max(maxChildRight, childRight)
-          }
-        }
-
-        // Check if content overflows the box
-        const boxHeight = computedHeight[i]
-        const boxWidth = computedWidth[i]
-        const userProps = layoutProps[i]
-
-        // Auto-enable scrolling if content overflows and no explicit overflow set
-        if (boxHeight && maxChildBottom > boxHeight) {
-          maxScrollOffset[i] = Math.ceil(maxChildBottom - boxHeight)
-          // Auto-enable scrolling if overflow not explicitly set to 'hidden'
-          if (!userProps?.overflow || userProps.overflow === 'auto') {
-            scrollable[i] = true
-            focusable[i] = true
-          }
-        } else {
-          maxScrollOffset[i] = 0
-        }
-
-        if (boxWidth && maxChildRight > boxWidth) {
-          maxScrollOffsetX[i] = Math.ceil(maxChildRight - boxWidth)
-          // Auto-enable scrolling if overflow not explicitly set to 'hidden'
-          if (!userProps?.overflow || userProps.overflow === 'auto') {
-            scrollable[i] = true
-            focusable[i] = true
-          }
-        } else {
-          maxScrollOffsetX[i] = 0
-        }
-      } else {
-        // No children, no overflow
-        maxScrollOffset[i] = 0
-        maxScrollOffsetX[i] = 0
-      }
-    } else {
-      wrappedLines[i] = []
-      maxScrollOffset[i] = 0
-      maxScrollOffsetX[i] = 0
+    // Handle border from borderStyles
+    if (!props.borderWidth && borderStyles[i] && borderStyles[i]! > 0) {
+      node.setBorder(Yoga.EDGE_ALL, 1)
     }
   }
 
-  // Update content height
-  contentHeight.value = terminalSize.fullscreen
-    ? terminalSize.height
-    : Math.max(maxContentHeight, 1)
+  // Step 2: Calculate layout from root nodes
+  for (let i = 0; i < registry.nextIndex; i++) {
+    if (!registry.allocatedIndices.has(i)) continue
+
+    const parentIdx = parentIndex[i]
+    if (parentIdx === undefined || parentIdx >= 0) continue // Skip non-roots
+
+    const rootNode = yogaNodes[i]
+    if (!rootNode) continue
+
+    // Use terminal dimensions for root
+    // In non-fullscreen mode, use undefined height to let content determine height
+    rootNode.calculateLayout(
+      terminalSize.width,
+      terminalSize.fullscreen ? terminalSize.height : undefined,
+      Yoga.DIRECTION_LTR
+    )
+  }
+
+  // Step 3: Read computed values into reactive arrays
+  for (let i = 0; i < registry.nextIndex; i++) {
+    if (!registry.allocatedIndices.has(i)) continue
+
+    const node = yogaNodes[i]
+    if (!node) continue
+
+    // Get absolute position by walking up the tree
+    let x = Math.round(node.getComputedLeft())
+    let y = Math.round(node.getComputedTop())
+
+    // Add parent positions for absolute coordinates
+    let current = node.getParent()
+    while (current) {
+      x += Math.round(current.getComputedLeft())
+      y += Math.round(current.getComputedTop())
+      current = current.getParent()
+    }
+
+    // Update reactive arrays
+    computedX[i] = x
+    computedY[i] = y
+    computedWidth[i] = Math.round(node.getComputedWidth())
+    computedHeight[i] = Math.round(node.getComputedHeight())
+
+    // Handle text wrapping
+    if (componentType[i] === ComponentType.TEXT) {
+      const text = texts[i] || ''
+      const width = computedWidth[i] || 80
+      wrappedLines[i] = wrapText(text, width)
+    } else {
+      wrappedLines[i] = []
+    }
+
+    // Simple overflow detection for scrollable containers
+    if (componentType[i] === ComponentType.BOX) {
+      let maxChildBottom = 0
+      const childCount = node.getChildCount()
+
+      for (let c = 0; c < childCount; c++) {
+        const child = node.getChild(c)
+        if (child) {
+          const childBottom = child.getComputedTop() + child.getComputedHeight()
+          maxChildBottom = Math.max(maxChildBottom, childBottom)
+        }
+      }
+
+      const boxHeight = computedHeight[i] || 0
+
+      if (maxChildBottom > boxHeight) {
+        maxScrollOffset[i] = Math.ceil(maxChildBottom - boxHeight)
+        const props = layoutProps[i] as TerminalLayoutProps
+        if (!props?.overflow || props.overflow === 'scroll') {
+          scrollable[i] = true
+          focusable[i] = true
+        }
+      } else {
+        maxScrollOffset[i] = 0
+      }
+    }
+  }
+
+  // Update content height for renderer
+  if (terminalSize.fullscreen) {
+    // In fullscreen mode, always use terminal height
+    contentHeight.value = terminalSize.height
+  } else {
+    // In non-fullscreen mode, find the actual bottom of ALL visible content
+    // Don't just look at root components - scan everything to find the true bottom
+    let maxBottom = 0
+
+    for (let i = 0; i < registry.nextIndex; i++) {
+      if (!registry.allocatedIndices.has(i)) continue
+      if (!visibility[i]) continue
+
+      // Check the bottom edge of every visible component
+      const bottom = (computedY[i] || 0) + (computedHeight[i] || 0)
+      maxBottom = Math.max(maxBottom, bottom)
+    }
+
+    contentHeight.value = Math.max(maxBottom, 1)
+  }
 }
 
 // ============================================================================
-// CONTENT HEIGHT STATE
+// REACTIVE CONTENT HEIGHT
 // ============================================================================
 
-// Export content height for the renderer to use
 export const contentHeight = $state({ value: 0 })
 
 // ============================================================================
-// EXPORT
+// INITIALIZATION
 // ============================================================================
 
 export function initializeLayout() {
-  // Create a layout effect that runs when dependencies change
+  // Create reactive effect for layout calculation
+  // Svelte will automatically track dependencies accessed in calculateLayout
   $effect(() => {
-    calculateAndUpdateLayout()
+    calculateLayout()
   })
 
-  // Return a cleanup function (noop for now since effects auto-cleanup)
-  return () => {}
+  return () => {} // Cleanup handled by Svelte
 }
