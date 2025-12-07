@@ -4,6 +4,8 @@
 
 **Build beautiful terminal applications with Svelte 5**
 
+![SvelTUI Demo](assets/sveltui-demo.gif)
+
 SvelTUI is a terminal UI framework that brings Svelte's elegant reactive programming model to the command line. Write declarative components, enjoy instant reactivity, and build responsive terminal interfaces with the same developer experience you love from web development.
 
 ```svelte
