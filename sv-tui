@@ -306,7 +306,7 @@ function getPackageJson(name, useLocal) {
   // For local development, sveltui is linked separately via `bun link sveltui`
   // For npm users, we include the published package
   if (!useLocal) {
-    deps.sveltui = '^0.1.0'
+    deps['@rlabs-inc/sveltui'] = '^0.1.0'
   }
 
   return {
@@ -371,7 +371,7 @@ async function build() {
   }
 
   // SvelTUI framework files - compile together with app
-  const sveltUIPath = 'node_modules/sveltui/src'
+  const sveltUIPath = 'node_modules/@rlabs-inc/sveltui/src'
   const sveltUIPatterns = ['**/*.svelte', '**/*.svelte.ts', '**/*.ts', '**/*.js']
   for (const pattern of sveltUIPatterns) {
     const glob = new Glob(pattern)
@@ -437,8 +437,8 @@ async function build() {
       .replace(/from\\s+['"]([^'"]+)\\.svelte['"]/g, "from '$1.svelte.mjs'")
       .replace(/from\\s+['"]([^'"]+)\\.svelte\\.ts['"]/g, "from '$1.svelte.js'")
       .replace(/from\\s+['"](\\.\\.?\\/[^'"]+)\\.ts['"]/g, "from '$1.mjs'")
-      .replace(/from\\s+["']sveltui["']/g, "from '../node_modules/sveltui/src/index.mjs'")
-      .replace(/from\\s+["']sveltui\\/src\\//g, "from '../node_modules/sveltui/src/")
+      .replace(/from\\s+["']sveltui["']/g, "from '../node_modules/@rlabs-inc/sveltui/src/index.mjs'")
+      .replace(/from\\s+["']sveltui\\/src\\//g, "from '../node_modules/@rlabs-inc/sveltui/src/")
 
     if (fixed !== content) {
       await Bun.write(file, fixed)
@@ -489,7 +489,7 @@ Thumbs.db
 function getReadme(name, template) {
   return `# ${name}
 
-A terminal UI application built with [SvelTUI](https://github.com/user/sveltui).
+A terminal UI application built with [SvelTUI](https://github.com/RLabs-Inc/sveltui).
 
 ## Quick Start
 
@@ -524,7 +524,7 @@ ${name}/
 
 ## Learn More
 
-- [SvelTUI Documentation](https://github.com/user/sveltui)
+- [SvelTUI Documentation](https://github.com/RLabs-Inc/sveltui)
 - [Svelte 5 Docs](https://svelte.dev/docs)
 `
 }
@@ -650,7 +650,7 @@ function showHelp() {
 ${c.bold}${c.brightCyan}SvelTUI CLI${c.reset} ${c.gray}v0.1.0${c.reset}
 
 ${c.bold}Usage:${c.reset}
-  ${c.cyan}sv-tui${c.reset} create <project-name> [options]
+  ${c.cyan}bunx @rlabs-inc/sveltui${c.reset} create <project-name> [options]
 
 ${c.bold}Options:${c.reset}
   ${c.cyan}--template${c.reset} <name>   Use a specific template (minimal, counter, dashboard)
@@ -659,13 +659,13 @@ ${c.bold}Options:${c.reset}
 
 ${c.bold}Examples:${c.reset}
   ${c.gray}# Interactive template selection${c.reset}
-  ${c.cyan}sv-tui${c.reset} create my-app
+  ${c.cyan}bunx @rlabs-inc/sveltui${c.reset} create my-app
 
   ${c.gray}# Use specific template${c.reset}
-  ${c.cyan}sv-tui${c.reset} create my-app --template dashboard
+  ${c.cyan}bunx @rlabs-inc/sveltui${c.reset} create my-app --template dashboard
 
   ${c.gray}# Development mode (link local SvelTUI)${c.reset}
-  ${c.cyan}sv-tui${c.reset} create my-app --local
+  ${c.cyan}bunx @rlabs-inc/sveltui${c.reset} create my-app --local
 
 ${c.bold}Templates:${c.reset}
   ${c.cyan}minimal${c.reset}     Clean starting point

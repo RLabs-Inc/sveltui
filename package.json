@@ -1,7 +1,7 @@
 {
   "name": "sveltui",
   "version": "0.1.0",
-  "description": "Write Svelte applications for terminal with SvelTUI",
+  "description": "Build beautiful terminal applications with Svelte 5 - reactive, zero-flicker, flexbox layouts",
   "main": "dist/src/index.cjs",
   "module": "dist/src/index.mjs",
   "type": "module",
@@ -10,13 +10,27 @@
   },
   "keywords": [
     "svelte",
+    "svelte5",
     "terminal",
     "tui",
     "cli",
-    "ui"
+    "ui",
+    "terminal-ui",
+    "console",
+    "flexbox",
+    "reactive",
+    "bun"
   ],
-  "author": "",
+  "author": "RLabs Inc.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RLabs-Inc/sveltui.git"
+  },
+  "homepage": "https://github.com/RLabs-Inc/sveltui#readme",
+  "bugs": {
+    "url": "https://github.com/RLabs-Inc/sveltui/issues"
+  },
   "exports": {
     ".": "./dist/src/index.mjs",
     "./mount": "./dist/src/mount.svelte.js"

@@ -1,5 +1,7 @@
 # SvelTUI
 
+> ⚠️ **Early Stage** - SvelTUI is functional and actively developed, but still in early stages. APIs may change. We'd love your feedback and contributions!
+
 **Build beautiful terminal applications with Svelte 5**
 
 SvelTUI is a terminal UI framework that brings Svelte's elegant reactive programming model to the command line. Write declarative components, enjoy instant reactivity, and build responsive terminal interfaces with the same developer experience you love from web development.
@@ -54,11 +56,21 @@ Differential rendering updates only the cells that changed. Your UI stays rock s
 
 ```bash
 # Using the CLI (recommended)
-bunx sv-tui create my-app
+bunx @rlabs-inc/sveltui create my-app
 cd my-app
 bun install
-bun run build
-bun run start
+bun run dev
+```
+
+The CLI offers three starter templates:
+
+- **minimal** - Clean starting point with just Box and Text
+- **counter** - Interactive demo with keyboard input and reactivity
+- **dashboard** - Full showcase with layout, scrolling, and live updates
+
+```bash
+# Skip template selection with --template
+bunx @rlabs-inc/sveltui create my-app --template dashboard
 ```
 
 ### Manual Setup
@@ -88,8 +100,10 @@ Create `src/App.svelte`:
   import { Box, Text } from 'sveltui'
 </script>
 
-<Box x={2} y={2} width={40} height={5} border="rounded" borderColor={0x06}>
-  <Text x={2} y={1} text="Hello, Terminal!" color={0x0a} />
+<Box width="100%" height="100%" padding={2}>
+  <Box border="rounded" borderColor={0x06} padding={1}>
+    <Text text="Hello, Terminal!" color={0x0a} />
+  </Box>
 </Box>
 ```
 
@@ -119,11 +133,16 @@ Container component with flexbox layout, borders, and background colors.
 | `border` | `'none'` \| `'single'` \| `'double'` \| `'rounded'` \| `'bold'` \| `'dashed'` \| `'dotted'` | Border style |
 | `borderColor` | `number` \| `string` | Border color (hex number or CSS color) |
 | `backgroundColor` | `number` \| `string` | Background color |
-| `x`, `y` | `number` | Position (when using absolute positioning) |
-| `width`, `height` | `number` \| `string` | Dimensions (number for chars, string for percentage) |
-| `padding` | `number` | Inner padding |
+| `width`, `height` | `number` \| `string` | Dimensions (number for chars, string like `"50%"` for percentage) |
+| `padding`, `paddingX`, `paddingY` | `number` | Inner padding |
+| `margin`, `marginX`, `marginY` | `number` | Outer margin |
+| `flexDirection` | `'row'` \| `'column'` | Main axis direction |
+| `flexGrow` | `number` | How much to grow relative to siblings |
+| `justifyContent` | `'flex-start'` \| `'center'` \| `'flex-end'` \| `'space-between'` | Main axis alignment |
+| `alignItems` | `'flex-start'` \| `'center'` \| `'flex-end'` \| `'stretch'` | Cross axis alignment |
+| `gap` | `number` | Space between children |
 | `focusable` | `boolean` | Whether the box can receive focus |
-| `onfocus`, `onblur` | `() => void` | Focus event callbacks |
+| `variant` | `'primary'` \| `'secondary'` \| `'accent'` \| `'success'` \| `'warning'` \| `'danger'` \| `'info'` | Theme-based styling |
 
 ### Text
 
@@ -137,16 +156,21 @@ Renders styled text content.
 />
 ```
 
+> ⚠️ **Important**: Always use the `text` prop, not children. Due to how Svelte handles children rendering, `<Text text="Hello" />` works correctly with reactivity, but `<Text>Hello</Text>` does not update reactively.
+
 **Props:**
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `text` | `string` | The text content to display |
-| `color` | `number` \| `string` | Text color |
+| `text` | `string` | The text content to display (required) |
+| `color` | `number` \| `string` | Text color (hex number or CSS color) |
 | `bold` | `boolean` | Bold text |
 | `italic` | `boolean` | Italic text |
 | `underline` | `boolean` | Underlined text |
-| `x`, `y` | `number` | Position |
+| `dim` | `boolean` | Dimmed text |
+| `variant` | `'primary'` \| `'secondary'` \| `'accent'` \| `'success'` \| `'warning'` \| `'danger'` \| `'info'` | Theme-based color |
+| `muted` | `boolean` | Use theme's muted text color |
+| `bright` | `boolean` | Use theme's bright text color |
 
 ## Keyboard API
 
@@ -317,6 +341,7 @@ SvelTUI includes a powerful theming system with semantic colors. Use the `varian
 |---------|----------|
 | `primary` | Main actions, focused elements |
 | `secondary` | Secondary actions, less emphasis |
+| `accent` | Highlighted elements, special emphasis |
 | `success` | Positive feedback, confirmations |
 | `warning` | Caution, important notices |
 | `danger` | Errors, destructive actions |
@@ -363,7 +388,7 @@ SvelTUI includes a powerful theming system with semantic colors. Use the `varian
 
 ```bash
 # Clone the repository
-git clone https://github.com/user/sveltui.git
+git clone https://github.com/RLabs-Inc/sveltui.git
 cd sveltui
 
 # Install dependencies
@@ -388,15 +413,18 @@ Contributions are welcome! Whether it's:
 
 Please feel free to open an issue or submit a pull request.
 
+## Known Issues
+
+- **Terminal resize in non-fullscreen mode** - Resizing the terminal window may cause rendering artifacts when not using `fullscreen: true`. Workaround: use fullscreen mode for apps that need resize support.
+
 ## Roadmap
 
-- [ ] More components (Button, List, Table, Progress, etc.)
-- [ ] Improved Input component with full editing support
+- [ ] Fix non-fullscreen resize handling
+- [ ] More components (Input, List, Table, Progress, etc.)
 - [ ] Animation primitives
 - [ ] Mouse event improvements
-- [ ] Accessibility features
-- [ ] More themes
 - [ ] Documentation site
+- [ ] More themes
 
 ## Acknowledgments
 

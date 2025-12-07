@@ -27,6 +27,15 @@ async function createPackage() {
   await $`rm -rf ${join(PACKAGE_DIR, 'src/test')}`
   await $`rm -f ${join(PACKAGE_DIR, 'src/main.ts')}`
 
+  // Copy LICENSE file
+  console.log('  ↳ Copying LICENSE...')
+  await $`cp LICENSE ${join(PACKAGE_DIR, 'LICENSE')}`
+
+  // Copy CLI tool
+  console.log('  ↳ Copying sv-tui CLI...')
+  await $`cp sv-tui ${join(PACKAGE_DIR, 'sv-tui')}`
+  await $`chmod +x ${join(PACKAGE_DIR, 'sv-tui')}`
+
   // Compile just the index.ts to index.js for compatibility
   console.log('  ↳ Compiling index.ts...')
   const indexTs = await Bun.file('src/index.ts').text()
@@ -43,19 +52,42 @@ async function createPackage() {
   // Create package.json using Bun.write
   console.log('  ↳ Creating package.json...')
   const packageJson = {
-    name: 'sveltui',
-    version: '0.1.0',
-    description: 'Terminal UI framework powered by Svelte',
+    name: '@rlabs-inc/sveltui',
+    version: '0.1.1',
+    description: 'Build beautiful terminal applications with Svelte 5 - reactive, zero-flicker, flexbox layouts',
     type: 'module',
     main: 'src/index.js',
     exports: {
       '.': './src/index.js',
       './src/*': './src/*',
     },
-    files: ['src'],
-    keywords: ['svelte', 'terminal', 'tui', 'cli', 'ui'],
+    bin: {
+      'sv-tui': './sv-tui',
+    },
+    files: ['src', 'sv-tui', 'LICENSE'],
+    keywords: [
+      'svelte',
+      'svelte5',
+      'terminal',
+      'tui',
+      'cli',
+      'ui',
+      'terminal-ui',
+      'console',
+      'flexbox',
+      'reactive',
+      'bun',
+    ],
     author: 'RLabs Inc.',
     license: 'MIT',
+    repository: {
+      type: 'git',
+      url: 'git+https://github.com/RLabs-Inc/sveltui.git',
+    },
+    homepage: 'https://github.com/RLabs-Inc/sveltui#readme',
+    bugs: {
+      url: 'https://github.com/RLabs-Inc/sveltui/issues',
+    },
     dependencies: {
       '@happy-dom/global-registrator': '^18.0.1',
       svelte: '^5.38.7',
@@ -113,11 +145,10 @@ A terminal UI framework that brings Svelte's elegant reactive programming model 
 
 \`\`\`bash
 # Create a new project (recommended)
-bunx sv-tui create my-app
+bunx @rlabs-inc/sveltui create my-app
 cd my-app
 bun install
-bun run build
-bun run start
+bun run dev
 \`\`\`
 
 ## Components
@@ -192,7 +223,7 @@ Change themes globally:
 
 ## Documentation
 
-Full documentation available at [GitHub](https://github.com/user/sveltui).
+Full documentation available at [GitHub](https://github.com/RLabs-Inc/sveltui).
 
 ## License
 
