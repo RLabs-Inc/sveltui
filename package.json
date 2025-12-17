@@ -1,6 +1,6 @@
 {
   "name": "sveltui",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Build beautiful terminal applications with Svelte 5 - reactive, zero-flicker, flexbox layouts",
   "main": "dist/src/index.cjs",
   "module": "dist/src/index.mjs",
@@ -39,7 +39,11 @@
     "build": "bun scripts/build.mjs",
     "build:watch": "bun scripts/build.mjs --watch",
     "build:verbose": "bun scripts/build.mjs --verbose",
-    "demo": "bun run build && bun --conditions browser dist/src/main.mjs"
+    "demo": "bun run build && bun --conditions browser dist/src/main.mjs",
+    "bench": "bun run build && bun --conditions browser dist/src/bench.mjs",
+    "stress": "bun run build && bun --conditions browser dist/src/stress.mjs",
+    "realworld": "bun run build && bun --conditions browser dist/src/realworld.mjs",
+    "canvas": "bun run build && bun --conditions browser dist/src/canvas-demo.mjs"
   },
   "devDependencies": {
     "@types/bun": "latest"

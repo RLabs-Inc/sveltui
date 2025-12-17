@@ -433,12 +433,19 @@ async function build() {
 
   for (const file of distFiles) {
     const content = await Bun.file(file).text()
+
+    // Calculate relative path to node_modules based on file depth
+    // e.g., dist/src/main.mjs -> ../node_modules/
+    // e.g., dist/src/tui/components/input/Input.svelte.mjs -> ../../../../node_modules/
+    const depth = file.split('/').length - 2  // -2 for 'dist' and filename
+    const relativePrefix = '../'.repeat(depth)
+
     const fixed = content
       .replace(/from\\s+['"]([^'"]+)\\.svelte['"]/g, "from '$1.svelte.mjs'")
       .replace(/from\\s+['"]([^'"]+)\\.svelte\\.ts['"]/g, "from '$1.svelte.js'")
       .replace(/from\\s+['"](\\.\\.?\\/[^'"]+)\\.ts['"]/g, "from '$1.mjs'")
-      .replace(/from\\s+["']sveltui["']/g, "from '../node_modules/@rlabs-inc/sveltui/src/index.mjs'")
-      .replace(/from\\s+["']sveltui\\/src\\//g, "from '../node_modules/@rlabs-inc/sveltui/src/")
+      .replace(/from\\s+["']sveltui["']/g, \`from '\${relativePrefix}node_modules/@rlabs-inc/sveltui/src/index.mjs'\`)
+      .replace(/from\\s+["']sveltui\\/src\\//g, \`from '\${relativePrefix}node_modules/@rlabs-inc/sveltui/src/\`)
 
     if (fixed !== content) {
       await Bun.write(file, fixed)

@@ -104,6 +104,8 @@ class Builder {
         'docs',
         'bkp',
         'packages',
+        'benchmarks',
+        'promotion',
       ],
       dev: options.dev !== false,
       ...options,

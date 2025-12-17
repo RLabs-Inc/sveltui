@@ -18,6 +18,7 @@ import {
 export const ComponentType = {
   TEXT: 0,
   BOX: 1,
+  CANVAS: 2,
 } as const
 
 // ============================================================================
@@ -60,6 +61,15 @@ export const depth = $state<number[]>([])
 // Text content
 export const texts = $state<string[]>([])
 export const wrappedLines = $state<string[][]>([]) // Wrapped text lines after layout
+
+// Canvas content - stores computed terminal cells (fully reactive)
+// Each cell: { char: string, fg: number, bg: number }
+export interface CanvasCell {
+  char: string
+  fg: number
+  bg: number
+}
+export const canvasCells = $state<(CanvasCell[][] | null)[]>([])
 
 // Layout properties (components set these)
 export const layoutProps = $state<any[]>([])
@@ -167,6 +177,7 @@ export function releaseIndex(id: string): void {
   depth[index] = 0
   texts[index] = ''
   wrappedLines[index] = []
+  canvasCells[index] = null
   layoutProps[index] = null
   colors[index * 2] = undefined
   colors[index * 2 + 1] = undefined

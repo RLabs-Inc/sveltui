@@ -19,6 +19,7 @@ import {
   opacity,
   texts,
   wrappedLines,
+  canvasCells,
   colors,
   textStyles,
   borderStyles,
@@ -542,6 +543,51 @@ function renderComponent(
     }
   }
 
+  // Render canvas content from pre-computed cells (fully reactive!)
+  if (componentType[index] === ComponentType.CANVAS) {
+    if (!contentClip) return // Content area is completely clipped
+
+    const cells = canvasCells[index]
+    if (!cells || cells.length === 0) return
+
+    const contentX = borderStyle > 0 ? x + 1 : x
+    const contentY = borderStyle > 0 ? y + 1 : y
+    const contentWidth = borderStyle > 0 ? width - 2 : width
+    const contentHeight = borderStyle > 0 ? height - 2 : height
+
+    // Render each cell from the pre-computed cells array
+    for (let cy = 0; cy < Math.min(cells.length, contentHeight); cy++) {
+      const row = cells[cy]
+      if (!row) continue
+
+      const py = contentY + cy
+
+      // Skip rows outside clip rect
+      if (py < contentClip.y || py >= contentClip.y + contentClip.height) continue
+
+      for (let cx = 0; cx < Math.min(row.length, contentWidth); cx++) {
+        const px = contentX + cx
+
+        // Skip cells outside clip rect
+        if (px < contentClip.x || px >= contentClip.x + contentClip.width) continue
+
+        const cell = row[cx]
+        if (!cell) continue
+
+        buffer.setCell(
+          px,
+          py,
+          {
+            char: cell.char,
+            fg: cell.fg,
+            bg: cell.bg,
+          },
+          contentClip
+        )
+      }
+    }
+  }
+
   // Render child components with proper clipping and scrolling
   if (componentType[index] === ComponentType.BOX) {
     // Only render children if there's a valid clip rect
@@ -583,7 +629,9 @@ const frameBuffer = $derived.by(() => {
   // This ensures proper parent-child clipping
   for (const index of sortedComponents) {
     // Only render root components here; children are rendered recursively
-    if (!parentIndex[index] || parentIndex[index] === -1) {
+    // IMPORTANT: parentIndex of 0 means parent is component 0, NOT a root!
+    // Only undefined or -1 indicates a root component
+    if (parentIndex[index] === undefined || parentIndex[index] === -1) {
       renderComponent(buffer, index, undefined, 0, 0)
     }
   }

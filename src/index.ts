@@ -25,3 +25,11 @@ export { keyboard, type KeyboardEvent } from './input/keyboard.svelte.ts'
 // Components - export the actual Svelte components
 export { default as Text } from './components/Text.svelte'
 export { default as Box } from './components/Box.svelte'
+export { default as Canvas } from './components/Canvas.svelte'
+
+// Canvas utilities
+export { PixelBuffer, type Color, type TerminalCell } from './canvas/index.ts'
+export type { CanvasContext } from './components/Canvas.svelte'
+
+// Theme system
+export { getTheme, type Theme, type ThemeColors } from './theme/theme.svelte.ts'
