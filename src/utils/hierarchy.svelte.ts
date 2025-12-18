@@ -34,6 +34,12 @@ export function setupComponent(
     const childNode = yogaNodes[index]
     const parentNode = yogaNodes[parentIdx]
     if (childNode && parentNode) {
+      // Defensive: if child already has a parent, remove it first
+      // This handles Svelte's {#each} lifecycle where creates may happen before destroys
+      const existingParent = childNode.getParent()
+      if (existingParent) {
+        existingParent.removeChild(childNode)
+      }
       parentNode.insertChild(childNode, parentNode.getChildCount())
     }
   } else {

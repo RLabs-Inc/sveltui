@@ -29,7 +29,7 @@ const c = {
   white: '\x1b[37m',
 
   // Bright colors (8-15) - adapt to terminal theme
-  gray: '\x1b[90m',        // bright black
+  gray: '\x1b[90m', // bright black
   brightRed: '\x1b[91m',
   brightGreen: '\x1b[92m',
   brightYellow: '\x1b[93m',
@@ -50,16 +50,39 @@ const box = {
 }
 
 function printBox(lines, color = c.cyan) {
-  const maxLen = Math.max(...lines.map(l => stripAnsi(l).length))
+  const maxLen = Math.max(...lines.map((l) => stripAnsi(l).length))
   const width = maxLen + 4
 
-  console.log(color + box.topLeft + box.horizontal.repeat(width - 2) + box.topRight + c.reset)
+  console.log(
+    color +
+      box.topLeft +
+      box.horizontal.repeat(width - 2) +
+      box.topRight +
+      c.reset
+  )
   for (const line of lines) {
     const stripped = stripAnsi(line)
     const padding = ' '.repeat(maxLen - stripped.length)
-    console.log(color + box.vertical + c.reset + ' ' + line + padding + ' ' + color + box.vertical + c.reset)
+    console.log(
+      color +
+        box.vertical +
+        c.reset +
+        ' ' +
+        line +
+        padding +
+        ' ' +
+        color +
+        box.vertical +
+        c.reset
+    )
   }
-  console.log(color + box.bottomLeft + box.horizontal.repeat(width - 2) + box.bottomRight + c.reset)
+  console.log(
+    color +
+      box.bottomLeft +
+      box.horizontal.repeat(width - 2) +
+      box.bottomRight +
+      c.reset
+  )
 }
 
 function stripAnsi(str) {
@@ -89,7 +112,7 @@ const TEMPLATES = {
 <Box width="100%" height="100%" padding={2}>
   <Text text="Hello, SvelTUI!" color={0x00ff88} bold />
 </Box>
-`
+`,
   },
 
   counter: {
@@ -145,7 +168,7 @@ const TEMPLATES = {
     <Text text="Press Ctrl+C to exit" color={0x64748b} dim />
   </Box>
 </Box>
-`
+`,
   },
 
   dashboard: {
@@ -288,8 +311,8 @@ const TEMPLATES = {
     <Text text="SvelTUI v0.1.0" color={0x475569} />
   </Box>
 </Box>
-`
-  }
+`,
+  },
 }
 
 // ============================================================================
@@ -306,7 +329,7 @@ function getPackageJson(name, useLocal) {
   // For local development, sveltui is linked separately via `bun link sveltui`
   // For npm users, we include the published package
   if (!useLocal) {
-    deps['@rlabs-inc/sveltui'] = '^0.1.0'
+    deps['@rlabs-inc/sveltui'] = '^0.1.4'
   }
 
   return {
@@ -545,18 +568,24 @@ async function promptTemplate() {
 
   const entries = Object.entries(TEMPLATES)
   entries.forEach(([key, tmpl], i) => {
-    console.log(`  ${c.cyan}${i + 1}.${c.reset} ${c.bold}${tmpl.name}${c.reset}`)
+    console.log(
+      `  ${c.cyan}${i + 1}.${c.reset} ${c.bold}${tmpl.name}${c.reset}`
+    )
     console.log(`     ${c.gray}${tmpl.description}${c.reset}\n`)
   })
 
-  process.stdout.write(`${c.cyan}?${c.reset} Enter choice (1-${entries.length}): `)
+  process.stdout.write(
+    `${c.cyan}?${c.reset} Enter choice (1-${entries.length}): `
+  )
 
   for await (const line of console) {
     const choice = parseInt(line.trim())
     if (choice >= 1 && choice <= entries.length) {
       return entries[choice - 1][0]
     }
-    process.stdout.write(`${c.yellow}Please enter 1-${entries.length}: ${c.reset}`)
+    process.stdout.write(
+      `${c.yellow}Please enter 1-${entries.length}: ${c.reset}`
+    )
   }
 
   return 'minimal'
@@ -567,25 +596,32 @@ async function create(projectName, options) {
 
   // Check if directory exists
   if (existsSync(projectName)) {
-    console.log(`\n${c.red}Error:${c.reset} Directory "${projectName}" already exists.\n`)
+    console.log(
+      `\n${c.red}Error:${c.reset} Directory "${projectName}" already exists.\n`
+    )
     process.exit(1)
   }
 
   // Template selection
-  const templateKey = options.template || await promptTemplate()
+  const templateKey = options.template || (await promptTemplate())
   const template = TEMPLATES[templateKey]
 
   if (!template) {
-    console.log(`\n${c.red}Error:${c.reset} Unknown template "${templateKey}".\n`)
+    console.log(
+      `\n${c.red}Error:${c.reset} Unknown template "${templateKey}".\n`
+    )
     console.log(`Available templates: ${Object.keys(TEMPLATES).join(', ')}\n`)
     process.exit(1)
   }
 
   console.log()
-  printBox([
-    `${c.bold}${c.brightCyan}Creating ${projectName}${c.reset}`,
-    `${c.gray}Template: ${template.name}${c.reset}`,
-  ], c.cyan)
+  printBox(
+    [
+      `${c.bold}${c.brightCyan}Creating ${projectName}${c.reset}`,
+      `${c.gray}Template: ${template.name}${c.reset}`,
+    ],
+    c.cyan
+  )
   console.log()
 
   // Create project structure
@@ -624,20 +660,28 @@ async function create(projectName, options) {
 
   // Write README
   printStep('📖', 'Creating README...')
-  await Bun.write(join(projectName, 'README.md'), getReadme(projectName, template))
+  await Bun.write(
+    join(projectName, 'README.md'),
+    getReadme(projectName, template)
+  )
   printSuccess('Created README.md')
 
   // Success message
   console.log()
-  printBox([
-    `${c.brightGreen}✓ Project created successfully!${c.reset}`,
-  ], c.green)
+  printBox(
+    [`${c.brightGreen}✓ Project created successfully!${c.reset}`],
+    c.green
+  )
 
   console.log(`
 ${c.bold}Next steps:${c.reset}
 
   ${c.cyan}cd${c.reset} ${projectName}
-  ${c.cyan}bun${c.reset} install${useLocal ? `\n  ${c.cyan}bun${c.reset} link sveltui  ${c.gray}# Link local SvelTUI${c.reset}` : ''}
+  ${c.cyan}bun${c.reset} install${
+    useLocal
+      ? `\n  ${c.cyan}bun${c.reset} link sveltui  ${c.gray}# Link local SvelTUI${c.reset}`
+      : ''
+  }
   ${c.cyan}bun run${c.reset} dev
 
 ${c.gray}${box.horizontal.repeat(50)}${c.reset}
@@ -701,7 +745,9 @@ if (templateIdx !== -1 && args[templateIdx + 1]) {
 }
 
 // Filter out flags to get command and project name
-const positional = args.filter(a => !a.startsWith('--') && a !== options.template)
+const positional = args.filter(
+  (a) => !a.startsWith('--') && a !== options.template
+)
 const command = positional[0]
 const projectName = positional[1]
 

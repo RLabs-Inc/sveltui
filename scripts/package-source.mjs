@@ -53,8 +53,9 @@ async function createPackage() {
   console.log('  ↳ Creating package.json...')
   const packageJson = {
     name: '@rlabs-inc/sveltui',
-    version: '0.1.1',
-    description: 'Build beautiful terminal applications with Svelte 5 - reactive, zero-flicker, flexbox layouts',
+    version: '0.1.4',
+    description:
+      'Build beautiful terminal applications with Svelte 5 - reactive, zero-flicker, flexbox layouts',
     type: 'module',
     main: 'src/index.js',
     exports: {

@@ -646,10 +646,7 @@ const frameBuffer = $derived.by(() => {
 function generateDiff(prev: FrameBuffer | null, next: FrameBuffer): string {
   const parts: string[] = []
 
-  // Track last styles to minimize escape codes
-  let lastFg: number | undefined = undefined
-  let lastBg: number | undefined = undefined
-  let lastStyle = 0
+  // Track cursor position (this is fine - cursor position is absolute)
   let lastY = -1
   let lastX = -1
 
@@ -711,33 +708,20 @@ function generateDiff(prev: FrameBuffer | null, next: FrameBuffer): string {
         lastX = x
       }
 
-      // Update text style if changed
-      if (newCell.style !== lastStyle) {
-        parts.push(ANSI.RESET)
-        if (newCell.style & 1) parts.push(ANSI.BOLD)
-        if (newCell.style & 2) parts.push(ANSI.ITALIC)
-        if (newCell.style & 4) parts.push(ANSI.UNDERLINE)
-        if (newCell.style & 8) parts.push(ANSI.STRIKETHROUGH)
-        if (newCell.style & 16) parts.push(ANSI.DIM)
-        if (newCell.style & 32) parts.push(ANSI.BLINK)
-        if (newCell.style & 64) parts.push(ANSI.REVERSE)
-        if (newCell.style & 128) parts.push(ANSI.HIDDEN)
-        lastStyle = newCell.style
-        // Force color update after reset
-        lastFg = undefined
-        lastBg = undefined
-      }
+      // Always reset and set style for each cell - simple, correct, fast enough
+      parts.push(ANSI.RESET)
+      if (newCell.style & 1) parts.push(ANSI.BOLD)
+      if (newCell.style & 2) parts.push(ANSI.ITALIC)
+      if (newCell.style & 4) parts.push(ANSI.UNDERLINE)
+      if (newCell.style & 8) parts.push(ANSI.STRIKETHROUGH)
+      if (newCell.style & 16) parts.push(ANSI.DIM)
+      if (newCell.style & 32) parts.push(ANSI.BLINK)
+      if (newCell.style & 64) parts.push(ANSI.REVERSE)
+      if (newCell.style & 128) parts.push(ANSI.HIDDEN)
 
-      // Update colors - handles ANSI indices, 256 colors, and RGB
-      if (newCell.fg !== lastFg) {
-        parts.push(getColorCode(newCell.fg, false))
-        lastFg = newCell.fg
-      }
-
-      if (newCell.bg !== lastBg) {
-        parts.push(getColorCode(newCell.bg, true))
-        lastBg = newCell.bg
-      }
+      // Always set colors for each cell
+      parts.push(getColorCode(newCell.fg, false))
+      parts.push(getColorCode(newCell.bg, true))
 
       // Output the character
       parts.push(newCell.char)
