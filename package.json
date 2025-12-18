@@ -1,6 +1,6 @@
 {
   "name": "sveltui",
-  "version": "0.1.1",
+  "version": "0.1.5",
   "description": "Build beautiful terminal applications with Svelte 5 - reactive, zero-flicker, flexbox layouts",
   "main": "dist/src/index.cjs",
   "module": "dist/src/index.mjs",

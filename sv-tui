@@ -329,7 +329,7 @@ function getPackageJson(name, useLocal) {
   // For local development, sveltui is linked separately via `bun link sveltui`
   // For npm users, we include the published package
   if (!useLocal) {
-    deps['@rlabs-inc/sveltui'] = '^0.1.4'
+    deps['@rlabs-inc/sveltui'] = '^0.1.5'
   }
 
   return {

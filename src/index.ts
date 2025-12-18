@@ -7,9 +7,20 @@
 // Sets up the environment before any components load
 // Register Happy DOM globals immediately when sveltui is imported
 // This ensures DOM is available for all Svelte operations
+//
+// IMPORTANT: We preserve native fetch because happy-dom's fetch enforces CORS
+// and strips Authorization headers, breaking OAuth and API calls in CLI apps.
+// SvelTUI only needs DOM globals (document, window) - not browser fetch behavior.
+
+// Save native fetch BEFORE happy-dom overwrites it
+const nativeFetch = globalThis.fetch
+
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 
 GlobalRegistrator.register()
+
+// Restore native fetch - we only need happy-dom for DOM, not HTTP
+globalThis.fetch = nativeFetch
 
 // Ensure we have what Svelte needs
 if (!global.document || !global.window) {
