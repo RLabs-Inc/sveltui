@@ -3,13 +3,13 @@
 import { mount } from './index.ts'
 import { mount as mountComponent } from 'svelte'
 
-import ResizeDemo from './test/ResizeDemo.svelte'
+import AppendModeDemo from './test/AppendModeDemo.svelte'
 
 mount(
   () => {
-    mountComponent(ResizeDemo, {
+    mountComponent(AppendModeDemo, {
       target: document.body,
     })
   },
-  { fullscreen: false }
+  { append: true } // Testing new append mode!
 )

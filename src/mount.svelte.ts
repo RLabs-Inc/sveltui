@@ -12,6 +12,7 @@ import { writeStdout } from './utils/bun-output.ts'
 
 export type MountOptions = {
   fullscreen?: boolean
+  append?: boolean // Append mode: content flows down, terminal scrolls naturally
 }
 
 // ============================================================================
@@ -25,15 +26,18 @@ export function mount(rootComponent: any, options: MountOptions = {}) {
 
   setTerminalSize(cols, rows)
   terminalSize.fullscreen = options.fullscreen || false
+  terminalSize.append = options.append || false
 
-  // Enter fullscreen if requested
+  // Enter fullscreen if requested (mutually exclusive with append mode)
   if (options.fullscreen) {
     writeStdout(ANSI.ENTER_ALT_SCREEN)
     writeStdout(ANSI.CLEAR_SCREEN)
   }
 
-  // Hide cursor during rendering
-  writeStdout(ANSI.HIDE_CURSOR)
+  // Hide cursor during rendering (not in append mode - keep terminal natural)
+  if (!options.append) {
+    writeStdout(ANSI.HIDE_CURSOR)
+  }
 
   writeStdout(ANSI.ENABLE_MOUSE)
 
@@ -133,8 +137,14 @@ export function mount(rootComponent: any, options: MountOptions = {}) {
     if (options.fullscreen) {
       writeStdout(ANSI.EXIT_ALT_SCREEN)
     }
-    writeStdout(ANSI.SHOW_CURSOR)
+    if (!options.append) {
+      writeStdout(ANSI.SHOW_CURSOR)
+    }
     writeStdout(ANSI.RESET)
+    if (options.append) {
+      // In append mode, ensure we end on a new line
+      writeStdout('\n')
+    }
   }
 
   // Handle exit

@@ -650,30 +650,36 @@ function generateDiff(prev: FrameBuffer | null, next: FrameBuffer): string {
   let lastY = -1
   let lastX = -1
 
-  // In non-fullscreen mode, we need to handle positioning differently
+  // Mode flags
   const isFullscreen = terminalSize.fullscreen
+  const isAppend = terminalSize.append
 
   // Detect terminal resize - buffer dimensions changed
   const sizeChanged =
     prev && (prev.width !== next.width || prev.height !== next.height)
 
-  // In non-fullscreen mode, if size changed, we need to do full redraw
-  // The cursor is already at our origin (restored before calling generateDiff)
-  // We don't clear because some terminals (like Warp) push content to scrollback
-  // Instead, we just overwrite by forcing a full render
-  if (sizeChanged && !isFullscreen) {
-    // If buffer got smaller, we need to clear the extra lines that won't be overwritten
-    if (prev && (prev.height > next.height || prev.width > next.width)) {
-      // Clear lines beyond the new buffer height
-      for (let y = next.height; y < prev.height; y++) {
-        parts.push(ANSI.moveTo(1, y + 1))
-        parts.push(ANSI.CLEAR_LINE)
+  // Handle size changes based on mode
+  if (sizeChanged) {
+    if (isAppend) {
+      // APPEND MODE: If content shrunk, we'll have stale lines below
+      // Force full redraw to handle this correctly
+      if (prev && prev.height > next.height) {
+        prev = null
       }
-      // Move back to origin
-      parts.push(ANSI.RESTORE_CURSOR)
+    } else if (!isFullscreen) {
+      // NON-FULLSCREEN MODE: Use restore cursor approach
+      if (prev && (prev.height > next.height || prev.width > next.width)) {
+        // Clear lines beyond the new buffer height
+        for (let y = next.height; y < prev.height; y++) {
+          parts.push(ANSI.moveTo(1, y + 1))
+          parts.push(ANSI.CLEAR_LINE)
+        }
+        // Move back to origin
+        parts.push(ANSI.RESTORE_CURSOR)
+      }
+      // Force full redraw by ignoring previous buffer
+      prev = null
     }
-    // Force full redraw by ignoring previous buffer
-    prev = null
   }
 
   // Use full buffer height in non-fullscreen, clamp to terminal height in fullscreen
@@ -737,14 +743,15 @@ function generateDiff(prev: FrameBuffer | null, next: FrameBuffer): string {
 
 let previousBuffer: FrameBuffer | null = null
 let isFirstRender = true
+let appendModePrevHeight = 0 // For append mode: track previous render height
 
 // ============================================================================
 // PUBLIC API
 // ============================================================================
 
 export function initializeRenderer() {
-  // Save cursor position once for non-fullscreen mode
-  if (!terminalSize.fullscreen) {
+  // Save cursor position once for non-fullscreen mode (not append mode)
+  if (!terminalSize.fullscreen && !terminalSize.append) {
     writeStdout(ANSI.SAVE_CURSOR)
   }
 
@@ -752,10 +759,19 @@ export function initializeRenderer() {
   $effect(() => {
     const nextBuffer = frameBuffer // Creates reactive dependency
 
-    // In non-fullscreen mode, restore to saved position before each frame
-    if (!terminalSize.fullscreen && !isFirstRender) {
+    // Position cursor based on mode
+    if (terminalSize.append) {
+      // APPEND MODE: Use relative cursor movement
+      // Move up by previous height to get back to start of last render
+      if (!isFirstRender && appendModePrevHeight > 0) {
+        writeStdout(ANSI.moveUp(appendModePrevHeight))
+        writeStdout('\r') // Move to column 1
+      }
+    } else if (!terminalSize.fullscreen && !isFirstRender) {
+      // NON-FULLSCREEN MODE: Restore to saved position
       writeStdout(ANSI.RESTORE_CURSOR)
     }
+    // FULLSCREEN MODE: No cursor positioning needed (absolute positions work)
 
     // Generate differential output
     const diff = generateDiff(previousBuffer, nextBuffer)
@@ -763,6 +779,13 @@ export function initializeRenderer() {
     // Output if there are changes
     if (diff) {
       writeStdout(diff)
+    }
+
+    // Track height and position cursor for append mode
+    if (terminalSize.append) {
+      appendModePrevHeight = nextBuffer.height
+      // Move cursor to end of content (column 1, after last line)
+      writeStdout(ANSI.moveTo(1, nextBuffer.height + 1))
     }
 
     // Save for next diff
@@ -773,7 +796,12 @@ export function initializeRenderer() {
   // Return cleanup
   return () => {
     writeStdout(ANSI.RESET)
-    if (!terminalSize.fullscreen) {
+    if (terminalSize.append) {
+      // APPEND MODE: Just ensure we're on a new line
+      writeStdout('\n')
+      appendModePrevHeight = 0
+    } else if (!terminalSize.fullscreen) {
+      // NON-FULLSCREEN MODE: Restore cursor
       writeStdout(ANSI.RESTORE_CURSOR)
     }
     previousBuffer = null

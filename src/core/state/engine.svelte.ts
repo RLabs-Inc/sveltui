@@ -41,6 +41,7 @@ export const terminalSize = $state({
   width: 80,
   height: 24,
   fullscreen: false,
+  append: false, // Append mode: content flows down, terminal scrolls naturally
 })
 
 // ============================================================================

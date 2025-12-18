@@ -308,7 +308,7 @@ const TEMPLATES = {
     padding={1}
   >
     <Text text="Tab: Navigate | ↑↓: Scroll | Ctrl+C: Exit" color={0x64748b} dim />
-    <Text text="SvelTUI v0.1.0" color={0x475569} />
+    <Text text="SvelTUI v0.1.6" color={0x475569} />
   </Box>
 </Box>
 `,
@@ -329,7 +329,7 @@ function getPackageJson(name, useLocal) {
   // For local development, sveltui is linked separately via `bun link sveltui`
   // For npm users, we include the published package
   if (!useLocal) {
-    deps['@rlabs-inc/sveltui'] = '^0.1.5'
+    deps['@rlabs-inc/sveltui'] = '^0.1.6'
   }
 
   return {
@@ -477,17 +477,21 @@ async function build() {
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(2)
 
+  // On success: clear screen for clean app launch
+  // On error: keep all output visible for debugging
   if (errors.length > 0) {
     console.log('\\n⚠️  Build completed with errors:\\n')
     for (const { file, error } of errors) {
       console.log(\`  ✗ \${file}\`)
       console.log(\`    \${error}\\n\`)
     }
+    console.log(\`Build failed with \${errors.length} error\${errors.length > 1 ? 's' : ''}\\n\`)
+    process.exit(1)
   }
 
-  console.log(\`\\n✅ Build complete! (\${compiled} files in \${elapsed}s)\`)
-  console.log('📁 Output: dist/')
-  console.log('\\n▶  Run with: bun run start\\n')
+  // Success: clear screen and let the app take over completely
+  // No message needed - if it works, it works!
+  console.clear()
 }
 
 await build()
@@ -698,7 +702,7 @@ ${c.dim}Happy coding! ${c.reset}${c.brightMagenta}♥${c.reset}
 
 function showHelp() {
   console.log(`
-${c.bold}${c.brightCyan}SvelTUI CLI${c.reset} ${c.gray}v0.1.0${c.reset}
+${c.bold}${c.brightCyan}SvelTUI CLI${c.reset} ${c.gray}v0.1.6${c.reset}
 
 ${c.bold}Usage:${c.reset}
   ${c.cyan}bunx @rlabs-inc/sveltui${c.reset} create <project-name> [options]

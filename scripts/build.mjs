@@ -469,14 +469,17 @@ class Builder {
   }
 
   report() {
-    this.logger.header('Build Complete')
-
-    // Show success stats first
+    // On success: clear screen for clean app launch
+    // On error: keep all output visible for debugging
     if (this.stats.errors.length === 0) {
-      console.log(
-        `\n  ${colors.green}${colors.bright}✨ Perfect build!${colors.reset}`
-      )
+      // Success: clear screen and let the app take over completely
+      // No message needed - if it works, it works!
+      console.clear()
+      return
     }
+
+    // Error path: keep all build output visible
+    this.logger.header('Build Complete')
 
     const stats = [
       `${colors.bright}Time:${colors.reset} ${this.logger.timing()}`,
@@ -572,9 +575,11 @@ class Builder {
           this.stats.errors.length > 1 ? 's' : ''
         }${colors.reset}`
       )
-    }
+      console.log()
 
-    console.log()
+      // Exit with error code so `bun run demo` doesn't proceed
+      process.exit(1)
+    }
   }
 
   formatBytes(bytes) {
