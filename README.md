@@ -1,3 +1,7 @@
+**Check out [tui](https://github.com/RLabs-Inc/tui) - a new tui framework, the same svelte-like reactivity without the Svelte framework overhead.**
+Built from ground up, fast deep grained reactivity, components props are fully reactive, change one and the render is automatically triggered, no fixed fps. 
+Sub-ms rendering on full screen mode + 2 rendering modes, inline and append with static region for better performance in long contents.
+
 # SvelTUI
 
 > ⚠️ **Early Stage** - SvelTUI is functional and actively developed, but still in early stages. APIs may change. We'd love your feedback and contributions!
